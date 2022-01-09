@@ -1,0 +1,17 @@
+<launch>
+
+    <arg name = 'use_rviz' default = 'true' />
+    <arg name = 'use_jsp' default = 'false' />
+
+    <param name="robot_description" command="$(find xacro)/xacro $(find turtlebot3_description)/urdf/turtlebot3_burger.urdf.xacro"/>
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
+
+    <group if="$(arg use_rviz)">
+        <node name="rviz" pkg ="rviz" type="rviz" args="-d $(find nuturtle_description)/config/basic.rviz"/>
+    </group>
+
+    <group if="$(arg use_jsp)">
+        <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher"/>
+    </group>
+
+</launch>

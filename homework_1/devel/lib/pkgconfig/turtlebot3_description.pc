@@ -1,0 +1,8 @@
+prefix=/home/algarverick/ME_495_SLAM/slam-project-algarv/homework_1/devel
+
+Name: turtlebot3_description
+Description: Description of turtlebot3_description
+Version: 1.2.5
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: urdf xacro
