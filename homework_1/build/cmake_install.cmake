@@ -131,6 +131,7 @@ endif()
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for each subdirectory.
   include("/home/algarverick/ME_495_SLAM/slam-project-algarv/homework_1/build/gtest/cmake_install.cmake")
+  include("/home/algarverick/ME_495_SLAM/slam-project-algarv/homework_1/build/nuturtle_description/cmake_install.cmake")
 
 endif()
 

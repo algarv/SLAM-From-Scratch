@@ -1,19 +1,19 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>nuturtle_description</name>
-  <version>0.0.0</version>
+  <version>0.0.3</version>
   <description>The nuturtle_description package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
   <!-- <maintainer email="jane.doe@example.com">Jane Doe</maintainer> -->
-  <maintainer email="algarverick@todo.todo">algarverick</maintainer>
+  <maintainer email="annagarverick2022@u.northwestern.edu">Anna Garverick</maintainer>
 
 
   <!-- One license tag required, multiple allowed, one license per tag -->
   <!-- Commonly used license strings: -->
   <!--   BSD, MIT, Boost Software License, GPLv2, GPLv3, LGPLv2.1, LGPLv3 -->
-  <license>TODO</license>
+  <license>APLv2</license>
 
 
   <!-- Url tags are optional, but multiple are allowed, one per tag -->
@@ -49,6 +49,9 @@
   <!-- Use doc_depend for packages you need only for building documentation: -->
   <!--   <doc_depend>doxygen</doc_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>roscpp</build_depend>
+  <build_export_depend>roscpp</build_export_depend>
+  <exec_depend>roscpp</exec_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->
