@@ -1,8 +1,0 @@
-prefix=/home/algarverick/ME_495_SLAM/slam-project-algarv/homework_1/install
-
-Name: nuturtle_description
-Description: Description of nuturtle_description
-Version: 0.0.0
-Cflags: 
-Libs: -L${prefix}/lib 
-Requires: roscpp
