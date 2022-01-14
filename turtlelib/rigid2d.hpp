@@ -138,9 +138,6 @@ namespace turtlelib
         /// \brief Create an identity transformation
         Transform2D();
         
-        /// \brief Set-up an empty transformation matrix
-        int T[3][3];
-
         /// \brief create a transformation that is a pure translation
         /// \param trans - the vector by which to translate
         explicit Transform2D(Vector2D trans);
@@ -182,7 +179,8 @@ namespace turtlelib
         /// \brief \see operator<<(...) (declared outside this class)
         /// for a description
         friend std::ostream & operator<<(std::ostream & os, const Transform2D & tf);
-    
+    private:
+        int T[3][3];
     };
 
 
