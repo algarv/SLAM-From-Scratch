@@ -1,0 +1,9 @@
+<launch>
+
+<arg name='rate' default = '500' />
+
+<node name="nusim" pkg="nusim" type="src/nusim.cpp"> 
+    <!-- <param name="rate" type="Rate" value="$(arg rate)"/> -->
+</node>
+
+</launch>
