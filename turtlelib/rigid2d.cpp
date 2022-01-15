@@ -54,19 +54,25 @@ namespace turtlelib{
 
     };
 
-    Transform2D::Transform2D Transform2D::inv() const{
+    Transform2D Transform2D::inv() const{
 
-      Transform2D T_inv; 
+      Vector2D trans;
+      trans.x = -1 * T[0][2];
+      trans.y = -1 * T[1][2];
+      double radians = 3.14159265/2 - asin(T[1][0]);
+      Transform2D T_inv(trans, radians); 
 
-      T_inv.T[0][0] = T[0][0];
-      T_inv.T[0][1] = T[1][0];  
-      T_inv.T[0][2] = -1 * T[0][2];  
-      T_inv.T[1][0] = T[0][1];
-      T_inv.T[1][1] = T[1][1]; 
-      T_inv.T[1][2] = -1 * T[1][2]; 
-      T_inv.T[2][0] = 0;
-      T_inv.T[2][1] = 0;
-      T_inv.T[2][2] = 1;
+      // Transform2D T_inv;
+    
+      // T_inv.T[0][0] = T[0][0];
+      // T_inv.T[0][1] = T[1][0];  
+      // T_inv.T[0][2] = -1 * T[0][2];  
+      // T_inv.T[1][0] = T[0][1];
+      // T_inv.T[1][1] = T[1][1]; 
+      // T_inv.T[1][2] = -1 * T[1][2]; 
+      // T_inv.T[2][0] = 0;
+      // T_inv.T[2][1] = 0;
+      // T_inv.T[2][2] = 1;
 
       return T_inv;
     };
