@@ -22,7 +22,7 @@ namespace turtlelib
     /// if given a compile-time constant as input
     constexpr bool almost_equal(double d1, double d2, double epsilon=1.0e-12)
     {
-        if (d1 - d2 < epsilon | d2 - d1 < epsilon){
+        if ((d1 - d2 < epsilon) | (d2 - d1 < epsilon)){
             return true;
         }
         else{
@@ -157,6 +157,11 @@ namespace turtlelib
         /// \return a vector in the new coordinate system
         Vector2D operator()(Vector2D v) const;
 
+        /// \brief apply a transformation to a Twist2D using the adjoint
+        /// \param t - the twist to transform
+        /// \return a twist in the new coordinate system
+        Twist2D operator()(Twist2D t) const;
+
         /// \brief invert the transformation
         /// \return the inverse transformation. 
         Transform2D inv() const;
@@ -175,9 +180,16 @@ namespace turtlelib
         /// \return the angular displacement, in radians
         double rotation() const;
 
+        /// \brief Construct the adjoint matrix
+        /// \return the adjoint matrix
+        double adjoint() const;
+
         /// \brief \see operator<<(...) (declared outside this class)
         /// for a description
         friend std::ostream & operator<<(std::ostream & os, const Transform2D & tf);
+
+        Vector2D normalize(Vector2D v) const;
+    
     private:
         float T[3][3];
     };
