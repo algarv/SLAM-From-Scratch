@@ -25,21 +25,37 @@ int main() {
     turtlelib::Vector2D Vab;
     Vab.x = x_in;
     Vab.y = y_in;
-    turtlelib::Transform2D Tab(Vab,deg);
+    double rad = turtlelib::deg2rad(deg);
+    turtlelib::Transform2D Tab(Vab,rad);
+    
+    std::cout << "Enter transform T_{b,c}:\n" << std::endl;
+    std::cout << "\r deg: ";
+    std::cin >> deg;
+    std::cout << "\r x: "; 
+    std::cin >> x_in;
+    std::cout << "\r y: ";
+    std::cin >> y_in;
 
+    turtlelib::Vector2D Vbc;
+    Vbc.x = x_in;
+    Vbc.y = y_in;
+    rad = turtlelib::deg2rad(deg);
+    turtlelib::Transform2D Tbc(Vbc,rad);
 
-    // turtlelib::Transform2D transform2d(v, turtlelib::PI/2);
-    // turtlelib::Vector2D v1;
-    // v1.x = 2;
-    // v1.y = 2;
-    // turtlelib::Vector2D v1_new = transform2d(v1);
-    // std::cout << v1_new;
+    // turtlelib::Transform2D Tac = Tab*=Tbc;
 
-    // std::cout << "Enter transform T_{a,b}" << std::endl;
-    // std::cin >> Tab;
+    std::cout << "T_{A,B}: deg: " << turtlelib::rad2deg(Tab.rotation()) << " x: " << Tab.translation().x << " y: " << Tab.translation().y << "\n";
+    std::cout << "T_{B,C}: deg: " << turtlelib::rad2deg(Tbc.rotation()) << " x: " << Tbc.translation().x << " y: " << Tbc.translation().y << "\n";
+    // std::cout << "T_{B,C}: deg: " << turtlelib::rad2deg(Tac.rotation()) << " x: " << Tac.translation().x << " y: " << Tac.translation().y << "\n";
 
-    // std::cout << "Enter transform T_{b,c}" << std::endl;
-    // std::cin >> Tbc;
+    turtlelib::Vector2D V_b;
+    std::cout << "Enter vector v_b:\n" << std::endl;
+    std::cout << "\rv_b.x: ";
+    std::cin >> V_b.x;
+    std::cout << "\rv_b.y: "; 
+    std::cin >> V_b.y;
+
+    std::cout << "v_bhat: " << Tab.normalize(V_b);
 
     return 0;
 };
