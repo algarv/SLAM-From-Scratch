@@ -145,26 +145,24 @@ namespace turtlelib{
     };
 
     Transform2D & Transform2D::operator*=(const Transform2D & rhs){
-      Transform2D combined(0);
-      Transform2D *combinedp;
-      
-      // T[0][0] T[0][1] T[0][2] * T[0][0] T[0][1] T[0][2]
-      // T[1][0] T[1][1] T[1][2]   T[1][0] T[1][1] T[1][2]
-      // T[2][0] T[2][1] T[2][2]   T[2][0] T[2][1] T[2][2]
-      
-      combined.T[0][0] = T[0][0]*rhs.T[0][0] + T[0][1]*rhs.T[1][0] + T[0][2]*rhs.T[2][0];
-      combined.T[0][1] = T[0][0]*rhs.T[0][1] + T[0][1]*rhs.T[1][1] + T[0][2]*rhs.T[2][1];
-      combined.T[0][2] = T[0][0]*rhs.T[0][2] + T[0][1]*rhs.T[1][2] + T[0][2]*rhs.T[2][2];
-      combined.T[1][0] = T[1][0]*rhs.T[0][0] + T[1][1]*rhs.T[1][0] + T[1][2]*rhs.T[2][0];
-      combined.T[1][1] = T[1][0]*rhs.T[0][1] + T[1][1]*rhs.T[1][1] + T[1][2]*rhs.T[2][1];
-      combined.T[1][2] = T[1][0]*rhs.T[0][2] + T[1][1]*rhs.T[1][2] + T[1][2]*rhs.T[2][2];
-      combined.T[2][0] = T[2][0]*rhs.T[0][0] + T[2][1]*rhs.T[1][0] + T[2][2]*rhs.T[2][0];
-      combined.T[2][1] = T[2][0]*rhs.T[0][1] + T[2][1]*rhs.T[1][1] + T[2][2]*rhs.T[2][1];
-      combined.T[2][2] = T[2][0]*rhs.T[0][2] + T[2][1]*rhs.T[1][2] + T[2][2]*rhs.T[2][2];
-    
-      combinedp = &combined;
+      // Transform2D combined(0);
+      // Transform2D *combinedp;
 
-      return combined;
+      // T[0][0] T[0][1] T[0][2] * rhs.T[0][0] T[0][1] T[0][2]
+      // T[1][0] T[1][1] T[1][2]       T[1][0] T[1][1] T[1][2]
+      // T[2][0] T[2][1] T[2][2]       T[2][0] T[2][1] T[2][2]
+
+      T[0][0] = T[0][0]*rhs.T[0][0] + T[0][1]*rhs.T[1][0] + T[0][2]*rhs.T[2][0];
+      T[0][1] = T[0][0]*rhs.T[0][1] + T[0][1]*rhs.T[1][1] + T[0][2]*rhs.T[2][1];
+      T[0][2] = T[0][0]*rhs.T[0][2] + T[0][1]*rhs.T[1][2] + T[0][2]*rhs.T[2][2];
+      T[1][0] = T[1][0]*rhs.T[0][0] + T[1][1]*rhs.T[1][0] + T[1][2]*rhs.T[2][0];
+      T[1][1] = T[1][0]*rhs.T[0][1] + T[1][1]*rhs.T[1][1] + T[1][2]*rhs.T[2][1];
+      T[1][2] = T[1][0]*rhs.T[0][2] + T[1][1]*rhs.T[1][2] + T[1][2]*rhs.T[2][2];
+      T[2][0] = T[2][0]*rhs.T[0][0] + T[2][1]*rhs.T[1][0] + T[2][2]*rhs.T[2][0];
+      T[2][1] = T[2][0]*rhs.T[0][1] + T[2][1]*rhs.T[1][1] + T[2][2]*rhs.T[2][1];
+      T[2][2] = T[2][0]*rhs.T[0][2] + T[2][1]*rhs.T[1][2] + T[2][2]*rhs.T[2][2];
+    
+      return *this;
     }
 
     Vector2D Transform2D::translation() const{

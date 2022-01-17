@@ -5,6 +5,7 @@
 
 
 #include<iosfwd> // contains forward definitions for iostream objects
+#include<cmath>
 
 namespace turtlelib
 {
@@ -22,7 +23,7 @@ namespace turtlelib
     /// if given a compile-time constant as input
     constexpr bool almost_equal(double d1, double d2, double epsilon=1.0e-12)
     {
-        if ((d1 - d2 < epsilon) | (d2 - d1 < epsilon)){
+        if (abs(d1 - d2) < epsilon){
             return true;
         }
         else{
@@ -192,6 +193,7 @@ namespace turtlelib
     
     private:
         float T[3][3];
+        float Trans[3][3];
     };
 
 

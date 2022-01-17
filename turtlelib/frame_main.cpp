@@ -7,12 +7,12 @@ double y_in;
 
 int main() {
     
-    // double deg = 270;
-    // double rad = turtlelib::deg2rad(deg);
-    // deg = turtlelib::rad2deg(rad);
-    // double rad_pis = rad/3.14159265;
+    // double ex_deg = 270;
+    // double ex_rad = turtlelib::deg2rad(ex_deg);
+    // ex_deg = turtlelib::rad2deg(ex_rad);
+    // double rad_pis = ex_rad/3.14159265;
     // std::cout << "Radians: " << rad_pis<<"pi" << "\n";
-    // std::cout << "Degrees: " << deg << "\n";
+    // std::cout << "Degrees: " << ex_deg << "\n";
 
     std::cout << "Enter transform T_{a,b}:\n" << std::endl;
     std::cout << "\r deg: ";
@@ -27,6 +27,7 @@ int main() {
     Vab.y = y_in;
     double rad = turtlelib::deg2rad(deg);
     turtlelib::Transform2D Tab(Vab,rad);
+    turtlelib::Transform2D Tac(Vab,rad);
     
     std::cout << "Enter transform T_{b,c}:\n" << std::endl;
     std::cout << "\r deg: ";
@@ -41,12 +42,17 @@ int main() {
     Vbc.y = y_in;
     rad = turtlelib::deg2rad(deg);
     turtlelib::Transform2D Tbc(Vbc,rad);
-
-    // turtlelib::Transform2D Tac = Tab*=Tbc;
+    turtlelib::Transform2D Tba(Vbc,rad);
 
     std::cout << "T_{A,B}: deg: " << turtlelib::rad2deg(Tab.rotation()) << " x: " << Tab.translation().x << " y: " << Tab.translation().y << "\n";
     std::cout << "T_{B,C}: deg: " << turtlelib::rad2deg(Tbc.rotation()) << " x: " << Tbc.translation().x << " y: " << Tbc.translation().y << "\n";
-    // std::cout << "T_{B,C}: deg: " << turtlelib::rad2deg(Tac.rotation()) << " x: " << Tac.translation().x << " y: " << Tac.translation().y << "\n";
+    
+    // turtlelib::Transform2D Tac(0);
+    Tab*=Tbc;
+    
+    std::cout << "T_{A,C}: deg: " << turtlelib::rad2deg(Tac.rotation()) << " x: " << Tac.translation().x << " y: " << Tac.translation().y << "\n";
+
+
 
     turtlelib::Vector2D V_b;
     std::cout << "Enter vector v_b:\n" << std::endl;
@@ -55,7 +61,7 @@ int main() {
     std::cout << "\rv_b.y: "; 
     std::cin >> V_b.y;
 
-    std::cout << "v_bhat: " << Tab.normalize(V_b);
+    // std::cout << "v_bhat: " << Tab.normalize(V_b);
 
     return 0;
 };
