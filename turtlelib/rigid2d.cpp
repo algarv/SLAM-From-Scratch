@@ -1,8 +1,22 @@
 #include "rigid2d.hpp"
 #include <iostream>
+#include <fstream>
+#include <string>
 #include <cmath>
 
 namespace turtlelib{
+
+    // Transform2D::Transform2D(){
+    //   T[0][0] = 1;
+    //   T[0][1] = 0;  
+    //   T[0][2] = 0;  
+    //   T[1][0] = 0;
+    //   T[1][1] = 1; 
+    //   T[1][2] = 0; 
+    //   T[2][0] = 0;
+    //   T[2][1] = 0;
+    //   T[2][2] = 1;
+    // };
 
     Transform2D::Transform2D(Vector2D v){
       T[0][0] = 1;
@@ -66,14 +80,14 @@ namespace turtlelib{
 
     //   //    0         0      T[1][2] * T[0][0] T[0][1] 0
     //   //    0         0     -T[0][2]   T[1][0] T[1][1] 0
-    //   // -T[1][2]   T[0][2]     0         0       0    0 
+    //   // -T[1][2]   T[0][2]     0         0       0    1 
 
     //   adj[3][0] = 0;
     //   adj[3][1] = 0;
-    //   adj[3][2] = 0;
+    //   adj[3][2] = T[1][2];
     //   adj[4][0] = 0;
     //   adj[4][1] = 0;
-    //   adj[4][2] = 0;
+    //   adj[4][2] = -T[0][2];
     //   adj[5][0] = -1*T[1][2]*T[0][0] + T[0][2]*T[1][0];
     //   adj[5][1] = -1*T[1][2]*T[0][1] + T[0][2]*T[1][1];
     //   adj[5][2] = 0;
@@ -106,61 +120,69 @@ namespace turtlelib{
     };
 
     Twist2D Transform2D::operator()(Twist2D t) const{
-      // T[0][0] T[0][1]  0      0        0     0     *   0
-      // T[1][0] T[1][1]  0      0        0     0         0
-      //    0       0     1      0        0     0        t.w
-      //    0       0     0   T[0][0]  T[0][1]  0        t.vx
-      //    0       0     0   T[1][0]  T[1][1]  0        t.vy
-      //    *       *     0      0        0     1         0
+      // T[0][0] T[0][1]  0         0        0     0     *   0
+      // T[1][0] T[1][1]  0         0        0     0         0
+      //    0       0     1         0        0     0        t.w
+      //    0       0  T[1][2]   T[0][0]  T[0][1]  0        t.vx
+      //    0       0 -T[0][2]   T[1][0]  T[1][1]  0        t.vy
+      //    *       *     0         0        0     1         0
 
       Twist2D t_new;
       t_new.w = t.w;
-      t_new.vx = T[0][0]*t.vx + T[0][1]*t.vy;
-      t_new.vy = T[1][0]*t.vx + T[1][1]*t.vy;
+      t_new.vx = T[1][2]*t.w + T[0][0]*t.vx + T[0][1]*t.vy;
+      t_new.vy = -T[0][2]*t.w + T[1][0]*t.vx + T[1][1]*t.vy;
 
       return t_new;
     }
 
     Transform2D Transform2D::inv() const{
 
-      Vector2D trans;
-      trans.x = -1 * T[0][2];
-      trans.y = -1 * T[1][2];
-      double radians = -1*asin(T[0][0]);
-      Transform2D T_inv(trans, radians); 
+      // Vector2D trans;
+      // trans.x = -1 * T[0][2];
+      // trans.y = -1 * T[1][2];
+      // double radians = -1*asin(T[0][0]);
+      // Transform2D T_inv(trans, radians); 
 
-      // Transform2D T_inv;
+      Transform2D T_inv(0);
     
-      // T_inv.T[0][0] = T[0][0];
-      // T_inv.T[0][1] = T[1][0];  
-      // T_inv.T[0][2] = -1 * T[0][2];  
-      // T_inv.T[1][0] = T[0][1];
-      // T_inv.T[1][1] = T[1][1]; 
-      // T_inv.T[1][2] = -1 * T[1][2]; 
-      // T_inv.T[2][0] = 0;
-      // T_inv.T[2][1] = 0;
-      // T_inv.T[2][2] = 1;
+      T_inv.T[0][0] = T[0][0];
+      T_inv.T[0][1] = T[1][0];  
+      T_inv.T[0][2] = -1 * T[0][2];  
+      T_inv.T[1][0] = T[0][1];
+      T_inv.T[1][1] = T[1][1]; 
+      T_inv.T[1][2] = -1 * T[1][2]; 
+      T_inv.T[2][0] = 0;
+      T_inv.T[2][1] = 0;
+      T_inv.T[2][2] = 1;
 
       return T_inv;
     };
 
     Transform2D & Transform2D::operator*=(const Transform2D & rhs){
-      // Transform2D combined(0);
-      // Transform2D *combinedp;
 
       // T[0][0] T[0][1] T[0][2] * rhs.T[0][0] T[0][1] T[0][2]
       // T[1][0] T[1][1] T[1][2]       T[1][0] T[1][1] T[1][2]
       // T[2][0] T[2][1] T[2][2]       T[2][0] T[2][1] T[2][2]
 
-      T[0][0] = T[0][0]*rhs.T[0][0] + T[0][1]*rhs.T[1][0] + T[0][2]*rhs.T[2][0];
-      T[0][1] = T[0][0]*rhs.T[0][1] + T[0][1]*rhs.T[1][1] + T[0][2]*rhs.T[2][1];
-      T[0][2] = T[0][0]*rhs.T[0][2] + T[0][1]*rhs.T[1][2] + T[0][2]*rhs.T[2][2];
-      T[1][0] = T[1][0]*rhs.T[0][0] + T[1][1]*rhs.T[1][0] + T[1][2]*rhs.T[2][0];
-      T[1][1] = T[1][0]*rhs.T[0][1] + T[1][1]*rhs.T[1][1] + T[1][2]*rhs.T[2][1];
-      T[1][2] = T[1][0]*rhs.T[0][2] + T[1][1]*rhs.T[1][2] + T[1][2]*rhs.T[2][2];
-      T[2][0] = T[2][0]*rhs.T[0][0] + T[2][1]*rhs.T[1][0] + T[2][2]*rhs.T[2][0];
-      T[2][1] = T[2][0]*rhs.T[0][1] + T[2][1]*rhs.T[1][1] + T[2][2]*rhs.T[2][1];
-      T[2][2] = T[2][0]*rhs.T[0][2] + T[2][1]*rhs.T[1][2] + T[2][2]*rhs.T[2][2];
+      const float a = T[0][0];
+      const float b = T[0][1];
+      const float c = T[0][2];
+      const float d = T[1][0];
+      const float e = T[1][1];
+      const float f = T[1][2];
+      const float g = T[2][0];
+      const float h = T[2][1];
+      const float i = T[2][2];
+
+      T[0][0] = a*rhs.T[0][0] + b*rhs.T[1][0] + c*rhs.T[2][0];
+      T[0][1] = a*rhs.T[0][1] + b*rhs.T[1][1] + c*rhs.T[2][1];
+      T[0][2] = a*rhs.T[0][2] + b*rhs.T[1][2] + c*rhs.T[2][2];
+      T[1][0] = d*rhs.T[0][0] + e*rhs.T[1][0] + f*rhs.T[2][0];
+      T[1][1] = d*rhs.T[0][1] + e*rhs.T[1][1] + f*rhs.T[2][1];
+      T[1][2] = d*rhs.T[0][2] + e*rhs.T[1][2] + f*rhs.T[2][2];
+      T[2][0] = g*rhs.T[0][0] + h*rhs.T[1][0] + i*rhs.T[2][0];
+      T[2][1] = g*rhs.T[0][1] + h*rhs.T[1][1] + i*rhs.T[2][1];
+      T[2][2] = g*rhs.T[0][2] + h*rhs.T[1][2] + i*rhs.T[2][2];
     
       return *this;
     }
@@ -189,5 +211,40 @@ namespace turtlelib{
 
       return normalized;
     }
-}
-;
+
+    std::istream & operator>>(std::istream & is, Transform2D & tf){
+      double degrees, radians;
+      char str[2];
+      char delim = ' ';
+      int num;
+      std::streamsize n = 4;
+      Vector2D v;
+      
+      // std::cin >> std::ws; //remove whitespace
+      
+      std::cin.ignore(10,' ');
+      std::cin.get(str, n, delim);
+      degrees = ((int) str[0] - 48)*10 + ((int) str[1] - 48)*1;
+      
+      std::cin.ignore(10,' ');
+      std::cin.get(str, n, delim);
+      v.x = (int) str[1] - 48;
+      
+      std::cin.ignore(10,' ');
+      std::cin.get(str, n, delim);
+      v.y = (int) str[0] - 48;
+
+      radians = deg2rad(degrees);
+
+      turtlelib::Transform2D T(v,radians);
+      tf = T;
+      // is >> tf;
+      return is;
+    }
+
+    std::ostream & operator<<(std::ostream & os, const Transform2D & tf){
+      os << "deg: " << rad2deg(tf.rotation()) << " x: " << tf.translation().x << " y: " << tf.translation().y << "\n";
+      return os;
+    }
+
+};

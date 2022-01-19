@@ -14,55 +14,31 @@ int main() {
     // std::cout << "Radians: " << rad_pis<<"pi" << "\n";
     // std::cout << "Degrees: " << ex_deg << "\n";
 
-    std::cout << "Enter transform T_{a,b}:\n" << std::endl;
-    std::cout << "\r deg: ";
-    std::cin >> deg;
-    std::cout << "\r x: "; 
-    std::cin >> x_in;
-    std::cout << "\r y: ";
-    std::cin >> y_in;
+    turtlelib::Transform2D Tab(0), Tbc(0), Tac(0), Tba(0), Tcb(0), Tca(0);
 
-    turtlelib::Vector2D Vab;
-    Vab.x = x_in;
-    Vab.y = y_in;
-    double rad = turtlelib::deg2rad(deg);
-    turtlelib::Transform2D Tab(Vab,rad);
-    turtlelib::Transform2D Tac(Vab,rad);
-    
-    std::cout << "Enter transform T_{b,c}:\n" << std::endl;
-    std::cout << "\r deg: ";
-    std::cin >> deg;
-    std::cout << "\r x: "; 
-    std::cin >> x_in;
-    std::cout << "\r y: ";
-    std::cin >> y_in;
+    std::cout << "Enter transform T_{a,b}:" << std::endl;
+    std::cin >> Tab;
+    std::cout << "Enter transform T_{b,c}:" << std::endl;
+    std::cin >> Tbc;
 
-    turtlelib::Vector2D Vbc;
-    Vbc.x = x_in;
-    Vbc.y = y_in;
-    rad = turtlelib::deg2rad(deg);
-    turtlelib::Transform2D Tbc(Vbc,rad);
-    turtlelib::Transform2D Tba(Vbc,rad);
+    Tac = Tab; 
+    Tba = Tbc;
 
-    std::cout << "T_{A,B}: deg: " << turtlelib::rad2deg(Tab.rotation()) << " x: " << Tab.translation().x << " y: " << Tab.translation().y << "\n";
-    std::cout << "T_{B,C}: deg: " << turtlelib::rad2deg(Tbc.rotation()) << " x: " << Tbc.translation().x << " y: " << Tbc.translation().y << "\n";
-    
-    // turtlelib::Transform2D Tac(0);
-    Tab*=Tbc;
-    
-    std::cout << "T_{A,C}: deg: " << turtlelib::rad2deg(Tac.rotation()) << " x: " << Tac.translation().x << " y: " << Tac.translation().y << "\n";
+    // Tbc * Tca
+    Tba*=(Tac.inv());    
 
+    // Tab * Tbc;
+    Tac*=Tbc;
 
+    Tcb = Tbc.inv();
+
+    Tca = Tac.inv();
+
+    std::cout << Tab; 
 
     turtlelib::Vector2D V_b;
     std::cout << "Enter vector v_b:\n" << std::endl;
-    std::cout << "\rv_b.x: ";
-    std::cin >> V_b.x;
-    std::cout << "\rv_b.y: "; 
-    std::cin >> V_b.y;
-
-    // std::cout << "v_bhat: " << Tab.normalize(V_b);
-
+    
     return 0;
 };
 

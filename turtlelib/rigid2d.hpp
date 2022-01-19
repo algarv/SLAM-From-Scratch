@@ -6,6 +6,7 @@
 
 #include<iosfwd> // contains forward definitions for iostream objects
 #include<cmath>
+#include<string> 
 
 namespace turtlelib
 {
@@ -214,10 +215,12 @@ namespace turtlelib
     /// \param rhs - the right hand operand
     /// \return the composition of the two transforms
     /// HINT: This function should be implemented in terms of *=
+   
     Transform2D operator*(Transform2D lhs, const Transform2D & rhs);
-
-
+    //{
+    //     lhs*=rhs;
+    //     return lhs;
+    // }
 
 }
-
 #endif
