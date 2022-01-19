@@ -28,6 +28,7 @@ namespace turtlelib{
       T[2][0] = 0;
       T[2][1] = 0;
       T[2][2] = 1;
+
     };
 
     Transform2D::Transform2D(double radians){
@@ -40,6 +41,7 @@ namespace turtlelib{
       T[2][0] = 0;
       T[2][1] = 0;
       T[2][2] = 1;
+
     };
 
     Transform2D::Transform2D(Vector2D v, double radians){
@@ -52,6 +54,7 @@ namespace turtlelib{
       T[2][0] = 0;
       T[2][1] = 0;
       T[2][2] = 1;
+
     };
 
     // double Transform2D::adjoint() const{
@@ -145,12 +148,17 @@ namespace turtlelib{
 
       Transform2D T_inv(0);
     
+      // r.T = T[0][0] T[1][0]
+      //       T[0][1] T[1][1]
+      // t = -r.T * T[0][2]
+      //            T[1][2] 
+
       T_inv.T[0][0] = T[0][0];
       T_inv.T[0][1] = T[1][0];  
-      T_inv.T[0][2] = -1 * T[0][2];  
+      T_inv.T[0][2] = -1*(T[0][0]*T[0][2] + T[1][0]*T[1][2]);  
       T_inv.T[1][0] = T[0][1];
       T_inv.T[1][1] = T[1][1]; 
-      T_inv.T[1][2] = -1 * T[1][2]; 
+      T_inv.T[1][2] = -1*(T[0][1]*T[0][2] + T[1][1]*T[1][2]);
       T_inv.T[2][0] = 0;
       T_inv.T[2][1] = 0;
       T_inv.T[2][2] = 1;
@@ -187,6 +195,11 @@ namespace turtlelib{
       return *this;
     }
 
+    Transform2D operator*(Transform2D lhs, const Transform2D & rhs){
+        lhs*=rhs;
+        return lhs;
+    }
+
     Vector2D Transform2D::translation() const{
       Vector2D translation;
       translation.x = T[0][2];
@@ -197,15 +210,17 @@ namespace turtlelib{
 
     double Transform2D::rotation() const{
       double angle;
-      angle = acos(T[0][0]);
+      
+      angle = atan2(T[1][0],T[0][0]);
 
       return angle;
     }
 
-    Vector2D Transform2D::normalize(Vector2D v) const{
+    Vector2D normalize(Vector2D v){
       Vector2D normalized;
 
       double m = sqrt(v.x*v.x + v.y*v.y);
+
       normalized.x = v.x/m;
       normalized.y = v.y/m;
 
@@ -214,39 +229,67 @@ namespace turtlelib{
 
     std::istream & operator>>(std::istream & is, Transform2D & tf){
       double degrees, radians;
-      char str[3];
-      char delim = ' ';
-      int num;
-      std::streamsize n = 4;
       Vector2D v;
       
-      // std::cin >> std::ws; //remove whitespace
+      std::cin >> std::ws;
       
       std::cin.ignore(10,' ');
-      std::cin.get(str, n, delim);
-      degrees = ((int) str[0] - 48)*10 + ((int) str[1] - 48)*1;
+      is >> degrees;
       
       std::cin.ignore(10,' ');
       std::cin.ignore(10,' ');
-      std::cin.get(str, n, ':');
-      v.x = (int) str[0] - 48;
+      is >> v.x;
       
       std::cin.ignore(10,':');
-      std::cin.get(str, n);
-      v.y = (int) str[1] - 48;
+      is >> v.y;
 
       radians = deg2rad(degrees);
 
-      // std::cout << "v.x: " << v.x << " v.y: " << v.y << " rad: " << radians << "\n";
-
       turtlelib::Transform2D T(v,radians);
       tf = T;
-      // is >> tf;
       return is;
     }
 
     std::ostream & operator<<(std::ostream & os, const Transform2D & tf){
       os << "deg: " << rad2deg(tf.rotation()) << " x: " << tf.translation().x << " y: " << tf.translation().y << "\n";
+      return os;
+    }
+
+    std::istream & operator>>(std::istream & is, Vector2D & v){
+      double x, y;
+      
+      std::cin >> std::ws;
+      is >> x;
+      is >> y;
+
+      v.x = x;
+      v.y = y;
+
+      return is;
+    }
+
+    std::ostream & operator<<(std::ostream &os, const Vector2D &v){
+      os << "[" << v.x << " " << v.y << "]" << "\n";
+      return os;
+    }
+
+    std::istream & operator>>(std::istream & is, Twist2D & v){
+      double w, x, y;
+      
+      std::cin >> std::ws;
+      is >> w;
+      is >> x;
+      is >> y;
+
+      v.w = w;
+      v.vx = x;
+      v.vy = y;
+
+      return is;
+    }
+
+    std::ostream & operator<<(std::ostream &os, const Twist2D &v){
+      os << "[" << v.w << " " << v.vx << " " << v.vy << "]" << "\n";
       return os;
     }
 

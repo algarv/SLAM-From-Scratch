@@ -70,6 +70,8 @@ namespace turtlelib
         double y = 0.0;
     };
 
+    Vector2D normalize(Vector2D v);
+
     /// \brief output a 2 dimensional vector as [xcomponent ycomponent]
     /// os - stream to output to
     /// v - the vector to print
@@ -189,8 +191,6 @@ namespace turtlelib
         /// \brief \see operator<<(...) (declared outside this class)
         /// for a description
         friend std::ostream & operator<<(std::ostream & os, const Transform2D & tf);
-
-        Vector2D normalize(Vector2D v) const;
     
     private:
         float T[3][3];
@@ -217,10 +217,6 @@ namespace turtlelib
     /// HINT: This function should be implemented in terms of *=
    
     Transform2D operator*(Transform2D lhs, const Transform2D & rhs);
-    //{
-    //     lhs*=rhs;
-    //     return lhs;
-    // }
 
 }
 #endif
