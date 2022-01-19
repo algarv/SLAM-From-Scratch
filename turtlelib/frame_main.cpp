@@ -34,9 +34,13 @@ int main() {
 
     Tca = Tac.inv();
 
-    std::cout << Tab; 
+    std::cout << "T_{a,b}: " << Tab; 
+    std::cout << "T_{b,a}: " << Tba; 
+    std::cout << "T_{b,c}: " << Tbc; 
+    std::cout << "T_{c,b}: " << Tcb; 
+    std::cout << "T_{a,c}: " << Tac; 
+    std::cout << "T_{c,a}: " << Tca; 
 
-    turtlelib::Vector2D V_b;
     std::cout << "Enter vector v_b:\n" << std::endl;
     
     return 0;

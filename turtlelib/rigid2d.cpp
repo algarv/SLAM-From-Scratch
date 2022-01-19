@@ -214,7 +214,7 @@ namespace turtlelib{
 
     std::istream & operator>>(std::istream & is, Transform2D & tf){
       double degrees, radians;
-      char str[2];
+      char str[3];
       char delim = ' ';
       int num;
       std::streamsize n = 4;
@@ -227,14 +227,17 @@ namespace turtlelib{
       degrees = ((int) str[0] - 48)*10 + ((int) str[1] - 48)*1;
       
       std::cin.ignore(10,' ');
-      std::cin.get(str, n, delim);
-      v.x = (int) str[1] - 48;
-      
       std::cin.ignore(10,' ');
-      std::cin.get(str, n, delim);
-      v.y = (int) str[0] - 48;
+      std::cin.get(str, n, ':');
+      v.x = (int) str[0] - 48;
+      
+      std::cin.ignore(10,':');
+      std::cin.get(str, n);
+      v.y = (int) str[1] - 48;
 
       radians = deg2rad(degrees);
+
+      // std::cout << "v.x: " << v.x << " v.y: " << v.y << " rad: " << radians << "\n";
 
       turtlelib::Transform2D T(v,radians);
       tf = T;
