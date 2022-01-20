@@ -28,7 +28,6 @@ namespace turtlelib{
       T[2][0] = 0;
       T[2][1] = 0;
       T[2][2] = 1;
-
     };
 
     Transform2D::Transform2D(double radians){
@@ -41,7 +40,6 @@ namespace turtlelib{
       T[2][0] = 0;
       T[2][1] = 0;
       T[2][2] = 1;
-
     };
 
     Transform2D::Transform2D(Vector2D v, double radians){
@@ -56,57 +54,6 @@ namespace turtlelib{
       T[2][2] = 1;
 
     };
-
-    // double Transform2D::adjoint() const{
-      
-    //   double adj[4][4];
-
-    //   adj[0][0] = T[0][0];
-    //   adj[0][1] = T[0][1];
-    //   adj[0][2] = 0;
-    //   adj[1][0] = T[1][0];
-    //   adj[1][1] = T[1][1];
-    //   adj[1][2] = 0;
-    //   adj[2][0] = 0;
-    //   adj[2][1] = 0;
-    //   adj[2][2] = 0;
-
-    //   adj[3][3] = T[0][0];
-    //   adj[3][4] = T[0][1];
-    //   adj[3][5] = 0;
-    //   adj[4][3] = T[1][0];
-    //   adj[4][4] = T[1][1];
-    //   adj[4][5] = 0;
-    //   adj[5][3] = 0;
-    //   adj[5][4] = 0;
-    //   adj[5][5] = 0;
-
-    //   //    0         0      T[1][2] * T[0][0] T[0][1] 0
-    //   //    0         0     -T[0][2]   T[1][0] T[1][1] 0
-    //   // -T[1][2]   T[0][2]     0         0       0    1 
-
-    //   adj[3][0] = 0;
-    //   adj[3][1] = 0;
-    //   adj[3][2] = T[1][2];
-    //   adj[4][0] = 0;
-    //   adj[4][1] = 0;
-    //   adj[4][2] = -T[0][2];
-    //   adj[5][0] = -1*T[1][2]*T[0][0] + T[0][2]*T[1][0];
-    //   adj[5][1] = -1*T[1][2]*T[0][1] + T[0][2]*T[1][1];
-    //   adj[5][2] = 0;
-
-    //   adj[0][3] = 0;
-    //   adj[0][4] = 0;
-    //   adj[0][5] = 0;
-    //   adj[1][3] = 0;
-    //   adj[1][4] = 0;
-    //   adj[1][5] = 0;
-    //   adj[2][3] = 0;
-    //   adj[2][4] = 0;
-    //   adj[2][5] = 0;
-
-    //   return adj;
-    // }
 
     Vector2D Transform2D::operator()(Vector2D v) const{
       
