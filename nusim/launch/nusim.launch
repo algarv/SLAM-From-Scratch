@@ -2,8 +2,12 @@
 
 <arg name='rate' default = '500' />
 
-<node name="nusim" pkg="nusim" type="src/nusim.cpp"> 
-    <!-- <param name="rate" type="Rate" value="$(arg rate)"/> -->
+<node name="nusim" pkg="nusim" type="nusim.cpp"> 
+    <rosparam param="rate">"$(arg rate)"</rosparam>
+    <rosparam command="load" file="$(find nusim)/config/initial.yaml" />
 </node>
+
+<node name="rivz" pkg="rviz" type="rviz"/>
+
 
 </launch>
