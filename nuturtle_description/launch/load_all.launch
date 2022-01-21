@@ -10,15 +10,15 @@
 
     <include file="$(find nuturtle_description)/launch/load.launch">
         <arg name="color" value="green"/>
-        <arg name = 'use_rviz' default = 'false' />
-        <arg name = 'use_jsp' default = 'true' />
+        <arg name = 'use_rviz' value = 'false' />
+        <arg name = 'use_jsp' value = 'true' />
     </include>
 
     <node pkg="tf2_ros" type="static_transform_publisher" name="b" args="0 1 0 0 0 0 world green_base_footprint" />
 
     <include file="$(find nuturtle_description)/launch/load.launch">
         <arg name="color" value="blue"/>
-        <arg name = 'use_rviz' default = 'false' />
+        <arg name = 'use_rviz' value = 'false' />
         <arg name = 'use_jsp' default = 'true' />
     </include>
 
@@ -26,8 +26,8 @@
 
     <include file="$(find nuturtle_description)/launch/load.launch">
         <arg name="color" value="black"/>
-        <arg name = 'use_rviz' default = 'false' />
-        <arg name = 'use_jsp' default = 'true' />
+        <arg name = 'use_rviz' value = 'false' />
+        <arg name = 'use_jsp' value = 'true' />
     </include>
 
     <node pkg="tf2_ros" type="static_transform_publisher" name="d" args="0 -1 0 0 0 0 world black_base_footprint" />

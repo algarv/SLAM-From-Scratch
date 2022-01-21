@@ -14,8 +14,6 @@
 
 
 static int rate;
-static std::string left_wheel = "red_wheel_left_joint";
-static std::string right_wheel = "red_wheel_right_joint";
 static std_msgs::UInt64 ts;
 static sensor_msgs::JointState wheels;
 static geometry_msgs::TransformStamped tfStamped;
@@ -32,9 +30,6 @@ bool restart(std_srvs::Empty::Request &request, std_srvs::Empty::Response &respo
 
 bool teleport(nusim::teleport::Request &pos, nusim::teleport::Response &response){
 
-        // wheels.position = {0, 0};
-        // js_pub.publish(wheels);
-        
         tf2_ros::TransformBroadcaster broadcaster;
 
         tfStamped.header.stamp = ros::Time();
@@ -89,7 +84,9 @@ int main(int argc, char *argv[]){
     ros::NodeHandle nh("~"), pub_nh;
     
     nh.getParam("rate", rate);
-    ros::Rate r(rate);
+    // ros::Rate r(rate);
+    // rate = 500;
+    // std::cout << rate;
 
     ts.data = 0;
 
@@ -107,30 +104,26 @@ int main(int argc, char *argv[]){
     nh.getParam("y0", y);
     nh.getParam("theta0", theta);
 
+    tfStamped.header.stamp = ros::Time();
+    tfStamped.header.frame_id = "world";
+    tfStamped.child_frame_id = "red_base_footprint";
+    tfStamped.transform.translation.x = x;
+    tfStamped.transform.translation.y = y;
+    tfStamped.transform.translation.z = 0;
+    tf2::Quaternion q;
+    q.setRPY(0, 0, theta);
+    tfStamped.transform.rotation.x = q.x();
+    tfStamped.transform.rotation.y = q.y();
+    tfStamped.transform.rotation.z = q.z();
+    tfStamped.transform.rotation.w = q.w();
+
+    broadcaster.sendTransform(tfStamped);
+
     while(ros::ok()) {
         ts.data += 1;
 
-        // wheels.header = ros::Time::now();
-        wheels.name = {left_wheel, right_wheel};
-        wheels.position = {0, 0};
-
         js_pub.publish(wheels);
         ts_pub.publish(ts);
-
-        tfStamped.header.stamp = ros::Time();
-        tfStamped.header.frame_id = "world";
-        tfStamped.child_frame_id = "red_base_footprint";
-        tfStamped.transform.translation.x = x;
-        tfStamped.transform.translation.y = y;
-        tfStamped.transform.translation.z = 0;
-        tf2::Quaternion q;
-        q.setRPY(0, 0, theta);
-        tfStamped.transform.rotation.x = q.x();
-        tfStamped.transform.rotation.y = q.y();
-        tfStamped.transform.rotation.z = q.z();
-        tfStamped.transform.rotation.w = q.w();
-
-        broadcaster.sendTransform(tfStamped);
     }
 
     // ros::ServiceServer service = nh.advertiseService("Add_Obstacle",obstacle)
