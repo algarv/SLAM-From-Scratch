@@ -1,0 +1,2 @@
+/usr/bin/ar qc libturtlelib.a  CMakeFiles/turtlelib.dir/src/rigid2d.cpp.o
+/usr/bin/ranlib libturtlelib.a

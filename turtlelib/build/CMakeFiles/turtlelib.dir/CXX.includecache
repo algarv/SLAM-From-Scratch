@@ -1,0 +1,28 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/algarverick/ME_495_SLAM/src/slam-project-algarv/turtlelib/include/turtlelib/rigid2d.hpp
+iosfwd
+-
+cmath
+-
+string
+-
+
+/home/algarverick/ME_495_SLAM/src/slam-project-algarv/turtlelib/src/rigid2d.cpp
+../include/turtlelib/rigid2d.hpp
+/home/algarverick/ME_495_SLAM/src/slam-project-algarv/turtlelib/include/turtlelib/rigid2d.hpp
+iostream
+-
+fstream
+-
+string
+-
+cmath
+-
+
