@@ -1,10 +1,10 @@
-Start testing: Jan 20 13:56 CST
+Start testing: Jan 21 02:28 CST
 ----------------------------------------------------------
 1/1 Testing: Test_of_Turtlelib
 1/1 Test: Test_of_Turtlelib
 Command: "/home/algarverick/ME_495_SLAM/src/slam-project-algarv/turtlelib/build/turtlelib_test"
 Directory: /home/algarverick/ME_495_SLAM/src/slam-project-algarv/turtlelib/build
-"Test_of_Turtlelib" start time: Jan 20 13:56 CST
+"Test_of_Turtlelib" start time: Jan 21 02:28 CST
 Output:
 ----------------------------------------------------------
 ===============================================================================
@@ -14,8 +14,8 @@ All tests passed (25 assertions in 12 test cases)
 Test time =   0.01 sec
 ----------------------------------------------------------
 Test Passed.
-"Test_of_Turtlelib" end time: Jan 20 13:56 CST
+"Test_of_Turtlelib" end time: Jan 21 02:28 CST
 "Test_of_Turtlelib" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-End testing: Jan 20 13:56 CST
+End testing: Jan 21 02:28 CST
