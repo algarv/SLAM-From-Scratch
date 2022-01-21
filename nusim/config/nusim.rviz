@@ -108,7 +108,7 @@ Visualization Manager:
       Marker Topic: /nusim_node/visualization_marker_array
       Name: MarkerArray
       Namespaces:
-        {}
+        nusim_node: true
       Queue Size: 100
       Value: true
   Enabled: true
@@ -139,7 +139,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 15.994560241699219
+      Distance: 17.953638076782227
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
