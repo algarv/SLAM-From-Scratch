@@ -2,7 +2,7 @@
 <package format="2">
   <name>nusim</name>
   <version>0.0.1</version>
-  <description>The nusim package</description>
+  <description>Spawns a turtlebot and obstacles in RViz with services to teleport and restart</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
@@ -51,7 +51,9 @@
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>message_generation</build_depend>
   <depend>message_runtime</depend>
+  <exec_depend>nuturtle_description</exec_depend>
   <depend>std_msgs</depend>
+  <exec_depend> rviz </exec_depend>
   <depend> roscpp </depend>
   <depend> tf2_ros </depend>
 
