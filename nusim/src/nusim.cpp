@@ -35,7 +35,9 @@ std::vector<double> obj_x_list, obj_y_list, obj_d_list;
 static visualization_msgs::MarkerArray obstacle, obj_array;
 
 bool restart(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response){
-
+/*
+Send the turtle bot back to the origin of the world frame and restart the timestep counter.
+*/
     ts.data = 0;
 
     x = 0;
