@@ -1,6 +1,6 @@
 # Nuturtle  Description
 
-URDF files for Nuturtle <Name Your Robot> (TurtleBot3)
+URDF files for Nuturtle BananaBot (TurtleBot3)
 
 This package loads a visualization of the Turtlebot3 in RVIZ
 

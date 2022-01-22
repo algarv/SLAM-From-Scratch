@@ -1,11 +1,21 @@
-/*
-## NUSIM NODE ##
-
-Custom Services:
-
-
-
-*/
+/// \file nusim.cpp
+/// \brief The nusim node sets up the turtlebot in rviz with obstacles and services for restarting and teleporting.
+///
+/// PARAMETERS:
+///     rate (rate.yaml): ros rate
+///     x0 (initial.yaml): x coordinate of the initial turtle position
+///     y0 (initial.yaml): y coordinate of the initial turtle position
+///     theta0 (initial.yaml): orientation of the initial turtle position
+///     objx (initial.yaml): list of x coorindates for the obstacles
+///     objy (initial.yaml): list of y coordinates for the obstacles
+///     objd (initial.yaml): list of obstacle diamters
+/// PUBLISHES:
+///     /nusim_node/visualization_marker_array (visualization_msgs/MarkerArray): publishes a marker array to spawn obstacles in rviz
+///     nusim_node/timestep (std_msgs/UInt64): counter tracking runs of ros::Spin
+///     /joint_states (sensor_msgs/JointState): publishes wheel joint states 
+/// SERVICES:
+///     nusim_node/Restart (Empty): Sends the turtlebot back to the origin of the world frame
+///     nusim_node/Teleport (teleport.srv): Teleports the turtle bot to the specfied x, y, and theta position
 
 #include <iostream>
 #include <string>
@@ -30,14 +40,16 @@ static std::string left_wheel = "red_wheel_left_joint";
 static std::string right_wheel = "red_wheel_right_joint";
 static geometry_msgs::TransformStamped tfStamped;
 static ros::Publisher obj_pub, js_pub, ts_pub;
-static ros::ServiceServer rs_service, tp_service, obj_service;
+static ros::ServiceServer rs_service, tp_service;
 std::vector<double> obj_x_list, obj_y_list, obj_d_list;
 static visualization_msgs::MarkerArray obstacle, obj_array;
 
 bool restart(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response){
-/*
-Send the turtle bot back to the origin of the world frame and restart the timestep counter.
-*/
+/// \brief Send the turtle bot back to the origin of the world frame and restart the timestep counter.
+///
+/// \param request - Empty::Request
+/// \param response - Empty::Reponse
+/// \returns true
     ts.data = 0;
 
     x = 0;
@@ -48,6 +60,11 @@ Send the turtle bot back to the origin of the world frame and restart the timest
 }
 
 bool teleport(nusim::teleport::Request &pos, nusim::teleport::Response &response){
+/// \brief Teleports the turtle to the specified position and rotation.
+///
+/// \param pos - position input from parameter
+/// \param response - Empty::Reponse
+/// \returns true
 
     x = pos.x;
     y = pos.y;
@@ -57,6 +74,12 @@ bool teleport(nusim::teleport::Request &pos, nusim::teleport::Response &response
 }
 
 visualization_msgs::MarkerArray add_obstacles(std::vector<double> obj_x_list, std::vector<double> obj_y_list, std::vector<double> obj_d_list){
+/// \brief Spawns obstacles defined in the paramter.
+///
+/// \param obj_x_list - std::vector<double> list of x positions
+/// \param obj_y_list - std::vector<double> list of y positions
+/// \param obj_d_list - std::vector<double> list of diameters
+/// \returns obstacle - visualization_msgs::MarkerArray message with obstacle information to publish
 
     int id = 0;
     obstacle.markers.resize(obj_x_list.size());
@@ -112,9 +135,6 @@ int main(int argc, char *argv[]){
     nh.getParam("x0", x);
     nh.getParam("y0", y);
     nh.getParam("theta0", w);
-    nh.getParam("obj_x",obj_x_list);
-    nh.getParam("obj_y",obj_y_list);
-    nh.getParam("obj_d",obj_d_list);
 
     while(ros::ok()) {
 
@@ -142,6 +162,10 @@ int main(int argc, char *argv[]){
 
         broadcaster.sendTransform(tfStamped);
         
+        nh.getParam("obj_x",obj_x_list);
+        nh.getParam("obj_y",obj_y_list);
+        nh.getParam("obj_d",obj_d_list);
+
         obj_array = add_obstacles(obj_x_list, obj_y_list,obj_d_list);
         obj_pub.publish(obj_array);
 
