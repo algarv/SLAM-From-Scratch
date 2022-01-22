@@ -207,8 +207,8 @@ TEST_CASE("Transform2D::operator*=, Self Reference", "[Transform2D]") //Ryan Kin
 TEST_CASE("Transform2D::operator*=, Identity Mul", "[Transform2D]") //Ryan King Shepard
 {
     //Build objects
-    Transform2D T_id{};
-    Transform2D T_id2{};
+    Transform2D T_id{0};
+    Transform2D T_id2{0};
     Vector2D vec_id{0,0};
 
     //Perform functions
@@ -348,8 +348,8 @@ TEST_CASE("Transform2D::operator*=, Big Rotation", "[Transform2D]") //Ryan King 
 TEST_CASE("Transform2D::operator*, Identity Mul", "[Transform2D]") //Ryan King Shepard
 {
     //Build objects
-    Transform2D T_id{};
-    Transform2D T_id2{};
+    Transform2D T_id{0};
+    Transform2D T_id2{0};
     Vector2D vec_id{0,0};
 
     //Perform functions
@@ -488,7 +488,7 @@ TEST_CASE("Transform2D::operator*, Big Rotation", "[Transform2D]") //Ryan King S
 TEST_CASE("Transform2D::operator(Vector), Idenity Transform", "[Transform2D]") //Ryan King Shepard
 {
     //Build objects
-    Transform2D T_ab{};
+    Transform2D T_ab{0};
     Vector2D vec_b{1.0, 1.0};
 
     // Answer
@@ -560,7 +560,7 @@ TEST_CASE("Transform2D::operator(Vector), Simple Transformation", "[Transform2D]
 TEST_CASE("Transform2D::operator(Twist2D), Identity Transform", "[Transform2D]") //Ryan King Shepard
 {
     //Build objects
-    Transform2D T_ab{};
+    Transform2D T_ab{0};
     Twist2D twt_b{PI/6, 1.0, 2.0};
 
     // Answer
@@ -570,9 +570,9 @@ TEST_CASE("Transform2D::operator(Twist2D), Identity Transform", "[Transform2D]")
     Twist2D res_twt = T_ab(twt_b);
 
     // Tests
-    REQUIRE(res_twt.theta_dot == Approx ( twt_ans.theta_dot).margin(epsilon));
-    REQUIRE(res_twt.x_dot == Approx( twt_ans.x_dot ).margin(epsilon));
-    REQUIRE(res_twt.y_dot == Approx( twt_ans.y_dot ).margin(epsilon));
+    REQUIRE(res_twt.w == Approx ( twt_ans.w).margin(epsilon));
+    REQUIRE(res_twt.vx == Approx( twt_ans.vx).margin(epsilon));
+    REQUIRE(res_twt.vy == Approx( twt_ans.vy).margin(epsilon));
 }
 
 TEST_CASE("Transform2D::operator(Twist2D), Simple Rotation", "[Transform2D]") //Ryan King Shepard
@@ -588,9 +588,9 @@ TEST_CASE("Transform2D::operator(Twist2D), Simple Rotation", "[Transform2D]") //
     Twist2D res_twt = T_ab(twt_b);
 
     // Tests
-    REQUIRE(res_twt.theta_dot == Approx ( twt_ans.theta_dot).margin(epsilon));
-    REQUIRE(res_twt.x_dot == Approx( twt_ans.x_dot ).margin(epsilon));
-    REQUIRE(res_twt.y_dot == Approx( twt_ans.y_dot ).margin(epsilon));
+    REQUIRE(res_twt.w == Approx ( twt_ans.w).margin(epsilon));
+    REQUIRE(res_twt.vx == Approx( twt_ans.vx ).margin(epsilon));
+    REQUIRE(res_twt.vy == Approx( twt_ans.vy ).margin(epsilon));
 }
 
 TEST_CASE("Transform2D::operator(Twist2D), Simple Translation", "[Transform2D]") //Ryan King Shepard
@@ -607,9 +607,9 @@ TEST_CASE("Transform2D::operator(Twist2D), Simple Translation", "[Transform2D]")
     Twist2D res_twt = T_ab(twt_b);
 
     // Tests
-    REQUIRE(res_twt.theta_dot == Approx ( twt_ans.theta_dot).margin(epsilon));
-    REQUIRE(res_twt.x_dot == Approx( twt_ans.x_dot ).margin(epsilon));
-    REQUIRE(res_twt.y_dot == Approx( twt_ans.y_dot ).margin(epsilon));
+    REQUIRE(res_twt.w == Approx ( twt_ans.w).margin(epsilon));
+    REQUIRE(res_twt.vx == Approx( twt_ans.vx).margin(epsilon));
+    REQUIRE(res_twt.vy == Approx( twt_ans.vy).margin(epsilon));
 }
 
 TEST_CASE("Transform2D::operator(Twist2D), Simple Transformation", "[Transform2D]") //Ryan King Shepard
@@ -626,7 +626,7 @@ TEST_CASE("Transform2D::operator(Twist2D), Simple Transformation", "[Transform2D
     Twist2D res_twt = T_ab(twt_b);
 
     // Tests
-    REQUIRE(res_twt.theta_dot == Approx ( twt_ans.theta_dot).margin(epsilon));
-    REQUIRE(res_twt.x_dot == Approx( twt_ans.x_dot ).margin(epsilon));
-    REQUIRE(res_twt.y_dot == Approx( twt_ans.y_dot ).margin(epsilon));
+    REQUIRE(res_twt.w == Approx ( twt_ans.w).margin(epsilon));
+    REQUIRE(res_twt.vx == Approx( twt_ans.vx).margin(epsilon));
+    REQUIRE(res_twt.vy == Approx( twt_ans.vy).margin(epsilon));
 }
