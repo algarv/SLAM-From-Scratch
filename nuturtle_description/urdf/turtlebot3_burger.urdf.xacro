@@ -12,6 +12,8 @@
   <xacro:property name="params" value = '${load_yaml (diff_params)}'/>
   <xacro:property name="r" value="${params['wheel_radius']}"/>
   <xacro:property name="w" value="${params['track_width']}"/>
+  <xacro:property name="cr" value="${params['collision_radius']}"/>
+
 
   <link name="${color}_base_footprint"/>
 
@@ -33,7 +35,12 @@
     <collision>
       <origin xyz="-0.032 0 0.070" rpy="0 0 0"/>
       <geometry>
-        <box size="0.140 0.140 0.143"/>
+        <xacro:if value="${cr==0}">
+          <box size="0.140 0.140 0.143"/>
+        </xacro:if>
+        <xacro:if value="${cr!=0}">
+          <cylinder radius="${cr}" length=".25"/>
+        </xacro:if>
       </geometry>
     </collision>
 
