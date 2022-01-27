@@ -1,4 +1,4 @@
-#include "../include/turtlelib/rigid2d.hpp"
+#include "turtlelib/rigid2d.hpp"
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -163,6 +163,17 @@ namespace turtlelib{
       return normalized;
     }
 
+    double normalize_angle(double rad){
+      double norm_angle;
+      if (rad > PI) {
+        norm_angle = -1*PI + (rad - PI);
+      }
+      if (rad <= -1*PI) {
+        norm_angle = PI + (rad + PI);
+      }
+      return norm_angle;
+    }
+
     std::istream & operator>>(std::istream & is, Transform2D & tf){
       double degrees, radians;
       Vector2D v;
@@ -238,6 +249,90 @@ namespace turtlelib{
     std::ostream & operator<<(std::ostream &os, const Twist2D &v){
       os << "[" << v.w << " " << v.vx << " " << v.vy << "]" << "\n";
       return os;
+    }
+
+    Vector2D operator+=(Vector2D lhs, const Vector2D rhs){
+      
+      lhs.x = lhs.x + rhs.x;
+      lhs.y = lhs.y + rhs.y;
+
+      return lhs;
+    }
+
+    Vector2D operator+(Vector2D lhs, const Vector2D rhs){
+      
+      lhs.x = lhs.x + rhs.x;
+      lhs.y = lhs.y + rhs.y;
+
+      return lhs;
+    }
+
+    Vector2D operator-=(Vector2D lhs, const Vector2D rhs){
+      
+      lhs.x = lhs.x - rhs.x;
+      lhs.y = lhs.y - rhs.y;
+
+      return lhs;
+    }
+
+    Vector2D operator-(Vector2D lhs, const Vector2D rhs){
+      
+      lhs.x = lhs.x - rhs.x;
+      lhs.y = lhs.y - rhs.y;
+
+      return lhs;
+    }
+
+    Vector2D operator*=(Vector2D lhs, const int num){
+      
+      lhs.x = lhs.x * num;
+      lhs.y = lhs.y * num;
+
+      return lhs;
+    }
+
+    Vector2D operator*(Vector2D lhs, const int num){
+      
+      lhs.x = lhs.x * num;
+      lhs.y = lhs.y * num;
+
+      return lhs;
+    }
+
+    Vector2D operator*=(const int num, Vector2D lhs){
+      
+      lhs.x = lhs.x * num;
+      lhs.y = lhs.y * num;
+
+      return lhs;
+    }
+
+    Vector2D operator*(const int num, Vector2D lhs){
+      
+      lhs.x = lhs.x * num;
+      lhs.y = lhs.y * num;
+
+      return lhs;
+    }
+
+    double dot(Vector2D vec1, Vector2D vec2){
+      double dot_product;
+      dot_product = vec1.x*vec2.x + vec1.y*vec2.y;
+      return dot_product;
+    } 
+
+    double magnitude(Vector2D vec){
+      double mag;
+      mag = sqrt(vec.x*vec.x + vec.y*vec.y);
+      return mag;
+    } 
+
+    double angle(Vector2D vec1, Vector2D vec2){
+      double dot_product = dot(vec1,vec2);
+      double mag1 = magnitude(vec1);
+      double mag2 = magnitude(vec2);
+      double radians = acos(dot_product / (mag1*mag2));
+      return radians;
     }
 
 };

@@ -70,7 +70,13 @@ namespace turtlelib
         double y = 0.0;
     };
 
+    /// \brief Normalize a vector v and output the unit vector
+    /// v - the vector to normalize
     Vector2D normalize(Vector2D v);
+
+    /// \brief Normalize an angle into the range of +/- pi
+    /// rad - the angle to normalize
+    double normalize_angle(double rad);
 
     /// \brief output a 2 dimensional vector as [xcomponent ycomponent]
     /// os - stream to output to
@@ -193,7 +199,6 @@ namespace turtlelib
         float Trans[3][3];
     };
 
-
     /// \brief should print a human readable version of the transform:
     /// An example output:
     /// deg: 90 x: 3 y: 5
@@ -211,8 +216,22 @@ namespace turtlelib
     /// \param rhs - the right hand operand
     /// \return the composition of the two transforms
     /// HINT: This function should be implemented in terms of *=
-   
     Transform2D operator*(Transform2D lhs, const Transform2D & rhs);
 
+    Vector2D operator+=(Vector2D lhs, const Vector2D rhs);
+    Vector2D operator+(Vector2D lhs, const Vector2D rhs);
+
+    Vector2D operator-=(Vector2D lhs, const Vector2D rhs);
+    Vector2D operator-(Vector2D lhs, const Vector2D rhs);
+
+    Vector2D operator*=(Vector2D vec, const int num);
+    Vector2D operator*(Vector2D vec, const int num);
+    
+    Vector2D operator*=(const int num, Vector2D vec);
+    Vector2D operator*(const int num, Vector2D vec);
+
+    double dot(Vector2D vec1, Vector2D vec2);
+    double magnitude(Vector2D vec);
+    double angle(Vector2D vec1, Vector2D vec2);
 }
 #endif

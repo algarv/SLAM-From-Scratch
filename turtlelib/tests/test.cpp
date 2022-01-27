@@ -1,7 +1,7 @@
-#define CATCH_CONFIG_MAIN
-#include "catch.hpp"
+// #define CATCH_CONFIG_MAIN
+#include "catch_ros/catch.hpp"
 #include "turtlelib/rigid2d.hpp"
-
+#include <sstream>
 
 TEST_CASE("constructor_all", "[transform]") { // Anna Garverick
     turtlelib::Vector2D v;

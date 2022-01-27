@@ -1,4 +1,4 @@
-#include "../include/turtlelib/rigid2d.hpp"
+#include "turtlelib/rigid2d.hpp"
 #include <iostream>
 
 double deg;
