@@ -669,6 +669,6 @@ TEST_CASE("Simulatenous", "[integrate_twist]") { //Anna Garverick
     double rot_out = sim.rotation();
 
     REQUIRE(rot_out == Approx(turtlelib::PI/2).margin(.1));
-    REQUIRE(trans_out.x == Approx(4/turtlelib::PI).margin(.1));
-    REQUIRE(trans_out.y == Approx(0).margin(.1));
+    REQUIRE(trans_out.x == Approx(0).margin(.1));
+    REQUIRE(trans_out.y == Approx(4/turtlelib::PI).margin(.1));
 }

@@ -40,6 +40,7 @@ static std::string left_wheel = "red_wheel_left_joint";
 static std::string right_wheel = "red_wheel_right_joint";
 static geometry_msgs::TransformStamped tfStamped;
 static ros::Publisher obj_pub, js_pub, ts_pub;
+static ros::Subscriber wheel_sub;
 static ros::ServiceServer rs_service, tp_service;
 std::vector<double> obj_x_list, obj_y_list, obj_d_list;
 static visualization_msgs::MarkerArray obstacle, obj_array;
@@ -128,6 +129,8 @@ int main(int argc, char *argv[]){
     ts_pub = nh.advertise<std_msgs::UInt64>("timestep",100);
     js_pub = pub_nh.advertise<sensor_msgs::JointState>("joint_states", 100);
     obj_pub = nh.advertise<visualization_msgs::MarkerArray>("visualization_marker_array", 100);
+
+    wheel_sub = nh.subscribe("red/wheel_cmd", 1, callback);
 
     rs_service = nh.advertiseService("Restart", restart);
     tp_service = nh.advertiseService("Teleport", teleport);
