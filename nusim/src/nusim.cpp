@@ -113,6 +113,10 @@ visualization_msgs::MarkerArray add_obstacles(std::vector<double> obj_x_list, st
     return obstacle;
 }
 
+int wheel_commands(){
+    
+}
+
 int main(int argc, char *argv[]){
     
     ros::init(argc, argv, "nusim");
@@ -130,7 +134,7 @@ int main(int argc, char *argv[]){
     js_pub = pub_nh.advertise<sensor_msgs::JointState>("joint_states", 100);
     obj_pub = nh.advertise<visualization_msgs::MarkerArray>("visualization_marker_array", 100);
 
-    wheel_sub = nh.subscribe("red/wheel_cmd", 1, callback);
+    wheel_sub = nh.subscribe("red/wheel_cmd", 100, wheel_commands);
 
     rs_service = nh.advertiseService("Restart", restart);
     tp_service = nh.advertiseService("Teleport", teleport);
