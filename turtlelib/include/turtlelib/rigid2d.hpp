@@ -199,7 +199,7 @@ namespace turtlelib
         float Trans[3][3];
     };
 
-    /// \brief should print a human readable version of the transform:
+    /// \brief prints a human readable version of the transform:
     /// An example output:
     /// deg: 90 x: 3 y: 5
     /// \param os - an output stream
@@ -218,22 +218,53 @@ namespace turtlelib
     /// HINT: This function should be implemented in terms of *=
     Transform2D operator*(Transform2D lhs, const Transform2D & rhs);
 
+    /// \brief element-wise vector addition
+    /// \param lhs - Vector2D to be added to 
+    /// \param rhs - Added Vector2D
     Vector2D operator+=(Vector2D lhs, const Vector2D rhs);
+    /// \brief element-wise vector addition
+    /// \param lhs - Vector2D to be added to 
+    /// \param rhs - Added Vector2D
     Vector2D operator+(Vector2D lhs, const Vector2D rhs);
 
+    /// \brief element-wise vector subtraction
+    /// \param lhs - Vector2D to be subtracted from 
+    /// \param rhs - Subtracted Vector2D
     Vector2D operator-=(Vector2D lhs, const Vector2D rhs);
+    /// \brief element-wise vector subtraction
+    /// \param lhs - Vector2D to be subtracted from 
+    /// \param rhs - Subtracted Vector2D    
     Vector2D operator-(Vector2D lhs, const Vector2D rhs);
 
+    /// \brief scalar multiplication of a Vector2D
+    /// \param Vector2D - Vector2D to be scaled
+    /// \param num - Scalar multiplier
     Vector2D operator*=(Vector2D vec, const int num);
+    /// \brief scalar multiplication of a Vector2D
+    /// \param Vector2D - Vector2D to be scaled
+    /// \param num - Scalar multiplier
     Vector2D operator*(Vector2D vec, const int num);
     
+    /// \brief scalar multiplication of a Vector2D
+    /// \param num - Scalar multiplier
+    /// \param Vector2D - Vector2D to be scaled
     Vector2D operator*=(const int num, Vector2D vec);
+    /// \brief scalar multiplication of a Vector2D
+    /// \param num - Scalar multiplier
+    /// \param Vector2D - Vector2D to be scaled
     Vector2D operator*(const int num, Vector2D vec);
 
+    /// \brief dot product of two Vector2Ds
     double dot(Vector2D vec1, Vector2D vec2);
+
+    /// \brief calculate the magnitude of a vector
     double magnitude(Vector2D vec);
+
+    /// \brief calculates the angle between two vectors
     double angle(Vector2D vec1, Vector2D vec2);
 
+    /// \brief integrates a Twist2D to find the result 
+    /// transformation matrix for the movement during one time step
     Transform2D integrate_twist(Twist2D twist);
 
 }
