@@ -335,4 +335,38 @@ namespace turtlelib{
       return radians;
     }
 
+    Transform2D integrate_twist(Twist2D twist){
+
+      double dx = twist.vx;
+      double dy = twist.vy;
+      double dth = twist.w;
+
+
+      Vector2D Vsb;
+
+      if (dth == 0){
+        Vsb.x = dx;
+        Vsb.y = dy;
+
+        Transform2D Tbbp(Vsb);
+
+        return Tbbp;
+      }
+      else {
+        Vsb.x = dy / dth;
+        Vsb.y = -1*dx / dth;
+
+        Transform2D Tsb(Vsb);
+
+        Transform2D Tssp(dth);
+
+        Transform2D Tbs = Tsb.inv();
+
+        Transform2D Tbbp = (Tbs*Tssp)*Tsb;
+
+        return Tbbp;
+      }
+
+    }
+
 };

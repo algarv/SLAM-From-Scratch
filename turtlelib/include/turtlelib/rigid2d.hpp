@@ -233,5 +233,8 @@ namespace turtlelib
     double dot(Vector2D vec1, Vector2D vec2);
     double magnitude(Vector2D vec);
     double angle(Vector2D vec1, Vector2D vec2);
+
+    Transform2D integrate_twist(Twist2D twist);
+
 }
 #endif

@@ -630,3 +630,45 @@ TEST_CASE("Transform2D::operator(Twist2D), Simple Transformation", "[Transform2D
     REQUIRE(res_twt.vx == Approx( twt_ans.vx).margin(epsilon));
     REQUIRE(res_twt.vy == Approx( twt_ans.vy).margin(epsilon));
 }
+
+TEST_CASE("Pure Translation", "[integrate_twist]") { //Anna Garverick
+    Twist2D trans; 
+    trans.w = 0;
+    trans.vx = 1;
+    trans.vy = 2; 
+
+    turtlelib::Transform2D pure_translation = turtlelib::integrate_twist(trans);
+    turtlelib::Vector2D trans_out;
+    trans_out.x = pure_translation.translation().x;
+    trans_out.y = pure_translation.translation().y;
+
+    REQUIRE(trans_out.x == 1);
+    REQUIRE(trans_out.y == 2);
+}
+
+TEST_CASE("Pure Rotation", "[integrate_twist]") { //Anna Garverick
+    Twist2D trans; 
+    trans.w = .15;
+    trans.vx = 0;
+    trans.vy = 0; 
+
+    turtlelib::Transform2D pure_rotation = turtlelib::integrate_twist(trans);
+    double rot_out = pure_rotation.rotation();
+
+    REQUIRE(rot_out == Approx(.15).margin(.01));
+}
+
+TEST_CASE("Simulatenous", "[integrate_twist]") { //Anna Garverick
+    Twist2D trans; 
+    trans.w = turtlelib::PI/2;
+    trans.vx = 1;
+    trans.vy = 1; 
+
+    turtlelib::Transform2D sim = turtlelib::integrate_twist(trans);
+    turtlelib::Vector2D trans_out = sim.translation();
+    double rot_out = sim.rotation();
+
+    REQUIRE(rot_out == Approx(turtlelib::PI/2).margin(.1));
+    REQUIRE(trans_out.x == Approx(4/turtlelib::PI).margin(.1));
+    REQUIRE(trans_out.y == Approx(0).margin(.1));
+}
