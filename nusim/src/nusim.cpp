@@ -24,26 +24,28 @@
 #include <ros/ros.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <std_msgs/UInt64.h>
+#include "std_msgs/String.h"
 #include <std_srvs/Empty.h>
 #include <tf2_ros/transform_broadcaster.h>
 #include <geometry_msgs/TransformStamped.h>
+#include <geometry_msgs/Twist.h>
 #include <visualization_msgs/MarkerArray.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include "nusim/teleport.h"
 #include "nusim/add_obstacle.h"
 
 static int rate;
-static float x = 0, y = 0, w = 0;
+static float x = 0, y = 0, w = 0, x_length = 0, y_length = 0, width = 0;
 static std_msgs::UInt64 ts;
 static sensor_msgs::JointState wheels;
 static std::string left_wheel = "red_wheel_left_joint";
 static std::string right_wheel = "red_wheel_right_joint";
 static geometry_msgs::TransformStamped tfStamped;
-static ros::Publisher obj_pub, js_pub, ts_pub;
+static ros::Publisher obj_pub, js_pub, ts_pub, cmd_vel_pub, arena_pub;
 static ros::Subscriber wheel_sub;
 static ros::ServiceServer rs_service, tp_service;
 std::vector<double> obj_x_list, obj_y_list, obj_d_list;
-static visualization_msgs::MarkerArray obstacle, obj_array;
+static visualization_msgs::MarkerArray obstacle, obj_array, marker_arena, arena_array;
 
 bool restart(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response){
 /// \brief Send the turtle bot back to the origin of the world frame and restart the timestep counter.
@@ -94,7 +96,7 @@ visualization_msgs::MarkerArray add_obstacles(std::vector<double> obj_x_list, st
         obstacle.markers[i].id = id;
         obstacle.markers[i].pose.position.x = obj_x_list[i];
         obstacle.markers[i].pose.position.y = obj_y_list[i];
-        obstacle.markers[i].pose.position.z = 0;
+        obstacle.markers[i].pose.position.z = .25;
         obstacle.markers[i].pose.orientation.x = 0.0;
         obstacle.markers[i].pose.orientation.y = 0.0;
         obstacle.markers[i].pose.orientation.z = 0.0;
@@ -113,9 +115,108 @@ visualization_msgs::MarkerArray add_obstacles(std::vector<double> obj_x_list, st
     return obstacle;
 }
 
-int wheel_commands(){
+visualization_msgs::MarkerArray make_arena(float x_length, float y_length){
     
+    arena_array.markers.resize(4);
+
+    int i = obj_x_list.size();
+
+    arena_array.markers[0].header.frame_id = "world";
+    arena_array.markers[0].ns = "nusim_node";
+    arena_array.markers[0].header.stamp = ros::Time::now();
+    arena_array.markers[0].type = visualization_msgs::Marker::CUBE;
+    arena_array.markers[0].action = visualization_msgs::Marker::ADD;
+    arena_array.markers[0].id = i;
+    arena_array.markers[0].pose.position.x = x_length/2;
+    arena_array.markers[0].pose.position.y = 0;
+    arena_array.markers[0].pose.position.z = .25;
+    arena_array.markers[0].pose.orientation.x = 0.0;
+    arena_array.markers[0].pose.orientation.y = 0.0;
+    arena_array.markers[0].pose.orientation.z = 0.0;
+    arena_array.markers[0].pose.orientation.w = 1.0;
+    arena_array.markers[0].scale.x = width;
+    arena_array.markers[0].scale.y = y_length - width;
+    arena_array.markers[0].scale.z = .25;
+    arena_array.markers[0].color.a = 1.0;
+    arena_array.markers[0].color.r = .75;
+    arena_array.markers[0].color.g = 0.0;
+    arena_array.markers[0].color.b = 1.0;
+
+    arena_array.markers[1].header.frame_id = "world";
+    arena_array.markers[1].ns = "nusim_node";
+    arena_array.markers[1].header.stamp = ros::Time::now();
+    arena_array.markers[1].type = visualization_msgs::Marker::CUBE;
+    arena_array.markers[1].action = visualization_msgs::Marker::ADD;
+    arena_array.markers[1].id = i+1;
+    arena_array.markers[1].pose.position.x = 0;
+    arena_array.markers[1].pose.position.y = y_length/2;
+    arena_array.markers[1].pose.position.z = .25;
+    arena_array.markers[1].pose.orientation.x = 0.0;
+    arena_array.markers[1].pose.orientation.y = 0.0;
+    arena_array.markers[1].pose.orientation.z = 0.0;
+    arena_array.markers[1].pose.orientation.w = 1.0;
+    arena_array.markers[1].scale.x = x_length + width;
+    arena_array.markers[1].scale.y = width;
+    arena_array.markers[1].scale.z = .25;
+    arena_array.markers[1].color.a = 1.0;
+    arena_array.markers[1].color.r = .75;
+    arena_array.markers[1].color.g = 0.0;
+    arena_array.markers[1].color.b = 1.0;
+
+
+    arena_array.markers[2].header.frame_id = "world";
+    arena_array.markers[2].ns = "nusim_node";
+    arena_array.markers[2].header.stamp = ros::Time::now();
+    arena_array.markers[2].type = visualization_msgs::Marker::CUBE;
+    arena_array.markers[2].action = visualization_msgs::Marker::ADD;
+    arena_array.markers[2].id = i+2;
+    arena_array.markers[2].pose.position.x = -x_length/2;
+    arena_array.markers[2].pose.position.y = 0;
+    arena_array.markers[2].pose.position.z = .25;
+    arena_array.markers[2].pose.orientation.x = 0.0;
+    arena_array.markers[2].pose.orientation.y = 0.0;
+    arena_array.markers[2].pose.orientation.z = 0.0;
+    arena_array.markers[2].pose.orientation.w = 1.0;
+    arena_array.markers[2].scale.x = width;
+    arena_array.markers[2].scale.y = y_length - width;
+    arena_array.markers[2].scale.z = .25;
+    arena_array.markers[2].color.a = 1.0;
+    arena_array.markers[2].color.r = .75;
+    arena_array.markers[2].color.g = 0.0;
+    arena_array.markers[2].color.b = 1.0;
+
+    arena_array.markers[3].header.frame_id = "world";
+    arena_array.markers[3].ns = "nusim_node";
+    arena_array.markers[3].header.stamp = ros::Time::now();
+    arena_array.markers[3].type = visualization_msgs::Marker::CUBE;
+    arena_array.markers[3].action = visualization_msgs::Marker::ADD;
+    arena_array.markers[3].id = i+3;
+    arena_array.markers[3].pose.position.x = 0;
+    arena_array.markers[3].pose.position.y = -y_length/2;
+    arena_array.markers[3].pose.position.z = .25;
+    arena_array.markers[3].pose.orientation.x = 0.0;
+    arena_array.markers[3].pose.orientation.y = 0.0;
+    arena_array.markers[3].pose.orientation.z = 0.0;
+    arena_array.markers[3].pose.orientation.w = 1.0;
+    arena_array.markers[3].scale.x = x_length + width;
+    arena_array.markers[3].scale.y = width;
+    arena_array.markers[3].scale.z = .25;
+    arena_array.markers[3].color.a = 1.0;
+    arena_array.markers[3].color.r = .75;
+    arena_array.markers[3].color.g = 0.0;
+    arena_array.markers[3].color.b = 1.0;
+    
+    return arena_array;
+
 }
+
+// int wheel_commands(){
+//     geomtery_msgs::Twist twist; 
+
+//     cmd_vel_pub.publish(twist);
+
+//     return 0;
+// }
 
 int main(int argc, char *argv[]){
     
@@ -133,8 +234,10 @@ int main(int argc, char *argv[]){
     ts_pub = nh.advertise<std_msgs::UInt64>("timestep",100);
     js_pub = pub_nh.advertise<sensor_msgs::JointState>("joint_states", 100);
     obj_pub = nh.advertise<visualization_msgs::MarkerArray>("visualization_marker_array", 100);
+    arena_pub = nh.advertise<visualization_msgs::MarkerArray>("visualization_marker_array", 100);
+    // cmd_vel_pub = pub_nh.advertise<geometry_msgs::Twist>("cmd_vel", 100);
 
-    wheel_sub = nh.subscribe("red/wheel_cmd", 100, wheel_commands);
+    // wheel_sub = nh.subscribe("red/wheel_cmd", 100, wheel_commands);
 
     rs_service = nh.advertiseService("Restart", restart);
     tp_service = nh.advertiseService("Teleport", teleport);
@@ -142,6 +245,9 @@ int main(int argc, char *argv[]){
     nh.getParam("x0", x);
     nh.getParam("y0", y);
     nh.getParam("theta0", w);
+    nh.getParam("x_length", x_length);
+    nh.getParam("y_length", y_length);
+    nh.getParam("wall_width", width);
 
     while(ros::ok()) {
 
@@ -176,9 +282,11 @@ int main(int argc, char *argv[]){
         obj_array = add_obstacles(obj_x_list, obj_y_list,obj_d_list);
         obj_pub.publish(obj_array);
 
+        arena_array = make_arena(x_length,y_length);
+        arena_pub.publish(arena_array);
+
         ros::spinOnce();
         r.sleep();
     }
-
     return 0;
 }
