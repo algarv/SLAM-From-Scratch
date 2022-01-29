@@ -65,7 +65,7 @@ namespace turtlelib
         dphi.R = new_wheel_angles.R - old_wheel_angles.R;
 
         twist.w = (WHEEL_RADIUS / TRACK_WIDTH) * (dphi.L - dphi.R);
-        twist.vx = .5*(dphi.R - dphi.L);
+        twist.vx = .5*WHEEL_RADIUS*(dphi.R + dphi.L);
         twist.vy = 0;
 
         q = get_q(twist, old_pos);
