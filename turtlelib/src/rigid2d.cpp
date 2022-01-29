@@ -165,6 +165,10 @@ namespace turtlelib{
 
     double normalize_angle(double rad){
       double norm_angle;
+      while (rad >= 2*turtlelib::PI){
+        rad -= 2*turtlelib::PI;
+      }
+
       if (rad > PI) {
         norm_angle = -1*PI + (rad - PI);
       }
