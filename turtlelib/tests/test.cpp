@@ -802,6 +802,9 @@ TEST_CASE("IK_Arc", "[inverse_kinematics]") { //Anna Garverick
 
     wheel_velocities = D.wheel_vel(twist);
 
-    REQUIRE(wheel_velocities.L == Approx(20).margin(.1));
-    REQUIRE(wheel_velocities.R == Approx(27.607).margin(.1));
+    double arc_length_L = ((.5 - .08) * twist.w);
+    double arc_length_R = ((.5 + .08) * twist.w);
+
+    REQUIRE(wheel_velocities.L == Approx(arc_length_L/.033).margin(.1));
+    REQUIRE(wheel_velocities.R == Approx(arc_length_R/.033).margin(.1));
 }
