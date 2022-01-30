@@ -1,0 +1,65 @@
+catkin_lint -W2
+catkin_make - [Code did not compile, due to missing include file.] -5
+
+Task A.
+README.md
+   - command
+   - command
+   - Rviz screenshot
+
+roslaunch nuturtle_description load.launch
+          [The launchfile arguments are undocumented.  Use doc the doc attribute in the arg tag]  -2
+
+roslaunch nuturtle_description load_all.launch 
+
+
+Minimal Files To Display Turtlebot:
+meshes/
+   burger_base.stl
+   lds.stl
+   left_tire.stl
+   right_tire.stl
+urdf/
+   common_properties.xacro
+   turtlebot3_burger.urdf.xacro
+   [extra file turtlebot3_burger.gazebo.xacro not needed] -1
+   
+config/diff_params.yaml
+   wheel_radius: 0.033
+   wheel_track: 0.160
+
+Task B.
+     static_assertions [None added] -1
+     unit_tests (enough + passed):
+
+     Conceptual questions -2 [See README.md]
+     
+     Code works?
+          - [Transform2D() default constructor is not defined or tested] -2
+          - The following test cases fail: -1
+       
+        Transform2D tfin;
+        stringstream ss2;
+        ss2 << "45 -1 7";
+        ss2 >> tfin;
+        CHECK(tfin.rotation() == Approx(PI/4.0));
+        CHECK(tfin.translation().x == Approx(-1));
+        CHECK(tfin.translation().y == Approx(7));
+
+       1. (minor) Your Vector2D and Transform2D output should not put a newline at the end.
+
+    General CPP comments
+      1. Use member initializer lists and delegating constructors when writing classes 2. Don't have unnecessary static variables
+      3. Don't use arrays, use std::vector
+      Lots of comments are inline on lines starting with //rec: see rigid2d.hpp/rigid2d.cpp
+
+Task C.
+   roslaunch nusim.launch
+   README
+
+
+Overall:
+This was a good assignment that met most of the goals.
+I suggest taking a look at my C++ recommendations, there are small but important ways to improve your code.
+
+89/100

@@ -1,11 +1,13 @@
-#include "../include/turtlelib/rigid2d.hpp"
+#include "../include/turtlelib/rigid2d.hpp" /// rec: This should compile with #include<turtlelib/rigid2d.hpp>
 #include <iostream>
 
-double deg;
+/// rec: why are these global variables? If you must use a global variable, make it static
+double deg; 
 double x_in;
 double y_in; 
 
 int main() {
+    /// rec: it would be better to declare some of these where they are used rather than all up-front
     turtlelib::Transform2D Tab(0), Tbc(0), Tac(0), Tba(0), Tcb(0), Tca(0);
 
     std::cout << "Enter transform T_{a,b}:" << std::endl;

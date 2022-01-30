@@ -189,6 +189,9 @@ namespace turtlelib
         friend std::ostream & operator<<(std::ostream & os, const Transform2D & tf);
     
     private:
+        ///rec: You should use double precision rather than float, except on microcontrollers
+        ///rec: Arrays should not be used (They are dangerous).  If you need to use an array, use an std::vector instead
+        ///rec: If you need a 2D array, use nested std::vector. Access with .at() rather than [] to have bounds checking
         float T[3][3];
         float Trans[3][3];
     };

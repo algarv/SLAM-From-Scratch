@@ -49,6 +49,9 @@ A library for handling transformations in SE(2) and other turtlebot-related math
     * Con.4: Use const to define objects with values that do not change after construction
 
         inv() should not modify the argument variable, so by default it is best to include the const argument and ensure the argument variable is not reassigned. operator*= actually intends to modify the lhs argument, so the const argument is not used. 
+        [ The const, when used with these functions does not refer to arguments to those functions, it refers to the object on which they are called.
+          So inv cannot modify any of the private variables of the class, while *= is, by design, supposed to modify those variables]
+        
 
 # Sample Run of frame_main
 ```

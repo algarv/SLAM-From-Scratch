@@ -30,10 +30,13 @@
 #include <visualization_msgs/MarkerArray.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include "nusim/teleport.h"
-#include "nusim/add_obstacle.h"
+//#include "nusim/add_obstacle.h" THIS FILE IS MISSING IN GIT!
 
+// rec: initialize all these variables
+// rec: only variables that are actually shared between multiple callbacks should be here
+// rec: many of these variables should be local.
 static int rate;
-static float x = 0, y = 0, w = 0;
+static float x = 0, y = 0, w = 0; // rec: use double, not float
 static std_msgs::UInt64 ts;
 static sensor_msgs::JointState wheels;
 static std::string left_wheel = "red_wheel_left_joint";
@@ -41,9 +44,10 @@ static std::string right_wheel = "red_wheel_right_joint";
 static geometry_msgs::TransformStamped tfStamped;
 static ros::Publisher obj_pub, js_pub, ts_pub;
 static ros::ServiceServer rs_service, tp_service;
-std::vector<double> obj_x_list, obj_y_list, obj_d_list;
+std::vector<double> obj_x_list, obj_y_list, obj_d_list; // rec: this should be static
 static visualization_msgs::MarkerArray obstacle, obj_array;
 
+// rec: the request should be const (this is in contrast to how ROS does it)
 bool restart(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response){
 /// \brief Send the turtle bot back to the origin of the world frame and restart the timestep counter.
 ///
@@ -73,6 +77,7 @@ bool teleport(nusim::teleport::Request &pos, nusim::teleport::Response &response
     return true;
 }
 
+/// rec: vectors should be passed at const & since they could become quite large
 visualization_msgs::MarkerArray add_obstacles(std::vector<double> obj_x_list, std::vector<double> obj_y_list, std::vector<double> obj_d_list){
 /// \brief Spawns obstacles defined in the paramter.
 ///
@@ -83,8 +88,9 @@ visualization_msgs::MarkerArray add_obstacles(std::vector<double> obj_x_list, st
 
     int id = 0;
     obstacle.markers.resize(obj_x_list.size());
-    for (int i = 0; i<obj_x_list.size(); i+=1) {
-        
+    for (int i = 0; i<obj_x_list.size(); i+=1) { // rec: this is C++, use i++ or ++i to increment by 1!
+
+        /// rec: obstacle.markers[i] is an std::vector. I'd recommend using .at() for safety here, unless performance really mattered
         obstacle.markers[i].header.frame_id = "world";
         obstacle.markers[i].ns = "nusim_node";
         obstacle.markers[i].header.stamp = ros::Time::now();

@@ -7,7 +7,16 @@
 
 
 namespace turtlelib{
-    Transform2D::Transform2D(Vector2D v){
+    /// rec: Use member initializer lists and delegating constructors.
+    /// rec: This would have allowed you to implement all of the constructors
+    /// rec: in terms of the most general one Transform2D v, double radians)
+    Transform2D::Transform2D():
+        Transform2D(0.0)
+    {
+    }
+
+    Transform2D::Transform2D(Vector2D v)
+    {
       T[0][0] = 1;
       T[0][1] = 0;  
       T[0][2] = v.x;  
@@ -17,7 +26,7 @@ namespace turtlelib{
       T[2][0] = 0;
       T[2][1] = 0;
       T[2][2] = 1;
-    };
+    } //rec: no semicolon after these when they are in the .cpp file
 
     Transform2D::Transform2D(double radians){
       T[0][0] = cos(radians);
@@ -66,6 +75,8 @@ namespace turtlelib{
       //    0       0 -T[0][2]   T[1][0]  T[1][1]  0        t.vy
       //    *       *     0         0        0     1         0
 
+        // rec: it would be better to initialize t_new with aggregate initialization, or just return it directly.
+        // rec: you could actually do return {t.w, T[1][2]*t.w, ...}
       Twist2D t_new;
       t_new.w = t.w;
       t_new.vx = T[1][2]*t.w + T[0][0]*t.vx + T[0][1]*t.vy;
@@ -91,7 +102,7 @@ namespace turtlelib{
 
       T_inv.T[0][0] = T[0][0];
       T_inv.T[0][1] = T[1][0];  
-      T_inv.T[0][2] = -1*(T[0][0]*T[0][2] + T[1][0]*T[1][2]);  
+      T_inv.T[0][2] = -1.0*(T[0][0]*T[0][2] + T[1][0]*T[1][2]);   // rec: don't mix integers (1) with floats, change to 1.0 (or better yet rearrange to get rid of -1)
       T_inv.T[1][0] = T[0][1];
       T_inv.T[1][1] = T[1][1]; 
       T_inv.T[1][2] = -1*(T[0][1]*T[0][2] + T[1][1]*T[1][2]);
@@ -108,12 +119,12 @@ namespace turtlelib{
       // T[1][0] T[1][1] T[1][2]       T[1][0] T[1][1] T[1][2]
       // T[2][0] T[2][1] T[2][2]       T[2][0] T[2][1] T[2][2]
 
-      const float a = T[0][0];
-      const float b = T[0][1];
-      const float c = T[0][2];
-      const float d = T[1][0];
-      const float e = T[1][1];
-      const float f = T[1][2];
+      const auto a = T[0][0]; // rec: this would be a good place to use auto
+      const float b = T[0][1];// rec: this way when you change T to double
+      const float c = T[0][2];// rec: you would not need to change anything here
+      const float d = T[1][0];// rec: an easier way to do this would be to 
+      const float e = T[1][1];// const auto Torig = *this; to make a copy
+      const float f = T[1][2];//
       const float g = T[2][0];
       const float h = T[2][1];
       const float i = T[2][2];
@@ -137,7 +148,7 @@ namespace turtlelib{
     }
 
     Vector2D Transform2D::translation() const{
-      Vector2D translation;
+        Vector2D translation; // rec: return {T[0][2], T[1][2]};
       translation.x = T[0][2];
       translation.y = T[1][2];
 
