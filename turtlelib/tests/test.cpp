@@ -734,14 +734,14 @@ TEST_CASE("FK_Arc", "[forward_kinematics]") { //Anna Garverick
     old_config.y = 0;
 
     twist.w = turtlelib::PI/2;
-    twist.vx = 1;
+    twist.vx = turtlelib::PI/4;
     twist.vy = 0;
 
     turtlelib::q updated_config = D.get_q(twist, old_config);
 
     REQUIRE(updated_config.theta == Approx(turtlelib::PI/2).margin(.1));
-    REQUIRE(updated_config.x == Approx(0.637).margin(.1));
-    REQUIRE(updated_config.y == Approx(0.637).margin(.1));
+    REQUIRE(updated_config.x == Approx(0.5).margin(.1));
+    REQUIRE(updated_config.y == Approx(0.5).margin(.1));
 }
 
 TEST_CASE("FK_Invalid", "[forward_kinematics]") { //Anna Garverick
