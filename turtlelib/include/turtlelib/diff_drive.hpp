@@ -44,14 +44,19 @@ namespace turtlelib
     };
 
     class DiffDrive{
+        public: 
 
-        Wheel_Angle wheel_pos(Wheel_Angle old_phi, Twist2D twist);
+            DiffDrive();
+            
+            Wheel_Angle wheel_pos(Wheel_Angle old_phi, Twist2D twist);
 
-        Wheel_Angular_Velocities wheel_vel(Twist2D twist);
+            Wheel_Angular_Velocities wheel_vel(Twist2D twist);
 
-        q get_q(Twist2D twist);
+            q get_q(Twist2D twist, q old_pos);
 
-        q get_q(Wheel_Angle new_wheel_pos, Wheel_Angle old_wheel_pos);        
+            q get_q(Wheel_Angle new_wheel_angles, Wheel_Angle old_wheel_angles, q old_pos); 
+        private:
+            q config;       
 
     };
 

@@ -33,19 +33,25 @@
 #include <tf2/LinearMath/Quaternion.h>
 #include "nusim/teleport.h"
 #include "nusim/add_obstacle.h"
+#include "nuturtlebot_msgs/WheelCommands.h"
+#include "nuturtlebot_msgs/SensorData.h"
+#include "turtlelib/rigid2d.hpp"
+#include "turtlelib/diff_drive.hpp"
 
 static int rate;
-static float x = 0, y = 0, w = 0, x_length = 0, y_length = 0, width = 0;
+static double x = 0, y = 0, w = 0, x_length = 0, y_length = 0, width = 0, dticks_radsec, eticks_radsec;
+static std::string left_wheel = "red_wheel_left_joint", right_wheel = "red_wheel_right_joint";
+std::vector<double> obj_x_list, obj_y_list, obj_d_list, radsec;
 static std_msgs::UInt64 ts;
 static sensor_msgs::JointState wheels;
-static std::string left_wheel = "red_wheel_left_joint";
-static std::string right_wheel = "red_wheel_right_joint";
 static geometry_msgs::TransformStamped tfStamped;
-static ros::Publisher obj_pub, js_pub, ts_pub, cmd_vel_pub, arena_pub;
+static nuturtlebot_msgs::SensorData sensor_data; 
+static ros::Publisher obj_pub, js_pub, ts_pub, cmd_vel_pub, arena_pub, sensor_pub;
 static ros::Subscriber wheel_sub;
 static ros::ServiceServer rs_service, tp_service;
-std::vector<double> obj_x_list, obj_y_list, obj_d_list;
 static visualization_msgs::MarkerArray obstacle, obj_array, marker_arena, arena_array;
+static turtlelib::Wheel_Angle wheel_angles, old_wheel_angles;
+static turtlelib::q pos, old_pos;
 
 bool restart(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response){
 /// \brief Send the turtle bot back to the origin of the world frame and restart the timestep counter.
@@ -53,6 +59,7 @@ bool restart(std_srvs::Empty::Request &request, std_srvs::Empty::Response &respo
 /// \param request - Empty::Request
 /// \param response - Empty::Reponse
 /// \returns true
+
     ts.data = 0;
 
     x = 0;
@@ -163,7 +170,6 @@ visualization_msgs::MarkerArray make_arena(float x_length, float y_length){
     arena_array.markers[1].color.g = 0.0;
     arena_array.markers[1].color.b = 1.0;
 
-
     arena_array.markers[2].header.frame_id = "world";
     arena_array.markers[2].ns = "nusim_node";
     arena_array.markers[2].header.stamp = ros::Time::now();
@@ -210,13 +216,17 @@ visualization_msgs::MarkerArray make_arena(float x_length, float y_length){
 
 }
 
-// int wheel_commands(){
-//     geomtery_msgs::Twist twist; 
+void wheel_commands(const nuturtlebot_msgs::WheelCommands::ConstPtr &wheel_cmd){
+    
+    int d_ticks_left = wheel_cmd->left_velocity;
+    int d_ticks_right = wheel_cmd->right_velocity;
 
-//     cmd_vel_pub.publish(twist);
+    radsec[0] = d_ticks_left * dticks_radsec;
+    radsec[1] = d_ticks_right * dticks_radsec;
 
-//     return 0;
-// }
+    sensor_data.left_encoder = radsec[0] / eticks_radsec;
+    sensor_data.right_encoder = radsec[1] / eticks_radsec;
+}
 
 int main(int argc, char *argv[]){
     
@@ -235,9 +245,8 @@ int main(int argc, char *argv[]){
     js_pub = pub_nh.advertise<sensor_msgs::JointState>("joint_states", 100);
     obj_pub = nh.advertise<visualization_msgs::MarkerArray>("visualization_marker_array", 100);
     arena_pub = nh.advertise<visualization_msgs::MarkerArray>("visualization_marker_array", 100);
+    sensor_pub = nh.advertise<nuturtlebot_msgs::SensorData>("encoder_ticks",100);
     // cmd_vel_pub = pub_nh.advertise<geometry_msgs::Twist>("cmd_vel", 100);
-
-    // wheel_sub = nh.subscribe("red/wheel_cmd", 100, wheel_commands);
 
     rs_service = nh.advertiseService("Restart", restart);
     tp_service = nh.advertiseService("Teleport", teleport);
@@ -248,6 +257,14 @@ int main(int argc, char *argv[]){
     nh.getParam("x_length", x_length);
     nh.getParam("y_length", y_length);
     nh.getParam("wall_width", width);
+    nh.getParam("motor_cmd_to_radsec", dticks_radsec);
+    nh.getParam("encoder_ticks_to_rad", eticks_radsec);
+    
+    old_pos.theta = w;
+    old_pos.x = x;
+    old_pos.y = y;
+
+    turtlelib::DiffDrive DD;
 
     while(ros::ok()) {
 
@@ -284,6 +301,18 @@ int main(int argc, char *argv[]){
 
         arena_array = make_arena(x_length,y_length);
         arena_pub.publish(arena_array);
+
+        wheel_sub = nh.subscribe("red/wheel_cmd", 100, wheel_commands);
+
+        sensor_pub.publish(sensor_data);
+        
+        wheel_angles.L = old_wheel_angles.L + radsec[0] * ts.data;
+        wheel_angles.R = old_wheel_angles.R + radsec[1] * ts.data;
+
+        pos = DD.get_q(wheel_angles, old_wheel_angles, old_pos);
+
+        old_wheel_angles = wheel_angles;
+        old_pos = pos; 
 
         ros::spinOnce();
         r.sleep();
