@@ -4,3 +4,6 @@ theta0: 0
 obj_x: [-1, 1, -1]
 obj_y: [1, 0, -1]
 obj_d: [.25, .25, .25]
+x_length: 5
+y_length: 7
+wall_width: .1

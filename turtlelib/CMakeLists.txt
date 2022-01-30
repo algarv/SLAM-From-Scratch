@@ -15,7 +15,6 @@ roscpp
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
-
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
@@ -121,6 +120,7 @@ ${catkin_INCLUDE_DIRS}
 
 ## Declare a C++ library
 add_library(${PROJECT_NAME}
+  src/diff_drive.cpp
   src/rigid2d.cpp
 )
 
@@ -216,6 +216,7 @@ install(TARGETS ${PROJECT_NAME}
 catch_add_test(${PROJECT_NAME}_test
 	tests/test.cpp
     src/rigid2d.cpp
+    src/diff_drive.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}_test ##Thing I am adding libraries to
@@ -224,7 +225,7 @@ target_link_libraries(${PROJECT_NAME}_test ##Thing I am adding libraries to
 )
 
 install(TARGETS frame_main
-RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
 )
 
 # enable C++ 17

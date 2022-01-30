@@ -5,7 +5,6 @@
 #include <cmath>
 
 
-
 namespace turtlelib{
     Transform2D::Transform2D(Vector2D v){
       T[0][0] = 1;

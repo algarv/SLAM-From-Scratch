@@ -12,7 +12,13 @@ constexpr double TRACK_WIDTH = .16;
 namespace turtlelib
 {
 
-    Wheel_Angular_Velocities wheel_vel(Twist2D twist){
+    DiffDrive::DiffDrive(){
+        config.theta = 0;
+        config.x = 0;
+        config.y = 0;
+    }
+
+    Wheel_Angular_Velocities DiffDrive::wheel_vel(Twist2D twist){
         
         Wheel_Angular_Velocities dw;
 
@@ -22,7 +28,7 @@ namespace turtlelib
         return dw;
     }
 
-    Wheel_Angle wheel_pos(Wheel_Angle old_phi, Twist2D twist){
+    Wheel_Angle DiffDrive::wheel_pos(Wheel_Angle old_phi, Twist2D twist){
         
         Wheel_Angle wheel_pos;
         
@@ -34,7 +40,7 @@ namespace turtlelib
         return wheel_pos;
     }
 
-    q get_q(Twist2D twist, q old_pos){
+    q DiffDrive::get_q(Twist2D twist, q old_pos){
 
         q q;
 
@@ -58,7 +64,7 @@ namespace turtlelib
         return q;
     }
 
-    q get_q(Wheel_Angle new_wheel_angles, Wheel_Angle old_wheel_angles, q old_pos){
+    q DiffDrive::get_q(Wheel_Angle new_wheel_angles, Wheel_Angle old_wheel_angles, q old_pos){
 
         q q;
 
