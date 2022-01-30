@@ -38,6 +38,10 @@ namespace turtlelib
 
         q q;
 
+        // if (twist.vy != 0){
+        //     throw std::logic_error("This is not an omniwheel robot, y value cannot be non-zero");
+        // }
+
         Vector2D old_pos_vec;
         Vector2D new_pos_vec;
         old_pos_vec.x = old_pos.x;

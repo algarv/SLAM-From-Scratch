@@ -1,6 +1,7 @@
 // #define CATCH_CONFIG_MAIN
 #include "catch_ros/catch.hpp"
 #include "turtlelib/rigid2d.hpp"
+#include "turtlelib/diff_drive.hpp"
 #include <sstream>
 
 TEST_CASE("constructor_all", "[transform]") { // Anna Garverick
@@ -672,3 +673,90 @@ TEST_CASE("Simulatenous", "[integrate_twist]") { //Anna Garverick
     REQUIRE(trans_out.x == Approx(0).margin(.1));
     REQUIRE(trans_out.y == Approx(4/turtlelib::PI).margin(.1));
 }
+
+TEST_CASE("FK_Forward Drive", "[forward_kinematics]") { //Anna Garverick
+    turtlelib::DiffDrive D;
+    turtlelib::Wheel_Angle phi0;
+    turtlelib::Wheel_Angle dphi;
+    turtlelib::q old_config;
+
+    phi0.L = 0;
+    phi0.R = 0;
+
+    old_config.theta = 0;
+    old_config.x = 0;
+    old_config.y = 0;
+    
+    dphi.L = turtlelib::PI/4;
+    dphi.R = turtlelib::PI/4;
+
+    turtlelib::q updated_config = D.get_q(dphi, phi0, old_config);
+
+    REQUIRE(updated_config.theta == 0);
+    REQUIRE(updated_config.x == Approx(0.033 * turtlelib::PI/4).margin(.1));
+    REQUIRE(updated_config.y == 0);
+}
+
+TEST_CASE("FK_Pure Rotation", "[forward_kinematics]") { //Anna Garverick
+    turtlelib::DiffDrive D;
+    turtlelib::Wheel_Angle phi0;
+    turtlelib::Wheel_Angle dphi;
+    turtlelib::q old_config;
+
+    phi0.L = 0;
+    phi0.R = 0;
+
+    old_config.theta = 0;
+    old_config.x = 0;
+    old_config.y = 0;
+    
+    dphi.L = turtlelib::PI/4;
+    dphi.R = -1*turtlelib::PI/4;
+
+    double arc_length = 0.033 * turtlelib::PI/4;
+    double final_theta = arc_length / .08;
+
+    turtlelib::q updated_config = D.get_q(dphi, phi0, old_config);
+
+    REQUIRE(updated_config.theta == Approx(final_theta).margin(.1));
+    REQUIRE(updated_config.x == 0);
+    REQUIRE(updated_config.y == 0);
+}
+
+TEST_CASE("FK_Arc", "[forward_kinematics]") { //Anna Garverick
+    turtlelib::DiffDrive D;
+    turtlelib::Twist2D twist;
+    turtlelib::Wheel_Angle dphi;
+    turtlelib::q old_config;
+
+    old_config.theta = 0;
+    old_config.x = 0;
+    old_config.y = 0;
+
+    twist.w = turtlelib::PI/2;
+    twist.vx = 1;
+    twist.vy = 0;
+
+    turtlelib::q updated_config = D.get_q(twist, old_config);
+
+    REQUIRE(updated_config.theta == Approx(turtlelib::PI/2).margin(.1));
+    REQUIRE(updated_config.x == Approx(0.637).margin(.1));
+    REQUIRE(updated_config.y == Approx(0.637).margin(.1));
+}
+
+// TEST_CASE("FK_Invalid", "[forward_kinematics]") { //Anna Garverick
+//     turtlelib::DiffDrive D;
+//     turtlelib::Twist2D twist;
+//     turtlelib::Wheel_Angle dphi;
+//     turtlelib::q old_config;
+
+//     old_config.theta = 0;
+//     old_config.x = 0;
+//     old_config.y = 0;
+
+//     twist.w = turtlelib::PI/2;
+//     twist.vx = 1;
+//     twist.vy = 1;
+
+//     CHECK_THROWS_AS(D.get_q(twist, old_config),std::logic_error)
+// }
