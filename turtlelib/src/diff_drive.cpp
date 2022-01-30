@@ -22,8 +22,8 @@ namespace turtlelib
         
         Wheel_Angular_Velocities dw;
 
-        dw.L = (twist.vx - twist.w * TRACK_WIDTH) / WHEEL_RADIUS;
-        dw.R = (twist.w * TRACK_WIDTH + twist.vx) / WHEEL_RADIUS;
+        dw.L = (twist.vx - twist.w * TRACK_WIDTH/2) / WHEEL_RADIUS;
+        dw.R = (twist.w * TRACK_WIDTH/2 + twist.vx) / WHEEL_RADIUS;
         
         return dw;
     }
@@ -44,9 +44,9 @@ namespace turtlelib
 
         q q;
 
-        // if (twist.vy != 0){
-        //     throw std::logic_error("This is not an omniwheel robot, y value cannot be non-zero");
-        // }
+        if (twist.vy != 0){
+            throw std::logic_error("This is not an omniwheel robot, y value cannot be non-zero");
+        }
 
         Vector2D old_pos_vec;
         Vector2D new_pos_vec;

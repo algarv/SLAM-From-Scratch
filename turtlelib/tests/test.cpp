@@ -744,19 +744,64 @@ TEST_CASE("FK_Arc", "[forward_kinematics]") { //Anna Garverick
     REQUIRE(updated_config.y == Approx(0.637).margin(.1));
 }
 
-// TEST_CASE("FK_Invalid", "[forward_kinematics]") { //Anna Garverick
-//     turtlelib::DiffDrive D;
-//     turtlelib::Twist2D twist;
-//     turtlelib::Wheel_Angle dphi;
-//     turtlelib::q old_config;
+TEST_CASE("FK_Invalid", "[forward_kinematics]") { //Anna Garverick
+    turtlelib::DiffDrive D;
+    turtlelib::Twist2D twist;
+    turtlelib::Wheel_Angle dphi;
+    turtlelib::q old_config;
 
-//     old_config.theta = 0;
-//     old_config.x = 0;
-//     old_config.y = 0;
+    old_config.theta = 0;
+    old_config.x = 0;
+    old_config.y = 0;
 
-//     twist.w = turtlelib::PI/2;
-//     twist.vx = 1;
-//     twist.vy = 1;
+    twist.w = turtlelib::PI/2;
+    twist.vx = 1;
+    twist.vy = 1;
 
-//     CHECK_THROWS_AS(D.get_q(twist, old_config),std::logic_error)
-// }
+    CHECK_THROWS_AS(D.get_q(twist, old_config),std::logic_error);
+}
+
+TEST_CASE("IK_Forward Drive", "[inverse_kinematics]") { //Anna Garverick
+    turtlelib::DiffDrive D;
+    turtlelib::Twist2D twist;
+    turtlelib::Wheel_Angular_Velocities wheel_velocities;
+
+    twist.w = 0;
+    twist.vx = 0.033 * turtlelib::PI/4;
+    twist.vy = 0;
+
+    wheel_velocities = D.wheel_vel(twist);
+
+    REQUIRE(wheel_velocities.L == turtlelib::PI/4);
+    REQUIRE(wheel_velocities.R == turtlelib::PI/4);
+}
+
+TEST_CASE("IK_Pure Rotation", "[inverse_kinematics]") { //Anna Garverick
+    turtlelib::DiffDrive D;
+    turtlelib::Twist2D twist;
+    turtlelib::Wheel_Angular_Velocities wheel_velocities;
+
+    twist.w = (0.033 * (turtlelib::PI/4)) / .08;
+    twist.vx = 0;
+    twist.vy = 0;
+
+    wheel_velocities = D.wheel_vel(twist);
+
+    REQUIRE(wheel_velocities.L == -1 * turtlelib::PI/4);
+    REQUIRE(wheel_velocities.R == turtlelib::PI/4);
+}
+
+TEST_CASE("IK_Arc", "[inverse_kinematics]") { //Anna Garverick
+    turtlelib::DiffDrive D;
+    turtlelib::Twist2D twist;
+    turtlelib::Wheel_Angular_Velocities wheel_velocities;
+
+    twist.w = turtlelib::PI/2;
+    twist.vx = turtlelib::PI/4;
+    twist.vy = 0;
+
+    wheel_velocities = D.wheel_vel(twist);
+
+    REQUIRE(wheel_velocities.L == Approx(20).margin(.1));
+    REQUIRE(wheel_velocities.R == Approx(27.607).margin(.1));
+}
