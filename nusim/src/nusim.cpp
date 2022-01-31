@@ -32,7 +32,6 @@
 #include <visualization_msgs/MarkerArray.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include "nusim/teleport.h"
-#include "nusim/add_obstacle.h"
 #include "nuturtlebot_msgs/WheelCommands.h"
 #include "nuturtlebot_msgs/SensorData.h"
 #include "turtlelib/rigid2d.hpp"
