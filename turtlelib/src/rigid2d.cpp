@@ -6,6 +6,11 @@
 
 
 namespace turtlelib{
+
+    Transform2D::Transform2D(void){
+      Transform2D T(0);
+    };
+
     Transform2D::Transform2D(Vector2D v){
       T[0][0] = 1;
       T[0][1] = 0;  
@@ -181,18 +186,29 @@ namespace turtlelib{
       double degrees, radians;
       Vector2D v;
 
-      is.ignore(10,'d');       
-      is.ignore(10,' ');
-      is >> degrees;
-      
-      is.ignore(10,' ');
-      is.ignore(10,' ');
-      is >> v.x;
-      
-      is.ignore(10,':');
-      is >> v.y;
+      std::string ignore1;
+      std::string ignore2;
+      std::string ignore3;
 
-      is.get();
+      char c = is.peek();
+      if (c == 'd'){
+        is >> ignore1 >> degrees >> ignore2 >> v.x >> ignore3 >> v.y;
+      }
+      else {
+        is >> degrees >> v.x >> v.y;
+      }
+
+
+      // is >> degrees;
+      
+      // is.ignore(10,' ');
+      // is.ignore(10,' ');
+      // is >> v.x;
+      
+      // is.ignore(10,':');
+      // is >> v.y;
+
+      // is.get();
 
       radians = deg2rad(degrees);
 
@@ -202,7 +218,7 @@ namespace turtlelib{
     }
 
     std::ostream & operator<<(std::ostream & os, const Transform2D & tf){
-      os << "deg: " << rad2deg(tf.rotation()) << " x: " << tf.translation().x << " y: " << tf.translation().y << "\n";
+      os << "deg: " << rad2deg(tf.rotation()) << " x: " << tf.translation().x << " y: " << tf.translation().y  << "\n";
       return os;
     }
 
@@ -234,19 +250,29 @@ namespace turtlelib{
     }
 
     std::istream & operator>>(std::istream & is, Twist2D & v){
-      
+
       char c = is.peek();
       if (c == '[') {
         is.get();
       }
-
-      is >> v.w;
-      is >> v.vx;
-      is >> v.vy;
+      
+      is >> v.w >> v.vx >> v.vy;
 
       is.get();
 
       return is;
+      // char c = is.peek();
+      // if (c == '[') {
+      //   is.get();
+      // }
+
+      // is >> v.w;
+      // is >> v.vx;
+      // is >> v.vy;
+
+      // is.get();
+
+      // return is;
     }
 
     std::ostream & operator<<(std::ostream &os, const Twist2D &v){

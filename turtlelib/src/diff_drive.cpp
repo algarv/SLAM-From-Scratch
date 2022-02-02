@@ -55,11 +55,18 @@ namespace turtlelib
 
         Transform2D Tbbp = integrate_twist(twist);
 
-        new_pos_vec = Tbbp(old_pos_vec);
+        Transform2D T_wb(old_pos_vec, old_pos.theta);
+        // new_pos_vec = Tbbp(old_pos_vec);
+        Transform2D T_wbp(0);
+        T_wbp = T_wb * Tbbp;
 
-        q.theta = old_pos.theta + twist.w;
-        q.x = new_pos_vec.x;
-        q.y = new_pos_vec.y;
+        // q.theta = old_pos.theta + twist.w;
+        // q.x = new_pos_vec.x;
+        // q.y = new_pos_vec.y;
+
+        q.theta = T_wbp.rotation();
+        q.x = T_wbp.translation().x;
+        q.y = T_wbp.translation().y;
 
         return q;
     }

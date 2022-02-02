@@ -186,6 +186,17 @@ TEST_CASE("ostream Transform output","[Transform2D]"){//James Avtges
 static const double epsilon = 1.0e-12;
 using namespace turtlelib;
 
+TEST_CASE("Failed from Homework 1","[istream]") //Matt Elwin
+{
+    turtlelib::Transform2D tfin;
+    std::stringstream ss2;
+    ss2 << "45 -1 7";
+    ss2 >> tfin;
+    CHECK(tfin.rotation() == Approx(PI/4.0));
+    CHECK(tfin.translation().x == Approx(-1));
+    CHECK(tfin.translation().y == Approx(7));
+}
+
 TEST_CASE("Transform2D::operator*=, Self Reference", "[Transform2D]") //Ryan King Shepard
 {
     //Build objects
@@ -723,7 +734,7 @@ TEST_CASE("FK_Pure Rotation", "[forward_kinematics]") { //Anna Garverick
     REQUIRE(updated_config.y == 0);
 }
 
-TEST_CASE("FK_Arc", "[forward_kinematics]") { //Anna Garverick
+TEST_CASE("FK_Arc_input_twist", "[forward_kinematics]") { //Anna Garverick
     turtlelib::DiffDrive D;
     turtlelib::Twist2D twist;
     turtlelib::Wheel_Angle dphi;
@@ -738,6 +749,29 @@ TEST_CASE("FK_Arc", "[forward_kinematics]") { //Anna Garverick
     twist.vy = 0;
 
     turtlelib::q updated_config = D.get_q(twist, old_config);
+
+    REQUIRE(updated_config.theta == Approx(turtlelib::PI/2).margin(.1));
+    REQUIRE(updated_config.x == Approx(0.5).margin(.1));
+    REQUIRE(updated_config.y == Approx(0.5).margin(.1));
+}
+
+TEST_CASE("FK_Arc_input_angles", "[forward_kinematics]") { //Anna Garverick
+    turtlelib::DiffDrive D;
+    turtlelib::Twist2D twist;
+    turtlelib::Wheel_Angle old_dphi, dphi;
+    turtlelib::q old_config, updated_config;
+
+    old_dphi.L = 0;
+    old_dphi.R = 0;
+
+    old_config.theta = 0;
+    old_config.x = 0;
+    old_config.y = 0;
+
+    dphi.L = ((.5 + .08) * turtlelib::PI/2)/0.033;
+    dphi.R = ((.5 - .08) * turtlelib::PI/2)/0.033;
+
+    updated_config = D.get_q(dphi, old_dphi, old_config);
 
     REQUIRE(updated_config.theta == Approx(turtlelib::PI/2).margin(.1));
     REQUIRE(updated_config.x == Approx(0.5).margin(.1));

@@ -45,7 +45,7 @@ static std_msgs::UInt64 ts;
 static sensor_msgs::JointState wheels;
 static geometry_msgs::TransformStamped tfStamped;
 static nuturtlebot_msgs::SensorData sensor_data; 
-static ros::Publisher obj_pub, js_pub, ts_pub, cmd_vel_pub, arena_pub, sensor_pub;
+static ros::Publisher obj_pub, js_pub, ts_pub, arena_pub, sensor_pub;
 static ros::Subscriber wheel_sub;
 static ros::ServiceServer rs_service, tp_service;
 static visualization_msgs::MarkerArray obstacle, obj_array, marker_arena, arena_array;
@@ -245,7 +245,6 @@ int main(int argc, char *argv[]){
     obj_pub = nh.advertise<visualization_msgs::MarkerArray>("visualization_marker_array", 100);
     arena_pub = nh.advertise<visualization_msgs::MarkerArray>("visualization_marker_array", 100);
     sensor_pub = nh.advertise<nuturtlebot_msgs::SensorData>("encoder_ticks",100);
-    // cmd_vel_pub = pub_nh.advertise<geometry_msgs::Twist>("cmd_vel", 100);
 
     rs_service = nh.advertiseService("Restart", restart);
     tp_service = nh.advertiseService("Teleport", teleport);
