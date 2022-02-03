@@ -244,7 +244,7 @@ int main(int argc, char *argv[]){
     js_pub = pub_nh.advertise<sensor_msgs::JointState>("joint_states", 100);
     obj_pub = nh.advertise<visualization_msgs::MarkerArray>("visualization_marker_array", 100);
     arena_pub = nh.advertise<visualization_msgs::MarkerArray>("visualization_marker_array", 100);
-    sensor_pub = nh.advertise<nuturtlebot_msgs::SensorData>("encoder_ticks",100);
+    sensor_pub = nh.advertise<nuturtlebot_msgs::SensorData>("sensor_data",100);
 
     rs_service = nh.advertiseService("Restart", restart);
     tp_service = nh.advertiseService("Teleport", teleport);
