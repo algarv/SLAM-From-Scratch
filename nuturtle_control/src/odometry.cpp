@@ -1,3 +1,20 @@
+/// \file odometry.cpp
+/// \brief Publishes odometry messages for the turtlebot to follow.
+///
+/// PARAMETERS:
+///     rate (rate.yaml): ros rate
+///     body_id: The id of the body frame
+///     odom_id: The id of the odom frame 
+///     wheel_left: The name of the left wheel joint
+///     wheel_right: The name of the right wheel joint
+///     encoder_ticks_to_rad (diff_params.yaml): The number of radians per encoder tick
+///
+/// PUBLISHES:
+///     odom (nav_msgs/Odometry): publishes the velocity of each wheel
+/// 
+/// SUBSCRIBERS:
+///     joint_states (sensor_msgs/JointState): Recieves the wheel joint angles
+
 #include <ros/ros.h>
 #include <string>
 #include "turtlelib/rigid2d.hpp"
@@ -19,6 +36,9 @@ ros::Publisher odom_pub;
 nav_msgs::Odometry odom_msg;
 
 void update_odom(const sensor_msgs::JointState &wheels){
+/// \brief Receives a wheel joint states and translates into a twist for the odometry message
+///
+/// \param wheels - wheel joint states
 
     turtlelib::Wheel_Angle wheel_angles;
     wheel_angles.L = wheels.position[0];
