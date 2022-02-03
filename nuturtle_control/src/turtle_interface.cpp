@@ -1,7 +1,5 @@
-#include <iostream>
-#include <string>
-#include <vector>
 #include <ros/ros.h>
+#include <string>
 #include "turtlelib/rigid2d.hpp"
 #include "turtlelib/diff_drive.hpp"
 #include <geometry_msgs/Twist.h>
@@ -18,7 +16,7 @@ static std::string left_wheel = "red_wheel_left_joint", right_wheel = "red_wheel
 static turtlelib::DiffDrive D; 
 static turtlelib::Twist2D twist_cmd;
 static turtlelib::Wheel_Angular_Velocities vels;
-static turtlelib::Wheel_Angle d_angles;
+static turtlelib::Wheel_Angle wheel_angles;
 static sensor_msgs::JointState wheels;
 
 nuturtlebot_msgs::WheelCommands output_cmd;
@@ -41,11 +39,11 @@ void calc_joint_states(const nuturtlebot_msgs::SensorData &sensor_data){
     L_ticks = sensor_data.left_encoder;
     R_ticks = sensor_data.right_encoder;
 
-    d_angles.L = turtlelib::normalize_angle(L_ticks * eticks_rad);
-    d_angles.R = turtlelib::normalize_angle(R_ticks * eticks_rad);
+    wheel_angles.L = turtlelib::normalize_angle(L_ticks * eticks_rad);
+    wheel_angles.R = turtlelib::normalize_angle(R_ticks * eticks_rad);
 
     wheels.name = {left_wheel, right_wheel};
-    wheels.position = {0, 0};
+    wheels.position = {wheel_angles.L, wheel_angles.R};
 }
 
 int main(int argc, char *argv[]){
@@ -61,7 +59,7 @@ int main(int argc, char *argv[]){
         ROS_DEBUG_ONCE("encoder_ticks_to_rad not defined");
         ros::shutdown();
     }
-    
+
     if (ros::param::has("rate")){
         ros::param::get("rate", rate);
     }
