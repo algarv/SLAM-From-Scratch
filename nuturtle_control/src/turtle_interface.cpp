@@ -11,8 +11,7 @@
 /// 
 /// SUBSCRIBERS:
 ///     turtle_interface/cmd_vel (geometry_msgs/Twist): Recieves a twist command
-///     turtle_interface/sensor_data (nuturtlebot_msgs/SensorData): Recieves encoder tick count
-
+///     turtle_interface/sensor_data (nuturtlebot_msgs/SensorData): Recieves encoder tick
 
 #include <ros/ros.h>
 #include <string>
@@ -92,8 +91,8 @@ int main(int argc, char *argv[]){
 
     ros::Rate r(rate);
 
-    output_cmd.left_velocity = 0;
-    output_cmd.right_velocity = 0;
+    wheel_vel_msg.left_velocity = 0;
+    wheel_vel_msg.right_velocity = 0;
 
     cmd_vel_sub = nh.subscribe("cmd_vel",100,follow_twist); 
     sensor_sub = nh.subscribe("sensor_data",100,calc_joint_states);
