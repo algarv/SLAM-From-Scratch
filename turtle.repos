@@ -1,0 +1,9 @@
+repositories:
+  src/nuturtlebot_msgs:
+    type: git
+    url: git@github.com:ME495-Navigation/nuturtlebot_msgs.git
+    version: main
+  src/slam-project-algarv:
+    type: git
+    url: git@github.com:ME495-Navigation/slam-project-algarv.git
+    version: main
