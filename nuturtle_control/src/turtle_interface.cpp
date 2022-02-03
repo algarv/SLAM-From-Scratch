@@ -8,6 +8,7 @@
 #include "nuturtlebot_msgs/WheelCommands.h"
 #include "nuturtlebot_msgs/SensorData.h"
 #include <sensor_msgs/JointState.h>
+#include <ros/console.h>
 
 static int rate;
 static ros::Subscriber cmd_vel_sub, sensor_sub;
@@ -53,8 +54,22 @@ int main(int argc, char *argv[]){
     
     ros::NodeHandle nh("~"), pub_nh;
 
-    nh.getParam("encoder_ticks_to_rad", eticks_rad);
-    nh.getParam("rate", rate);
+    if (ros::param::has("encoder_ticks_to_rad")){
+        ros::param::get("encoder_ticks_to_rad", eticks_rad);
+    }
+    else {
+        ROS_DEBUG_ONCE("encoder_ticks_to_rad not defined");
+        ros::shutdown();
+    }
+    
+    if (ros::param::has("rate")){
+        ros::param::get("rate", rate);
+    }
+    else {
+        ROS_DEBUG_ONCE("rate not defined");
+        ros::shutdown();
+    }
+
     ros::Rate r(rate);
 
     output_cmd.left_velocity = 0;
