@@ -13,7 +13,7 @@
 ///     odom (nav_msgs/Odometry): publishes the velocity of each wheel
 /// 
 /// SUBSCRIBERS:
-///     joint_states (sensor_msgs/JointState): Recieves the wheel joint angles
+///     joint_states (sensor_msgs/JointState): Receives the wheel joint angles
 
 #include <ros/ros.h>
 #include <string>
@@ -58,14 +58,14 @@ void update_odom(const sensor_msgs::JointState &wheels){
     odom_msg.twist.twist.angular.z = twist.w;
 }
 
-// bool set_pose(turtle_interface::set_pose::Request &pos, turtle_interface::set_pose::Response &response){
+bool set_pose(nuturtle_control::set_pose::Request &pos, nuturtle_control::set_pose::Response &response){
 
-//     twist.vx = pos.x;
-//     twist.vy = pos.y;
-//     twist.w = pos.w;
+    twist.vx = pos.x;
+    twist.vy = pos.y;
+    twist.w = pos.w;
 
-//     return true;
-// }
+    return true;
+}
 
 int main(int argc, char *argv[]){
 
@@ -112,7 +112,7 @@ int main(int argc, char *argv[]){
 
     js_sub = nh.subscribe("joint_states",100,update_odom);
 
-    // pose_service = nh.advertiseService("set_pose",set_pose);
+    pose_service = nh.advertiseService("set_pose",set_pose);
 
     while(1){
 

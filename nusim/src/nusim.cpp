@@ -39,7 +39,7 @@
 
 static int rate;
 static double x = 0, y = 0, w = 0, x_length = 0, y_length = 0, width = 0, dticks_radsec, eticks_radsec;
-static std::string left_wheel = "red_wheel_left_joint", right_wheel = "red_wheel_right_joint";
+static std::string left_wheel = "red_wheel_left_joint", right_wheel = "red_wheel_right_joint", odom_id;
 std::vector<double> obj_x_list, obj_y_list, obj_d_list, radsec;
 static std_msgs::UInt64 ts;
 static sensor_msgs::JointState wheels;
@@ -258,6 +258,8 @@ int main(int argc, char *argv[]){
     nh.getParam("motor_cmd_to_radsec", dticks_radsec);
     nh.getParam("encoder_ticks_to_rad", eticks_radsec);
     
+    nh.param<std::string>("odom_id",odom_id,"odom");
+
     old_pos.theta = w;
     old_pos.x = x;
     old_pos.y = y;
@@ -277,7 +279,7 @@ int main(int argc, char *argv[]){
 
         tfStamped.header.stamp = ros::Time::now();
         tfStamped.header.frame_id = "world";
-        tfStamped.child_frame_id = "red_base_footprint";
+        tfStamped.child_frame_id = odom_id;
         tfStamped.transform.translation.x = x;
         tfStamped.transform.translation.y = y;
         tfStamped.transform.translation.z = 0;
@@ -304,8 +306,8 @@ int main(int argc, char *argv[]){
 
         sensor_pub.publish(sensor_data);
         
-        wheel_angles.L = old_wheel_angles.L + radsec[0] * ts.data;
-        wheel_angles.R = old_wheel_angles.R + radsec[1] * ts.data;
+        wheel_angles.L = old_wheel_angles.L + radsec[0] * 1;
+        wheel_angles.R = old_wheel_angles.R + radsec[1] * 1;
 
         pos = DD.get_q(wheel_angles, old_wheel_angles, old_pos);
 
