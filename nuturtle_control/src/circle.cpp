@@ -52,18 +52,14 @@ int main(int argc, char *argv[]){
     ros::ServiceServer reverse_service = nh.advertiseService("Reverse",reverse);
     ros::ServiceServer stop_service = nh.advertiseService("Stop",stop);
 
-    ros::Publisher cmd_vel_pub = pub_nh.advertise<geometry_msgs::Twist>("cmd_vel", 10);
+    ros::Publisher cmd_vel_pub = pub_nh.advertise<geometry_msgs::Twist>("cmd_vel", 100);
     stopped = false;
 
     geometry_msgs::Twist twist_cmd;
     
     while(stopped == false){
-        if (rad == 0){
-            twist_cmd.linear.x = 0;
-            twist_cmd.angular.z = vel;
-        }
-        twist_cmd.linear.x = vel;
-        twist_cmd.angular.z = vel/rad;
+        twist_cmd.linear.x = vel * rad;
+        twist_cmd.angular.z = vel;
         cmd_vel_pub.publish(twist_cmd);
         ros::spinOnce();
         r.sleep();

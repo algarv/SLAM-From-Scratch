@@ -85,6 +85,20 @@ namespace turtlelib
         return twist;
     }
 
+    Twist2D DiffDrive::get_twist(Wheel_Angular_Velocities wheel_vel){
+        Wheel_Angle dphi;
+        Twist2D twist;
+
+        dphi.L = wheel_vel.L;
+        dphi.R = wheel_vel.R;
+
+        twist.w = (WHEEL_RADIUS / TRACK_WIDTH) * (dphi.L - dphi.R);
+        twist.vx = .5*WHEEL_RADIUS*(dphi.R + dphi.L);
+        twist.vy = 0;
+        
+        return twist;
+    }
+
     q DiffDrive::get_q(Wheel_Angle new_wheel_angles, Wheel_Angle old_wheel_angles, q old_pos){
 
         q q;

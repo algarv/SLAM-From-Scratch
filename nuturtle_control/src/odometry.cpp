@@ -36,6 +36,7 @@ static bool teleporting = false;
 static double x = 0, y = 0, w = 0;
 std::string body_id, odom_id, wheel_left, wheel_right;
 turtlelib::Wheel_Angle wheel_angles = {.L = 0, .R = 0}, old_wheel_angles = {.L = 0, .R = 0};
+turtlelib::Wheel_Angular_Velocities wheel_vels;
 turtlelib::DiffDrive D;
 turtlelib::Twist2D twist;
 turtlelib::q pos, old_pos;
@@ -52,7 +53,11 @@ void update_odom(const sensor_msgs::JointState &wheels){
 
     wheel_angles.L = wheels.position[0];
     wheel_angles.R = wheels.position[1];
-    twist = D.get_twist(wheel_angles, old_wheel_angles);
+    wheel_vels.L = wheels.velocity[0];
+    wheel_vels.R = wheels.velocity[1];
+    // twist = D.get_twist(wheel_angles, old_wheel_angles);
+    twist = D.get_twist(wheel_vels);
+
 
     // odom_msg.header.frame_id = "odom";
     odom_msg.twist.twist.linear.x = twist.vx;

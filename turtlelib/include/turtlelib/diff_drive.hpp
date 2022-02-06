@@ -54,6 +54,8 @@ namespace turtlelib
 
             Twist2D get_twist(Wheel_Angle new_wheel_angles, Wheel_Angle old_wheel_angles);
 
+            Twist2D get_twist(Wheel_Angular_Velocities wheel_vel);
+
             q get_q(Twist2D twist, q old_pos);
 
             q get_q(Wheel_Angle new_wheel_angles, Wheel_Angle old_wheel_angles, q old_pos); 

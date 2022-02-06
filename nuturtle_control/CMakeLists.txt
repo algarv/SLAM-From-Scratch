@@ -200,9 +200,9 @@ install(TARGETS circle odometry turtle_interface
 # )
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
-# install(FILES turtle_interface
-#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-# )
+install(FILES loader.sh
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
 
 #############
 ## Testing ##

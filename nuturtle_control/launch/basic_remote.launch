@@ -1,0 +1,6 @@
+<launch>
+
+  <machine name="turtlebot" env-loader=$(find nuturtle_control)/loader.sh>
+  </machine>
+
+</launch>
