@@ -72,45 +72,44 @@ int main(int argc, char *argv[]){
     ros::init(argc, argv, "odometry");
     ros::NodeHandle nh("~"), pub_nh;
 
-    if (ros::param::has("body_id")){
+    // if (ros::param::has("body_id")){
         ros::param::get("body_id", body_id);
-    }
-    else {
-        ROS_DEBUG_ONCE("body_id not defined");
-        ros::shutdown();
-    }
+    // }
+    // else {
+    //     ROS_DEBUG_ONCE("body_id not defined");
+    //     ros::shutdown();
+    // }
 
-    if (ros::param::has("wheel_left")){
+    // if (ros::param::has("wheel_left")){
         ros::param::get("wheel_left", wheel_left);
-    }
-    else {
-        ROS_DEBUG_ONCE("wheel_left not defined");
-        ros::shutdown();
-    }
+    // }
+    // else {
+    //     ROS_DEBUG_ONCE("wheel_left not defined");
+    //     ros::shutdown();
+    // }
 
-    if (ros::param::has("wheel_right")){
+    // if (ros::param::has("wheel_right")){
         ros::param::get("wheel_right", wheel_right);
-    }
-    else {
-        ROS_DEBUG_ONCE("wheel_right not defined");
-        ros::shutdown();
-    }
+    // }
+    // else {
+    //     ROS_DEBUG_ONCE("wheel_right not defined");
+    //     ros::shutdown();
+    // }
 
-    if (ros::param::has("rate")){
+    // if (ros::param::has("rate")){
         ros::param::get("rate", rate);
-    }
-    else {
-        ROS_DEBUG_ONCE("rate not defined");
-        ros::shutdown();
-    }
+    // }
+    // else {
+    //     ROS_DEBUG_ONCE("rate not defined");
+    //     ros::shutdown();
+    // }
 
     nh.param<std::string>("odom_id",odom_id,"odom");
 
     ros::Rate r(rate);
 
-    odom_pub = pub_nh.advertise<nav_msgs::Odometry>("odom", 100);
-
-    js_sub = nh.subscribe("joint_states",100,update_odom);
+    odom_pub = pub_nh.advertise<nav_msgs::Odometry>("odom", 10);
+    js_sub = pub_nh.subscribe("red/joint_states",100,update_odom);
 
     pose_service = nh.advertiseService("set_pose",set_pose);
 

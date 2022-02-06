@@ -15,22 +15,28 @@
 #include "nuturtle_control/control.h"
 #include <std_srvs/Empty.h>
 
-static double v, r;
+static double vel = 0.0, rad = 1.0;
 bool stopped;
 
-void control(nuturtle_control::control::Request &params, nuturtle_control::control::Return &return){
+bool control(nuturtle_control::control::Request &params, nuturtle_control::control::Response &response){
 
-    v = params.velocity;
-    r = params.radius;
+    vel = params.velocity;
+    rad = params.radius;
+
+    return true;
 
 }
 
-void reverse(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response){
-    v = -1 * v;
+bool reverse(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response){
+    vel = -1 * vel;
+
+    return true;
 }
 
-void stop(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response){
+bool stop(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response){
     stopped = true;
+
+    return true;
 }
 
 int main(int argc, char *argv[]){
@@ -42,24 +48,28 @@ int main(int argc, char *argv[]){
     nh.getParam("rate", rate);
     ros::Rate r(rate);
 
-    ros::ServiceServer control_service = nh.advertiseService("control",control);
-    ros::ServiceServer reverse_service = nh.advertiseService("reverse",reverse);
-    ros::ServiceServer stop_service = nh.advertiseService("stop",stop);
+    ros::ServiceServer control_service = nh.advertiseService("Control",control);
+    ros::ServiceServer reverse_service = nh.advertiseService("Reverse",reverse);
+    ros::ServiceServer stop_service = nh.advertiseService("Stop",stop);
 
-    ros::Publisher cmd_vel_pub = pub_nh.advertise<geometry_msgs::Twist>("red/wheel_cmd", 100);
+    ros::Publisher cmd_vel_pub = pub_nh.advertise<geometry_msgs::Twist>("cmd_vel", 10);
     stopped = false;
 
+    geometry_msgs::Twist twist_cmd;
+    
     while(stopped == false){
-        turtlelib::Twist2D twist_cmd{.vx = v, .vy = 0, .w = v/r};
+        twist_cmd.linear.x = vel;
+        twist_cmd.angular.z = vel/rad;
+        cmd_vel_pub.publish(twist_cmd);
         ros::spinOnce();
         r.sleep();
     }
 
-    turtlelib::Twist2D twist_cmd{.vx = 0, .vy = 0, .w = 0};
+    twist_cmd.linear.x = 0;
+    twist_cmd.angular.z = 0;
     cmd_vel_pub.publish(twist_cmd);
-
-    }
-    }
+    ros::spinOnce();
+    r.sleep();
 
     return 0;
 }

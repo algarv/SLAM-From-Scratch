@@ -26,11 +26,11 @@
 static int rate;
 static ros::Subscriber cmd_vel_sub, sensor_sub;
 static ros::Publisher wheel_pub, js_pub;
-static double eticks_rad;
+static double eticks_rad, mticks_radsec;
 static std::string left_wheel = "red_wheel_left_joint", right_wheel = "red_wheel_right_joint";
 static turtlelib::DiffDrive D; 
 static turtlelib::Twist2D twist_cmd;
-static turtlelib::Wheel_Angular_Velocities vels;
+static turtlelib::Wheel_Angular_Velocities vel_cmd, wheel_vels;
 static turtlelib::Wheel_Angle wheel_angles;
 static sensor_msgs::JointState wheel_msg;
 static nuturtlebot_msgs::WheelCommands wheel_vel_msg;
@@ -44,14 +44,16 @@ void follow_twist(const geometry_msgs::Twist &wheel_cmd){
     twist_cmd.vy = wheel_cmd.linear.y;
     twist_cmd.w = wheel_cmd.angular.z;
 
-    vels = D.wheel_vel(twist_cmd);
+    vel_cmd = D.wheel_vel(twist_cmd);
+    // ROS_WARN("vx: %f,vy: %f,w: %f",twist_cmd.vx,twist_cmd.vy,twist_cmd.w);//edit
 
-    wheel_vel_msg.left_velocity = vels.L;
-    wheel_vel_msg.right_velocity = vels.R;
+    wheel_vel_msg.left_velocity = vel_cmd.L;
+    wheel_vel_msg.right_velocity = vel_cmd.R;
+
 }
 
 void calc_joint_states(const nuturtlebot_msgs::SensorData &sensor_data){
-/// \brief Recieves a sensor data message and uses the encoder ticks to return wheel positions.
+/// \brief Receives a sensor data message and uses the encoder ticks to return wheel positions.
 ///
 /// \param sensor_data - Sensor data recieved from nuturtlebot_msgs
 
@@ -60,11 +62,16 @@ void calc_joint_states(const nuturtlebot_msgs::SensorData &sensor_data){
     L_ticks = sensor_data.left_encoder;
     R_ticks = sensor_data.right_encoder;
 
-    wheel_angles.L = turtlelib::normalize_angle(L_ticks * eticks_rad);
-    wheel_angles.R = turtlelib::normalize_angle(R_ticks * eticks_rad);
+    wheel_angles.L = (L_ticks * eticks_rad);
+    wheel_angles.R = (R_ticks * eticks_rad);
 
-    wheel_msg.name = {left_wheel, right_wheel};
+    wheel_vels.L = L_ticks * mticks_radsec;
+    wheel_vels.R = R_ticks * mticks_radsec;
+
+    wheel_msg.header.stamp = ros::Time::now();
+    wheel_msg.name = {"red_wheel_left_joint", "red_wheel_right_joint"};
     wheel_msg.position = {wheel_angles.L, wheel_angles.R};
+    wheel_msg.velocity = {wheel_vels.L, wheel_vels.R};
 }
 
 int main(int argc, char *argv[]){
@@ -73,40 +80,61 @@ int main(int argc, char *argv[]){
     
     ros::NodeHandle nh("~"), pub_nh;
 
-    if (ros::param::has("encoder_ticks_to_rad")){
-        ros::param::get("encoder_ticks_to_rad", eticks_rad);
-    }
-    else {
-        ROS_DEBUG_ONCE("encoder_ticks_to_rad not defined");
-        ros::shutdown();
-    }
+    rate = 50;
 
-    if (ros::param::has("rate")){
-        ros::param::get("rate", rate);
-    }
-    else {
-        ROS_DEBUG_ONCE("rate not defined");
-        ros::shutdown();
-    }
+    // if (ros::param::has("/turtle_interface/encoder_ticks_to_rad")){
+        ros::param::get("red/encoder_ticks_to_rad", eticks_rad);
+    // }
+    // else {
+    //     ROS_DEBUG_ONCE("encoder_ticks_to_rad not defined");
+    //     // ros::shutdown();
+    // }
+
+    // if (ros::param::has("/turtle_interface/motor_cmd_to_radsec")){
+        ros::param::get("red/motor_cmd_to_radsec", mticks_radsec);
+    // }
+    // else {
+        // ROS_DEBUG_ONCE("motor_cmd_to_radsec not defined");
+        // ros::shutdown();
+    // }
+
+    // if (ros::param::has("turtle_interface/rate")){
+        ros::param::get("turtle_interface/rate", rate);
+    // }
+    // else {
+    //     ROS_DEBUG_ONCE("rate not defined");
+    //     // ros::shutdown();
+    // }
 
     ros::Rate r(rate);
 
-    wheel_vel_msg.left_velocity = 0;
-    wheel_vel_msg.right_velocity = 0;
+    // wheel_vel_msg.left_velocity = 0;
+    // wheel_vel_msg.right_velocity = 0;
 
-    cmd_vel_sub = nh.subscribe("cmd_vel",100,follow_twist); 
-    sensor_sub = nh.subscribe("sensor_data",100,calc_joint_states);
+    cmd_vel_sub = pub_nh.subscribe("cmd_vel",10,follow_twist); 
+    sensor_sub = pub_nh.subscribe("sensor_data",10,calc_joint_states);
 
-    wheel_pub = pub_nh.advertise<nuturtlebot_msgs::WheelCommands>("red/wheel_cmd", 100);
-    js_pub = pub_nh.advertise<sensor_msgs::JointState>("joint_states", 100);
+    wheel_pub = pub_nh.advertise<nuturtlebot_msgs::WheelCommands>("red/wheel_cmd", 10);
+    js_pub = pub_nh.advertise<sensor_msgs::JointState>("red/joint_states", 10);
+
+    // wheel_msg.header.frame_id = "world";
+    wheel_msg.header.stamp = ros::Time::now();
+    wheel_msg.name = {left_wheel, right_wheel};
+    wheel_msg.position = {0, 0};
+    wheel_msg.velocity = {0, 0};
 
     while(true){
-
+        // wheel_vel_msg.left_velocity = 10; 
+        // wheel_vel_msg.right_velocity = 10;
+        // wheel_vel_msg.left_velocity = vel_cmd.L; //edit
+        // wheel_vel_msg.right_velocity = vel_cmd.R;
         wheel_pub.publish(wheel_vel_msg);  
+        
         js_pub.publish(wheel_msg);
 
         ros::spinOnce();
         r.sleep();
     }
+
     return 0;
 }

@@ -8,6 +8,8 @@ Panels:
         - /Status1
         - /RobotModel1
         - /MarkerArray1
+        - /TF1
+        - /TF1/Frames1
       Splitter Ratio: 0.5
     Tree Height: 1550
   - Class: rviz/Selection
@@ -111,6 +113,53 @@ Visualization Manager:
         nusim_node: true
       Queue Size: 100
       Value: true
+    - Class: rviz/TF
+      Enabled: true
+      Frame Timeout: 15
+      Frames:
+        All Enabled: false
+        odom:
+          Value: true
+        red_base_footprint:
+          Value: true
+        red_base_link:
+          Value: false
+        red_base_scan:
+          Value: false
+        red_caster_back_link:
+          Value: false
+        red_imu_link:
+          Value: false
+        red_wheel_left_link:
+          Value: true
+        red_wheel_right_link:
+          Value: true
+        world:
+          Value: true
+      Marker Alpha: 1
+      Marker Scale: 1
+      Name: TF
+      Show Arrows: true
+      Show Axes: true
+      Show Names: true
+      Tree:
+        world:
+          odom:
+            {}
+          red_base_footprint:
+            red_base_link:
+              red_base_scan:
+                {}
+              red_caster_back_link:
+                {}
+              red_imu_link:
+                {}
+              red_wheel_left_link:
+                {}
+              red_wheel_right_link:
+                {}
+      Update Interval: 0
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -139,7 +188,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 17.953638076782227
+      Distance: 6.553987503051758
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1

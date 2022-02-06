@@ -57,8 +57,8 @@ tf2_ros)
 ## Generate services in the 'srv' folder
 add_service_files(
   FILES
+  control.srv
   set_pose.srv
-#   Service2.srv
 )
 
 ## Generate actions in the 'action' folder
@@ -136,6 +136,7 @@ ${catkin_INCLUDE_DIRS}
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(turtle_interface src/turtle_interface.cpp)
 add_executable(odometry src/odometry.cpp)
+add_executable(circle src/circle.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -158,6 +159,11 @@ target_link_libraries(odometry
   ${catkin_LIBRARIES}
 )
 
+target_link_libraries(circle
+  turtlelib
+  ${catkin_LIBRARIES}
+)
+
 #############
 ## Install ##
 #############
@@ -174,7 +180,7 @@ target_link_libraries(odometry
 
 ## Mark executables for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html
-install(TARGETS odometry turtle_interface
+install(TARGETS circle odometry turtle_interface
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

@@ -10,7 +10,8 @@ project(nusim)
 find_package(catkin REQUIRED COMPONENTS
 message_generation 
 nuturtlebot_msgs
-roscpp 
+sensor_msgs
+roscpp
 std_msgs
 tf2_ros)
 
@@ -104,7 +105,7 @@ generate_messages(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES nusim
-  CATKIN_DEPENDS message_runtime roscpp std_msgs
+CATKIN_DEPENDS message_runtime roscpp std_msgs
 #  DEPENDS system_lib
 )
 

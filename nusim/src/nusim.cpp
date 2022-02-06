@@ -36,9 +36,10 @@
 #include "nuturtlebot_msgs/SensorData.h"
 #include "turtlelib/rigid2d.hpp"
 #include "turtlelib/diff_drive.hpp"
+#include <ros/console.h>
 
-static int rate;
-static double x = 0, y = 0, w = 0, x_length = 0, y_length = 0, width = 0, dticks_radsec, eticks_radsec;
+static int rate, flag = 0;
+static double x = 0, y = 0, w = 0, x_length = 0, y_length = 0, width = 0, left_rot_vel = 0.0, right_rot_vel = 0.0, old_ticks_L = 0, old_ticks_R = 0, dticks_radsec, eticks_radsec;
 static std::string left_wheel = "red_wheel_left_joint", right_wheel = "red_wheel_right_joint", odom_id;
 std::vector<double> obj_x_list, obj_y_list, obj_d_list, radsec;
 static std_msgs::UInt64 ts;
@@ -215,16 +216,30 @@ visualization_msgs::MarkerArray make_arena(float x_length, float y_length){
 
 }
 
-void wheel_commands(const nuturtlebot_msgs::WheelCommands::ConstPtr &wheel_cmd){
-    
-    int d_ticks_left = wheel_cmd->left_velocity;
-    int d_ticks_right = wheel_cmd->right_velocity;
+void update_wheel_position(const nuturtlebot_msgs::WheelCommands::ConstPtr &wheel_cmd){
 
-    radsec[0] = d_ticks_left * dticks_radsec;
-    radsec[1] = d_ticks_right * dticks_radsec;
+    double L_cmd = wheel_cmd->left_velocity;
+    double R_cmd = wheel_cmd->right_velocity;
 
-    sensor_data.left_encoder = radsec[0] / eticks_radsec;
-    sensor_data.right_encoder = radsec[1] / eticks_radsec;
+    if(flag == 20){
+        sensor_data.left_encoder = 0;
+        sensor_data.right_encoder = 0;
+        flag+=1;
+    }
+
+    left_rot_vel = 2.84 * L_cmd / 256.0;
+    right_rot_vel = 2.84 * R_cmd / 256.0;
+
+    // radsec[0] = d_ticks_left * dticks_radsec;
+    // radsec[1] = d_ticks_right * dticks_radsec;
+
+    ROS_WARN("Left: %6.2f Right: %6.2f", left_rot_vel, right_rot_vel);
+
+    sensor_data.stamp = ros::Time::now();
+    sensor_data.left_encoder += (dticks_radsec / left_rot_vel);
+    sensor_data.right_encoder += (dticks_radsec / right_rot_vel);
+    // old_ticks_L = sensor_data.left_encoder;
+    // old_ticks_R = sensor_data.right_encoder;
 }
 
 int main(int argc, char *argv[]){
@@ -233,7 +248,8 @@ int main(int argc, char *argv[]){
     
     ros::NodeHandle nh("~"), pub_nh;
     
-    nh.getParam("rate", rate);
+    nh.getParam("nusim_node/rate", rate);
+    rate = 50;
     ros::Rate r(rate);
 
     ts.data = 0;
@@ -241,10 +257,12 @@ int main(int argc, char *argv[]){
     static tf2_ros::TransformBroadcaster broadcaster;
 
     ts_pub = nh.advertise<std_msgs::UInt64>("timestep",100);
-    js_pub = pub_nh.advertise<sensor_msgs::JointState>("joint_states", 100);
+    // js_pub = pub_nh.advertise<sensor_msgs::JointState>("red/joint_states", 100);
     obj_pub = nh.advertise<visualization_msgs::MarkerArray>("visualization_marker_array", 100);
     arena_pub = nh.advertise<visualization_msgs::MarkerArray>("visualization_marker_array", 100);
-    sensor_pub = nh.advertise<nuturtlebot_msgs::SensorData>("sensor_data",100);
+    sensor_pub = pub_nh.advertise<nuturtlebot_msgs::SensorData>("sensor_data",100);
+
+    wheel_sub = pub_nh.subscribe("red/wheel_cmd", 10, update_wheel_position);
 
     rs_service = nh.advertiseService("Restart", restart);
     tp_service = nh.advertiseService("Teleport", teleport);
@@ -255,46 +273,33 @@ int main(int argc, char *argv[]){
     nh.getParam("x_length", x_length);
     nh.getParam("y_length", y_length);
     nh.getParam("wall_width", width);
-    nh.getParam("motor_cmd_to_radsec", dticks_radsec);
-    nh.getParam("encoder_ticks_to_rad", eticks_radsec);
+    nh.getParam("red/motor_cmd_to_radsec", dticks_radsec);
+    nh.getParam("red/encoder_ticks_to_rad", eticks_radsec);
     
     nh.param<std::string>("odom_id",odom_id,"odom");
+
+    radsec.resize(2);
 
     old_pos.theta = w;
     old_pos.x = x;
     old_pos.y = y;
 
+    sensor_data.stamp = ros::Time::now();
+    sensor_data.left_encoder = 0;
+    sensor_data.right_encoder = 0;
+    sensor_pub.publish(sensor_data);
+
     turtlelib::DiffDrive DD;
 
-    while(ros::ok()) {
+    wheels.header.stamp = ros::Time::now();
+    wheels.name = {left_wheel, right_wheel};
 
-        wheels.name = {left_wheel, right_wheel};
-        wheels.position = {0, 0};
-        js_pub.publish(wheels);
+    while(ros::ok()) {
         
         ts.data += 1;
         ts_pub.publish(ts);
 
         tf2_ros::TransformBroadcaster broadcaster;
-
-        tfStamped.header.stamp = ros::Time::now();
-        tfStamped.header.frame_id = "world";
-        tfStamped.child_frame_id = odom_id;
-        tfStamped.transform.translation.x = x;
-        tfStamped.transform.translation.y = y;
-        tfStamped.transform.translation.z = 0;
-        tf2::Quaternion q;
-        q.setRPY(0, 0, w);
-        tfStamped.transform.rotation.x = q.x();
-        tfStamped.transform.rotation.y = q.y();
-        tfStamped.transform.rotation.z = q.z();
-        tfStamped.transform.rotation.w = q.w();
-
-        broadcaster.sendTransform(tfStamped);
-        
-        nh.getParam("obj_x",obj_x_list);
-        nh.getParam("obj_y",obj_y_list);
-        nh.getParam("obj_d",obj_d_list);
 
         obj_array = add_obstacles(obj_x_list, obj_y_list,obj_d_list);
         obj_pub.publish(obj_array);
@@ -302,14 +307,36 @@ int main(int argc, char *argv[]){
         arena_array = make_arena(x_length,y_length);
         arena_pub.publish(arena_array);
 
-        wheel_sub = nh.subscribe("red/wheel_cmd", 100, wheel_commands);
-
         sensor_pub.publish(sensor_data);
         
-        wheel_angles.L = old_wheel_angles.L + radsec[0] * 1;
-        wheel_angles.R = old_wheel_angles.R + radsec[1] * 1;
+        wheel_angles.L = old_wheel_angles.L + left_rot_vel * 1;
+        wheel_angles.R = old_wheel_angles.R + right_rot_vel * 1;
+
+        wheels.header.stamp = ros::Time::now();
+        wheels.position = {wheel_angles.L, wheel_angles.R};
+
+        // js_pub.publish(wheels);
 
         pos = DD.get_q(wheel_angles, old_wheel_angles, old_pos);
+
+        tfStamped.header.stamp = ros::Time::now();
+        tfStamped.header.frame_id = "world";
+        tfStamped.child_frame_id = "red_base_footprint";
+        tfStamped.transform.translation.x = pos.x;
+        tfStamped.transform.translation.y = pos.y;
+        tfStamped.transform.translation.z = 0;
+        tf2::Quaternion q;
+        q.setRPY(0, 0, pos.theta);
+        tfStamped.transform.rotation.x = q.x();
+        tfStamped.transform.rotation.y = q.y();
+        tfStamped.transform.rotation.z = q.z();
+        tfStamped.transform.rotation.w = q.w();
+
+        broadcaster.sendTransform(tfStamped);
+        
+        nh.getParam("nusim_node/obj_x",obj_x_list);
+        nh.getParam("nusim_node/obj_y",obj_y_list);
+        nh.getParam("nusim_node/obj_d",obj_d_list);
 
         old_wheel_angles = wheel_angles;
         old_pos = pos; 
