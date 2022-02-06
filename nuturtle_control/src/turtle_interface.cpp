@@ -123,7 +123,7 @@ int main(int argc, char *argv[]){
     wheel_msg.position = {0, 0};
     wheel_msg.velocity = {0, 0};
 
-    while(true){
+    while(ros::ok()){
         // wheel_vel_msg.left_velocity = 10; 
         // wheel_vel_msg.right_velocity = 10;
         // wheel_vel_msg.left_velocity = vel_cmd.L; //edit

@@ -32,10 +32,12 @@
 #include "nuturtle_control/set_pose.h"
 
 int rate;
+static double x = 0, y = 0, w = 0;
 std::string body_id, odom_id, wheel_left, wheel_right;
-turtlelib::Wheel_Angle saved_phi;
+turtlelib::Wheel_Angle wheel_angles = {.L = 0, .R = 0}, old_wheel_angles = {.L = 0, .R = 0};
 turtlelib::DiffDrive D;
 turtlelib::Twist2D twist;
+turtlelib::q pos, old_pos;
 static geometry_msgs::TransformStamped odom_tf;
 ros::Subscriber js_sub;
 ros::Publisher odom_pub;
@@ -47,22 +49,23 @@ void update_odom(const sensor_msgs::JointState &wheels){
 ///
 /// \param wheels - wheel joint states
 
-    turtlelib::Wheel_Angle wheel_angles;
     wheel_angles.L = wheels.position[0];
     wheel_angles.R = wheels.position[1];
-    twist = D.get_twist(wheel_angles, saved_phi);
+    ROS_WARN("L: %f R: %f", wheel_angles.L, wheel_angles.R);
+    twist = D.get_twist(wheel_angles, old_wheel_angles);
+    old_wheel_angles = {.L = wheel_angles.L, .R = wheel_angles.R};
 
-    odom_msg.header.frame_id = odom_id;
+    odom_msg.header.frame_id = "odom";
     odom_msg.twist.twist.linear.x = twist.vx;
     odom_msg.twist.twist.linear.y = twist.vy;
     odom_msg.twist.twist.angular.z = twist.w;
 }
 
-bool set_pose(nuturtle_control::set_pose::Request &pos, nuturtle_control::set_pose::Response &response){
+bool set_pose(nuturtle_control::set_pose::Request &pose, nuturtle_control::set_pose::Response &response){
 
-    twist.vx = pos.x;
-    twist.vy = pos.y;
-    twist.w = pos.w;
+    twist.vx = pose.x;
+    twist.vy = pose.y;
+    twist.w = pose.w;
 
     return true;
 }
@@ -104,29 +107,40 @@ int main(int argc, char *argv[]){
     //     ros::shutdown();
     // }
 
+    nh.getParam("x0", x);
+    nh.getParam("y0", y);
+    nh.getParam("theta0", w);
+
     nh.param<std::string>("odom_id",odom_id,"odom");
 
     ros::Rate r(rate);
 
-    odom_pub = pub_nh.advertise<nav_msgs::Odometry>("odom", 10);
-    js_sub = pub_nh.subscribe("red/joint_states",100,update_odom);
+    odom_pub = pub_nh.advertise<nav_msgs::Odometry>("odom", 100);
+    js_sub = pub_nh.subscribe("red/joint_states",10,update_odom);
 
     pose_service = nh.advertiseService("set_pose",set_pose);
 
-    while(1){
+    old_pos.theta = w;
+    old_pos.x = x;
+    old_pos.y = y;
+
+    while(ros::ok()){
 
         odom_pub.publish(odom_msg);        
 
         tf2_ros::TransformBroadcaster odom_broadcaster;
 
+        pos = D.get_q(wheel_angles, old_wheel_angles, old_pos);
+
+
         odom_tf.header.stamp = ros::Time::now();
-        odom_tf.header.frame_id = odom_id;
-        odom_tf.child_frame_id = body_id;
-        odom_tf.transform.translation.x = twist.vx;
-        odom_tf.transform.translation.y = twist.vy;
+        odom_tf.header.frame_id = "odom";
+        odom_tf.child_frame_id = "blue_base_footprint";
+        odom_tf.transform.translation.x = pos.x;
+        odom_tf.transform.translation.y = pos.y;
         odom_tf.transform.translation.z = 0;
         tf2::Quaternion q;
-        q.setRPY(0, 0, twist.w);
+        q.setRPY(0, 0, pos.theta);
         odom_tf.transform.rotation.x = q.x();
         odom_tf.transform.rotation.y = q.y();
         odom_tf.transform.rotation.z = q.z();

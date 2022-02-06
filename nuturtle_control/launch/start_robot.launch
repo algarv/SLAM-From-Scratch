@@ -16,6 +16,12 @@
     <arg name = 'use_jsp' value = 'false' />
 </include>
 
+<include file="$(find nuturtle_description)/launch/load.launch">
+    <arg name="color" value="blue"/>
+    <arg name = 'use_rviz' value = 'false' />
+    <arg name = 'use_jsp' value = 'true' />
+</include>
+
 <node name="nusim_node" pkg="nusim" type="nusim_node" output = "screen"> 
     <rosparam command="load" file="$(find nusim)/config/initial.yaml" />
 </node>
@@ -24,6 +30,7 @@
 </node>
 
 <node name="odometry" pkg="nuturtle_control" type="odometry" output = "screen"> 
+    <rosparam command="load" file="$(find nusim)/config/initial.yaml" />
 </node>
 
 <group if="$(eval cmd_src == 'circle')">

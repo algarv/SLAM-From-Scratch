@@ -44,7 +44,7 @@ static std::string left_wheel = "red_wheel_left_joint", right_wheel = "red_wheel
 std::vector<double> obj_x_list, obj_y_list, obj_d_list, radsec;
 static std_msgs::UInt64 ts;
 static sensor_msgs::JointState wheels;
-static geometry_msgs::TransformStamped tfStamped;
+static geometry_msgs::TransformStamped sim_tf;
 static nuturtlebot_msgs::SensorData sensor_data; 
 static ros::Publisher obj_pub, js_pub, ts_pub, arena_pub, sensor_pub;
 static ros::Subscriber wheel_sub;
@@ -221,23 +221,16 @@ void update_wheel_position(const nuturtlebot_msgs::WheelCommands::ConstPtr &whee
     double L_cmd = wheel_cmd->left_velocity;
     double R_cmd = wheel_cmd->right_velocity;
 
-    if(flag == 20){
-        sensor_data.left_encoder = 0;
-        sensor_data.right_encoder = 0;
-        flag+=1;
-    }
-
     left_rot_vel = 2.84 * L_cmd / 256.0;
     right_rot_vel = 2.84 * R_cmd / 256.0;
 
     // radsec[0] = d_ticks_left * dticks_radsec;
     // radsec[1] = d_ticks_right * dticks_radsec;
 
-    ROS_WARN("Left: %6.2f Right: %6.2f", left_rot_vel, right_rot_vel);
-
     sensor_data.stamp = ros::Time::now();
-    sensor_data.left_encoder += (dticks_radsec / left_rot_vel);
-    sensor_data.right_encoder += (dticks_radsec / right_rot_vel);
+    sensor_data.left_encoder += (left_rot_vel / dticks_radsec);
+    sensor_data.right_encoder += (right_rot_vel / dticks_radsec);
+    // ROS_WARN("Left: %6.2d Right: %6.2d", sensor_data.left_encoder, sensor_data.right_encoder);
     // old_ticks_L = sensor_data.left_encoder;
     // old_ticks_R = sensor_data.right_encoder;
 }
@@ -273,8 +266,8 @@ int main(int argc, char *argv[]){
     nh.getParam("x_length", x_length);
     nh.getParam("y_length", y_length);
     nh.getParam("wall_width", width);
-    nh.getParam("red/motor_cmd_to_radsec", dticks_radsec);
-    nh.getParam("red/encoder_ticks_to_rad", eticks_radsec);
+    nh.getParam("/motor_cmd_to_radsec", dticks_radsec);
+    nh.getParam("/encoder_ticks_to_rad", eticks_radsec);
     
     nh.param<std::string>("odom_id",odom_id,"odom");
 
@@ -319,20 +312,20 @@ int main(int argc, char *argv[]){
 
         pos = DD.get_q(wheel_angles, old_wheel_angles, old_pos);
 
-        tfStamped.header.stamp = ros::Time::now();
-        tfStamped.header.frame_id = "world";
-        tfStamped.child_frame_id = "red_base_footprint";
-        tfStamped.transform.translation.x = pos.x;
-        tfStamped.transform.translation.y = pos.y;
-        tfStamped.transform.translation.z = 0;
+        sim_tf.header.stamp = ros::Time::now();
+        sim_tf.header.frame_id = "world";
+        sim_tf.child_frame_id = "red_base_footprint";
+        sim_tf.transform.translation.x = pos.x;
+        sim_tf.transform.translation.y = pos.y;
+        sim_tf.transform.translation.z = 0;
         tf2::Quaternion q;
         q.setRPY(0, 0, pos.theta);
-        tfStamped.transform.rotation.x = q.x();
-        tfStamped.transform.rotation.y = q.y();
-        tfStamped.transform.rotation.z = q.z();
-        tfStamped.transform.rotation.w = q.w();
+        sim_tf.transform.rotation.x = q.x();
+        sim_tf.transform.rotation.y = q.y();
+        sim_tf.transform.rotation.z = q.z();
+        sim_tf.transform.rotation.w = q.w();
 
-        broadcaster.sendTransform(tfStamped);
+        broadcaster.sendTransform(sim_tf);
         
         nh.getParam("nusim_node/obj_x",obj_x_list);
         nh.getParam("nusim_node/obj_y",obj_y_list);

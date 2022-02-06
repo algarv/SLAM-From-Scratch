@@ -10,6 +10,7 @@ Panels:
         - /MarkerArray1
         - /TF1
         - /TF1/Frames1
+        - /RobotModel2
       Splitter Ratio: 0.5
     Tree Height: 1550
   - Class: rviz/Selection
@@ -118,6 +119,20 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: false
+        blue_base_footprint:
+          Value: true
+        blue_base_link:
+          Value: false
+        blue_base_scan:
+          Value: false
+        blue_caster_back_link:
+          Value: false
+        blue_imu_link:
+          Value: false
+        blue_wheel_left_link:
+          Value: true
+        blue_wheel_right_link:
+          Value: true
         odom:
           Value: true
         red_base_footprint:
@@ -145,7 +160,18 @@ Visualization Manager:
       Tree:
         world:
           odom:
-            {}
+            blue_base_footprint:
+              blue_base_link:
+                blue_base_scan:
+                  {}
+                blue_caster_back_link:
+                  {}
+                blue_imu_link:
+                  {}
+                blue_wheel_left_link:
+                  {}
+                blue_wheel_right_link:
+                  {}
           red_base_footprint:
             red_base_link:
               red_base_scan:
@@ -160,6 +186,55 @@ Visualization Manager:
                 {}
       Update Interval: 0
       Value: true
+    - Alpha: 1
+      Class: rviz/RobotModel
+      Collision Enabled: false
+      Enabled: true
+      Links:
+        All Links Enabled: true
+        Expand Joint Details: false
+        Expand Link Details: false
+        Expand Tree: false
+        Link Tree Style: Links in Alphabetic Order
+        blue_base_footprint:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        blue_base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        blue_base_scan:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        blue_caster_back_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        blue_imu_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        blue_wheel_left_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        blue_wheel_right_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+      Name: RobotModel
+      Robot Description: blue/robot_description
+      TF Prefix: ""
+      Update Interval: 0
+      Value: true
+      Visual Enabled: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -188,7 +263,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 6.553987503051758
+      Distance: 1.797385811805725
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -204,9 +279,9 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.0653982162475586
+      Pitch: 0.5653977990150452
       Target Frame: <Fixed Frame>
-      Yaw: 3.480400323867798
+      Yaw: 3.970404624938965
     Saved: ~
 Window Geometry:
   Displays:
