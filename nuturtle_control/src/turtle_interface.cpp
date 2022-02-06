@@ -26,7 +26,7 @@
 static int rate;
 static ros::Subscriber cmd_vel_sub, sensor_sub;
 static ros::Publisher wheel_pub, js_pub;
-static double eticks_rad, mticks_radsec;
+static double eticks_rad, mticks_radsec, L_ticks, R_ticks, d_L_ticks, d_R_ticks, saved_L_ticks = 0, saved_R_ticks = 0;
 static std::string left_wheel = "red_wheel_left_joint", right_wheel = "red_wheel_right_joint";
 static turtlelib::DiffDrive D; 
 static turtlelib::Twist2D twist_cmd;
@@ -56,22 +56,26 @@ void calc_joint_states(const nuturtlebot_msgs::SensorData &sensor_data){
 /// \brief Receives a sensor data message and uses the encoder ticks to return wheel positions.
 ///
 /// \param sensor_data - Sensor data recieved from nuturtlebot_msgs
-
-    double L_ticks, R_ticks;
     
     L_ticks = sensor_data.left_encoder;
     R_ticks = sensor_data.right_encoder;
 
+    d_L_ticks = L_ticks - saved_L_ticks;
+    d_R_ticks = R_ticks - saved_R_ticks;
+
     wheel_angles.L = (L_ticks * eticks_rad);
     wheel_angles.R = (R_ticks * eticks_rad);
 
-    wheel_vels.L = L_ticks * mticks_radsec;
-    wheel_vels.R = R_ticks * mticks_radsec;
+    wheel_vels.L = d_L_ticks * mticks_radsec;
+    wheel_vels.R = d_R_ticks * mticks_radsec;
 
     wheel_msg.header.stamp = ros::Time::now();
-    wheel_msg.name = {"red_wheel_left_joint", "red_wheel_right_joint"};
+    wheel_msg.name = {left_wheel, right_wheel};
     wheel_msg.position = {wheel_angles.L, wheel_angles.R};
     wheel_msg.velocity = {wheel_vels.L, wheel_vels.R};
+
+    saved_L_ticks = L_ticks;
+    saved_R_ticks = R_ticks;
 }
 
 int main(int argc, char *argv[]){
@@ -79,8 +83,6 @@ int main(int argc, char *argv[]){
     ros::init(argc, argv, "turtle_interface");
     
     ros::NodeHandle nh("~"), pub_nh;
-
-    rate = 50;
 
     // if (ros::param::has("/turtle_interface/encoder_ticks_to_rad")){
         ros::param::get("red/encoder_ticks_to_rad", eticks_rad);
@@ -99,7 +101,7 @@ int main(int argc, char *argv[]){
     // }
 
     // if (ros::param::has("turtle_interface/rate")){
-        ros::param::get("turtle_interface/rate", rate);
+        ros::param::get("rate", rate);
     // }
     // else {
     //     ROS_DEBUG_ONCE("rate not defined");
@@ -107,9 +109,6 @@ int main(int argc, char *argv[]){
     // }
 
     ros::Rate r(rate);
-
-    // wheel_vel_msg.left_velocity = 0;
-    // wheel_vel_msg.right_velocity = 0;
 
     cmd_vel_sub = pub_nh.subscribe("cmd_vel",10,follow_twist); 
     sensor_sub = pub_nh.subscribe("sensor_data",10,calc_joint_states);
@@ -124,10 +123,7 @@ int main(int argc, char *argv[]){
     wheel_msg.velocity = {0, 0};
 
     while(ros::ok()){
-        // wheel_vel_msg.left_velocity = 10; 
-        // wheel_vel_msg.right_velocity = 10;
-        // wheel_vel_msg.left_velocity = vel_cmd.L; //edit
-        // wheel_vel_msg.right_velocity = vel_cmd.R;
+
         wheel_pub.publish(wheel_vel_msg);  
         
         js_pub.publish(wheel_msg);

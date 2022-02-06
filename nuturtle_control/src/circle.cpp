@@ -58,6 +58,10 @@ int main(int argc, char *argv[]){
     geometry_msgs::Twist twist_cmd;
     
     while(stopped == false){
+        if (rad == 0){
+            twist_cmd.linear.x = 0;
+            twist_cmd.angular.z = vel;
+        }
         twist_cmd.linear.x = vel;
         twist_cmd.angular.z = vel/rad;
         cmd_vel_pub.publish(twist_cmd);

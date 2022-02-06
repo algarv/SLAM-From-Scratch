@@ -38,7 +38,8 @@
 #include "turtlelib/diff_drive.hpp"
 #include <ros/console.h>
 
-static int rate, flag = 0;
+static int rate;
+static bool teleporting = false;
 static double x = 0, y = 0, w = 0, x_length = 0, y_length = 0, width = 0, left_rot_vel = 0.0, right_rot_vel = 0.0, old_ticks_L = 0, old_ticks_R = 0, dticks_radsec, eticks_radsec;
 static std::string left_wheel = "red_wheel_left_joint", right_wheel = "red_wheel_right_joint", odom_id;
 std::vector<double> obj_x_list, obj_y_list, obj_d_list, radsec;
@@ -62,24 +63,34 @@ bool restart(std_srvs::Empty::Request &request, std_srvs::Empty::Response &respo
 
     ts.data = 0;
 
-    x = 0;
-    y = 0;
-    w = 0;
+    pos.x = x;
+    pos.y = y;
+    pos.theta = w;
+
+    wheel_angles = {.L = 0, .R = 0};
+    old_wheel_angles = {.L = 0, .R = 0};
+
+    sensor_data.left_encoder = 0;
+    sensor_data.right_encoder = 0;
+
+    teleporting = true;
 
     return true;
 }
 
-bool teleport(nusim::teleport::Request &pos, nusim::teleport::Response &response){
+bool teleport(nusim::teleport::Request &pose, nusim::teleport::Response &response){
 /// \brief Teleports the turtle to the specified position and rotation.
 ///
-/// \param pos - position input from parameter
+/// \param pose - position input from parameter
 /// \param response - Empty::Reponse
 /// \returns true
 
-    x = pos.x;
-    y = pos.y;
-    w = pos.w;
+    pos.x = pose.x;
+    pos.y = pose.y;
+    pos.theta = pose.w;
  
+    teleporting = true;
+
     return true;
 }
 
@@ -241,13 +252,12 @@ int main(int argc, char *argv[]){
     
     ros::NodeHandle nh("~"), pub_nh;
     
-    nh.getParam("nusim_node/rate", rate);
-    rate = 50;
+    ros::param::get("rate", rate);
     ros::Rate r(rate);
 
     ts.data = 0;
 
-    static tf2_ros::TransformBroadcaster broadcaster;
+    tf2_ros::TransformBroadcaster broadcaster;
 
     ts_pub = nh.advertise<std_msgs::UInt64>("timestep",100);
     // js_pub = pub_nh.advertise<sensor_msgs::JointState>("red/joint_states", 100);
@@ -292,8 +302,6 @@ int main(int argc, char *argv[]){
         ts.data += 1;
         ts_pub.publish(ts);
 
-        tf2_ros::TransformBroadcaster broadcaster;
-
         obj_array = add_obstacles(obj_x_list, obj_y_list,obj_d_list);
         obj_pub.publish(obj_array);
 
@@ -310,7 +318,9 @@ int main(int argc, char *argv[]){
 
         // js_pub.publish(wheels);
 
-        pos = DD.get_q(wheel_angles, old_wheel_angles, old_pos);
+        if (teleporting == false){
+            pos = DD.get_q(wheel_angles, old_wheel_angles, old_pos);
+        }
 
         sim_tf.header.stamp = ros::Time::now();
         sim_tf.header.frame_id = "world";
@@ -333,6 +343,8 @@ int main(int argc, char *argv[]){
 
         old_wheel_angles = wheel_angles;
         old_pos = pos; 
+
+        teleporting = false;
 
         ros::spinOnce();
         r.sleep();

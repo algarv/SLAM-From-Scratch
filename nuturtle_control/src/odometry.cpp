@@ -32,6 +32,7 @@
 #include "nuturtle_control/set_pose.h"
 
 int rate;
+static bool teleporting = false;
 static double x = 0, y = 0, w = 0;
 std::string body_id, odom_id, wheel_left, wheel_right;
 turtlelib::Wheel_Angle wheel_angles = {.L = 0, .R = 0}, old_wheel_angles = {.L = 0, .R = 0};
@@ -51,11 +52,9 @@ void update_odom(const sensor_msgs::JointState &wheels){
 
     wheel_angles.L = wheels.position[0];
     wheel_angles.R = wheels.position[1];
-    ROS_WARN("L: %f R: %f", wheel_angles.L, wheel_angles.R);
     twist = D.get_twist(wheel_angles, old_wheel_angles);
-    old_wheel_angles = {.L = wheel_angles.L, .R = wheel_angles.R};
 
-    odom_msg.header.frame_id = "odom";
+    // odom_msg.header.frame_id = "odom";
     odom_msg.twist.twist.linear.x = twist.vx;
     odom_msg.twist.twist.linear.y = twist.vy;
     odom_msg.twist.twist.angular.z = twist.w;
@@ -63,9 +62,11 @@ void update_odom(const sensor_msgs::JointState &wheels){
 
 bool set_pose(nuturtle_control::set_pose::Request &pose, nuturtle_control::set_pose::Response &response){
 
-    twist.vx = pose.x;
-    twist.vy = pose.y;
-    twist.w = pose.w;
+    pos.x = pose.x;
+    pos.y = pose.y;
+    pos.theta = pose.w;
+
+    teleporting = true;
 
     return true;
 }
@@ -124,14 +125,15 @@ int main(int argc, char *argv[]){
     old_pos.x = x;
     old_pos.y = y;
 
+    tf2_ros::TransformBroadcaster odom_broadcaster;
+
     while(ros::ok()){
 
         odom_pub.publish(odom_msg);        
 
-        tf2_ros::TransformBroadcaster odom_broadcaster;
-
-        pos = D.get_q(wheel_angles, old_wheel_angles, old_pos);
-
+        if (teleporting == false){
+            pos = D.get_q(wheel_angles, old_wheel_angles, old_pos);
+        }
 
         odom_tf.header.stamp = ros::Time::now();
         odom_tf.header.frame_id = "odom";
@@ -147,6 +149,11 @@ int main(int argc, char *argv[]){
         odom_tf.transform.rotation.w = q.w();
 
         odom_broadcaster.sendTransform(odom_tf);
+
+        old_pos = pos;
+        old_wheel_angles = {.L = wheel_angles.L, .R = wheel_angles.R};
+
+        teleporting = false;
 
         ros::spinOnce();
         r.sleep();
