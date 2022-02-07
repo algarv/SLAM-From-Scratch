@@ -2,7 +2,7 @@
 /// \brief Publishes odometry messages for the turtlebot to follow.
 ///
 /// PARAMETERS:
-///     rate (rate.yaml): ros rate
+///     rate: ros rate
 ///     body_id: The id of the body frame
 ///     odom_id: The id of the odom frame 
 ///     wheel_left: The name of the left wheel joint
@@ -138,6 +138,7 @@ int main(int argc, char *argv[]){
 
         if (teleporting == false){
             pos = D.get_q(wheel_angles, old_wheel_angles, old_pos);
+            // pos = D.get_q(twist,old_pos);
         }
 
         odom_tf.header.stamp = ros::Time::now();

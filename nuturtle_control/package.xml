@@ -53,6 +53,8 @@
   <exec_depend> message_runtime </exec_depend>
   <exec_depend> nusim </exec_depend>
   <exec_depend> rviz </exec_depend>
+  <depend> catch_ros </depend>
+  <test_depend> ros_test </test_depend>
   <depend> tf2_ros </depend>
 
 

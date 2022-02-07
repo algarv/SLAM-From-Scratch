@@ -1,3 +1,14 @@
+/// \file circle.cpp
+/// \brief Advertises a service to make the turtlebot spin in a specified arc.
+///
+/// PUBLISHES:
+///     cmd_vel (geometry_msgs/Twist): publishes the twist corresponding to the specified arc
+/// 
+/// SERVICES:
+///     nuturtle_control/Control (control.srv): Sends the turtlebot back to the origin of the world frame
+///     nuturtle_control/Reverse (Empty): Reverses the direction of the turtlebots trajectory
+///     nuturtle_control/Stop (Empty): Stops the turtlebot
+
 #include <ros/ros.h>
 #include <string>
 #include "turtlelib/rigid2d.hpp"
@@ -15,7 +26,7 @@
 #include "nuturtle_control/control.h"
 #include <std_srvs/Empty.h>
 
-static double vel = 0.0, rad = 1.0;
+static double vel = 0.0, rad = 0.0;
 bool stopped;
 
 bool control(nuturtle_control::control::Request &params, nuturtle_control::control::Response &response){

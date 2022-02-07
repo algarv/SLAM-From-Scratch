@@ -52,6 +52,8 @@ static ros::Subscriber wheel_sub;
 static ros::ServiceServer rs_service, tp_service;
 static visualization_msgs::MarkerArray obstacle, obj_array, marker_arena, arena_array;
 static turtlelib::Wheel_Angle wheel_angles, old_wheel_angles;
+static turtlelib::Wheel_Angular_Velocities wheel_vels;
+static turtlelib::Twist2D twist;
 static turtlelib::q pos, old_pos;
 
 bool restart(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response){
@@ -114,7 +116,7 @@ visualization_msgs::MarkerArray add_obstacles(std::vector<double> obj_x_list, st
         obstacle.markers[i].id = id;
         obstacle.markers[i].pose.position.x = obj_x_list[i];
         obstacle.markers[i].pose.position.y = obj_y_list[i];
-        obstacle.markers[i].pose.position.z = .25;
+        obstacle.markers[i].pose.position.z = .125;
         obstacle.markers[i].pose.orientation.x = 0.0;
         obstacle.markers[i].pose.orientation.y = 0.0;
         obstacle.markers[i].pose.orientation.z = 0.0;
@@ -147,7 +149,7 @@ visualization_msgs::MarkerArray make_arena(float x_length, float y_length){
     arena_array.markers[0].id = i;
     arena_array.markers[0].pose.position.x = x_length/2;
     arena_array.markers[0].pose.position.y = 0;
-    arena_array.markers[0].pose.position.z = .25;
+    arena_array.markers[0].pose.position.z = 0.125;
     arena_array.markers[0].pose.orientation.x = 0.0;
     arena_array.markers[0].pose.orientation.y = 0.0;
     arena_array.markers[0].pose.orientation.z = 0.0;
@@ -168,7 +170,7 @@ visualization_msgs::MarkerArray make_arena(float x_length, float y_length){
     arena_array.markers[1].id = i+1;
     arena_array.markers[1].pose.position.x = 0;
     arena_array.markers[1].pose.position.y = y_length/2;
-    arena_array.markers[1].pose.position.z = .25;
+    arena_array.markers[1].pose.position.z = 0.125;
     arena_array.markers[1].pose.orientation.x = 0.0;
     arena_array.markers[1].pose.orientation.y = 0.0;
     arena_array.markers[1].pose.orientation.z = 0.0;
@@ -189,7 +191,7 @@ visualization_msgs::MarkerArray make_arena(float x_length, float y_length){
     arena_array.markers[2].id = i+2;
     arena_array.markers[2].pose.position.x = -x_length/2;
     arena_array.markers[2].pose.position.y = 0;
-    arena_array.markers[2].pose.position.z = .25;
+    arena_array.markers[2].pose.position.z = 0.125;
     arena_array.markers[2].pose.orientation.x = 0.0;
     arena_array.markers[2].pose.orientation.y = 0.0;
     arena_array.markers[2].pose.orientation.z = 0.0;
@@ -210,7 +212,7 @@ visualization_msgs::MarkerArray make_arena(float x_length, float y_length){
     arena_array.markers[3].id = i+3;
     arena_array.markers[3].pose.position.x = 0;
     arena_array.markers[3].pose.position.y = -y_length/2;
-    arena_array.markers[3].pose.position.z = .25;
+    arena_array.markers[3].pose.position.z = 0.125;
     arena_array.markers[3].pose.orientation.x = 0.0;
     arena_array.markers[3].pose.orientation.y = 0.0;
     arena_array.markers[3].pose.orientation.z = 0.0;
@@ -235,6 +237,8 @@ void update_wheel_position(const nuturtlebot_msgs::WheelCommands::ConstPtr &whee
     left_rot_vel = 2.84 * L_cmd / 256.0;
     right_rot_vel = 2.84 * R_cmd / 256.0;
 
+    wheel_vels.L = left_rot_vel;
+    wheel_vels.R = right_rot_vel;
     // radsec[0] = d_ticks_left * dticks_radsec;
     // radsec[1] = d_ticks_right * dticks_radsec;
 
@@ -263,7 +267,6 @@ int main(int argc, char *argv[]){
     // js_pub = pub_nh.advertise<sensor_msgs::JointState>("red/joint_states", 100);
     obj_pub = nh.advertise<visualization_msgs::MarkerArray>("visualization_marker_array", 100);
     arena_pub = nh.advertise<visualization_msgs::MarkerArray>("visualization_marker_array", 100);
-    sensor_pub = pub_nh.advertise<nuturtlebot_msgs::SensorData>("sensor_data",100);
 
     wheel_sub = pub_nh.subscribe("red/wheel_cmd", 10, update_wheel_position);
 
@@ -310,8 +313,10 @@ int main(int argc, char *argv[]){
 
         sensor_pub.publish(sensor_data);
         
-        wheel_angles.L = old_wheel_angles.L + left_rot_vel * 1;
-        wheel_angles.R = old_wheel_angles.R + right_rot_vel * 1;
+        // wheel_angles.L = old_wheel_angles.L + left_rot_vel * 1;
+        // wheel_angles.R = old_wheel_angles.R + right_rot_vel * 1;
+
+        twist = DD.get_twist(wheel_vels);
 
         wheels.header.stamp = ros::Time::now();
         wheels.position = {wheel_angles.L, wheel_angles.R};
@@ -319,7 +324,8 @@ int main(int argc, char *argv[]){
         // js_pub.publish(wheels);
 
         if (teleporting == false){
-            pos = DD.get_q(wheel_angles, old_wheel_angles, old_pos);
+            // pos = DD.get_q(wheel_angles, old_wheel_angles, old_pos);
+            pos = DD.get_q(twist,old_pos);
         }
 
         sim_tf.header.stamp = ros::Time::now();
@@ -337,9 +343,9 @@ int main(int argc, char *argv[]){
 
         broadcaster.sendTransform(sim_tf);
         
-        nh.getParam("nusim_node/obj_x",obj_x_list);
-        nh.getParam("nusim_node/obj_y",obj_y_list);
-        nh.getParam("nusim_node/obj_d",obj_d_list);
+        nh.getParam("/obj_x",obj_x_list);
+        nh.getParam("/obj_y",obj_y_list);
+        nh.getParam("/obj_d",obj_d_list);
 
         old_wheel_angles = wheel_angles;
         old_pos = pos; 

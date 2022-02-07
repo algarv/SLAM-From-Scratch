@@ -8,6 +8,7 @@ project(nuturtle_control)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
+catch_ros
 message_generation 
 nuturtlebot_msgs
 roscpp 
@@ -129,7 +130,7 @@ ${catkin_INCLUDE_DIRS}
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
-# add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+## add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
@@ -146,7 +147,9 @@ add_executable(circle src/circle.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-# add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(turtle_interface ${turtle_interface_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(odometry ${odometry_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(circle ${circle_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(turtle_interface
@@ -216,3 +219,14 @@ install(FILES loader.sh
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+
+# catch_add_test(${PROJECT_NAME}_test
+# 	tests/turtle_interface_test.cpp
+# )
+
+catch_add_rostest_node(${PROJECT_NAME}_test tests/turtle_interface_test.cpp)
+
+target_link_libraries(${PROJECT_NAME}_test ##Thing I am adding libraries to
+    turtlelib
+    ${catkin_LIBRARIES}
+)
