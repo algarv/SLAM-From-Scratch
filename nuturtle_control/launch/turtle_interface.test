@@ -6,6 +6,6 @@
     <arg name = 'rviz' value = 'false' />
 </include>
 
-<test test-name="nuturtle_control_test" pkg="nuturtle_control" type="turtle_interface_test.cpp" />
+<test test-name="nuturtle_control_test" pkg="nuturtle_control" type="nuturtle_control_test" />
 
 </launch>

@@ -9,6 +9,7 @@ project(nuturtle_control)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
 catch_ros
+rostest
 message_generation 
 nuturtlebot_msgs
 roscpp 
@@ -118,7 +119,7 @@ CATKIN_DEPENDS message_runtime roscpp std_msgs
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-# include
+#include
 ${catkin_INCLUDE_DIRS}
 )
 
@@ -136,8 +137,13 @@ ${catkin_INCLUDE_DIRS}
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(turtle_interface src/turtle_interface.cpp)
+add_dependencies(turtle_interface ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
 add_executable(odometry src/odometry.cpp)
+add_dependencies(odometry ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
 add_executable(circle src/circle.cpp)
+add_dependencies(circle ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -147,9 +153,6 @@ add_executable(circle src/circle.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-add_dependencies(turtle_interface ${turtle_interface_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_dependencies(odometry ${odometry_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_dependencies(circle ${circle_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(turtle_interface
@@ -221,12 +224,16 @@ install(FILES loader.sh
 # catkin_add_nosetests(test)
 
 # catch_add_test(${PROJECT_NAME}_test
-# 	tests/turtle_interface_test.cpp
+#  	tests/turtle_interface_test.cpp
 # )
+if(CATKIN_ENABLE_TESTING)
 
 catch_add_rostest_node(${PROJECT_NAME}_test tests/turtle_interface_test.cpp)
+add_rostest(launch/turtle_interface.test)
 
 target_link_libraries(${PROJECT_NAME}_test ##Thing I am adding libraries to
     turtlelib
     ${catkin_LIBRARIES}
 )
+
+endif()
