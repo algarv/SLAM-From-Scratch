@@ -40,7 +40,7 @@
 
 static int rate;
 static bool teleporting = false;
-static double x = 0, y = 0, w = 0, x_length = 0, y_length = 0, width = 0, left_rot_vel = 0.0, right_rot_vel = 0.0, old_ticks_L = 0, old_ticks_R = 0, dticks_radsec, eticks_radsec;
+static double x = 0, y = 0, w = 0, x_length = 0, y_length = 0, width = 0, left_rot_vel = 0.0, right_rot_vel = 0.0, old_ticks_L = 0, old_ticks_R = 0, mticks_radsec, eticks_rad;
 static std::string left_wheel = "red_wheel_left_joint", right_wheel = "red_wheel_right_joint", odom_id;
 std::vector<double> obj_x_list, obj_y_list, obj_d_list, radsec;
 static std_msgs::UInt64 ts;
@@ -234,17 +234,24 @@ void update_wheel_position(const nuturtlebot_msgs::WheelCommands::ConstPtr &whee
     double L_cmd = wheel_cmd->left_velocity;
     double R_cmd = wheel_cmd->right_velocity;
 
-    left_rot_vel = 2.84 * L_cmd / 256.0;
-    right_rot_vel = 2.84 * R_cmd / 256.0;
+    // left_rot_vel = 2.84 * L_cmd / 265.0;
+    // right_rot_vel = 2.84 * R_cmd / 265.0;
+    left_rot_vel = L_cmd * mticks_radsec;
+    right_rot_vel = R_cmd * mticks_radsec;
 
     wheel_vels.L = left_rot_vel;
     wheel_vels.R = right_rot_vel;
     // radsec[0] = d_ticks_left * dticks_radsec;
     // radsec[1] = d_ticks_right * dticks_radsec;
 
+    wheel_angles.L = (left_rot_vel / rate) + old_wheel_angles.L;
+    wheel_angles.R = (right_rot_vel / rate) + old_wheel_angles.R;
+
     sensor_data.stamp = ros::Time::now();
-    sensor_data.left_encoder += (left_rot_vel / dticks_radsec);
-    sensor_data.right_encoder += (right_rot_vel / dticks_radsec);
+    sensor_data.left_encoder = wheel_angles.L / eticks_rad;
+    sensor_data.right_encoder = wheel_angles.R / eticks_rad;
+    sensor_data.left_encoder = sensor_data.left_encoder % 4096;
+    sensor_data.right_encoder = sensor_data.right_encoder % 4096;
     // ROS_WARN("Left: %6.2d Right: %6.2d", sensor_data.left_encoder, sensor_data.right_encoder);
     // old_ticks_L = sensor_data.left_encoder;
     // old_ticks_R = sensor_data.right_encoder;
@@ -256,7 +263,8 @@ int main(int argc, char *argv[]){
     
     ros::NodeHandle nh("~"), pub_nh;
     
-    ros::param::get("rate", rate);
+    // ros::param::get("rate", rate);
+    rate = 100;
     ros::Rate r(rate);
 
     ts.data = 0;
@@ -267,7 +275,7 @@ int main(int argc, char *argv[]){
     // js_pub = pub_nh.advertise<sensor_msgs::JointState>("red/joint_states", 100);
     obj_pub = nh.advertise<visualization_msgs::MarkerArray>("visualization_marker_array", 100);
     arena_pub = nh.advertise<visualization_msgs::MarkerArray>("visualization_marker_array", 100);
-
+    sensor_pub = pub_nh.advertise<nuturtlebot_msgs::SensorData>("sensor_data",100);
     wheel_sub = pub_nh.subscribe("red/wheel_cmd", 10, update_wheel_position);
 
     rs_service = nh.advertiseService("Restart", restart);
@@ -279,8 +287,8 @@ int main(int argc, char *argv[]){
     nh.getParam("x_length", x_length);
     nh.getParam("y_length", y_length);
     nh.getParam("wall_width", width);
-    nh.getParam("/motor_cmd_to_radsec", dticks_radsec);
-    nh.getParam("/encoder_ticks_to_rad", eticks_radsec);
+    nh.getParam("/motor_cmd_to_radsec", mticks_radsec);
+    nh.getParam("/encoder_ticks_to_rad", eticks_rad);
     
     nh.param<std::string>("odom_id",odom_id,"odom");
 
@@ -312,11 +320,8 @@ int main(int argc, char *argv[]){
         arena_pub.publish(arena_array);
 
         sensor_pub.publish(sensor_data);
-        
-        // wheel_angles.L = old_wheel_angles.L + left_rot_vel * 1;
-        // wheel_angles.R = old_wheel_angles.R + right_rot_vel * 1;
 
-        twist = DD.get_twist(wheel_vels);
+        // twist = DD.get_twist(wheel_vels);
 
         wheels.header.stamp = ros::Time::now();
         wheels.position = {wheel_angles.L, wheel_angles.R};
@@ -324,10 +329,10 @@ int main(int argc, char *argv[]){
         // js_pub.publish(wheels);
 
         if (teleporting == false){
-            // pos = DD.get_q(wheel_angles, old_wheel_angles, old_pos);
-            pos = DD.get_q(twist,old_pos);
+            pos = DD.get_q(wheel_angles, old_wheel_angles, old_pos);
+            // pos = DD.get_q(twist,old_pos);
         }
-
+        
         sim_tf.header.stamp = ros::Time::now();
         sim_tf.header.frame_id = "world";
         sim_tf.child_frame_id = "red_base_footprint";

@@ -47,8 +47,24 @@ void follow_twist(const geometry_msgs::Twist &wheel_cmd){
     vel_cmd = D.wheel_vel(twist_cmd);
     // ROS_WARN("vx: %f,vy: %f,w: %f",twist_cmd.vx,twist_cmd.vy,twist_cmd.w);//edit
 
-    wheel_vel_msg.left_velocity = vel_cmd.L;
-    wheel_vel_msg.right_velocity = vel_cmd.R;
+    wheel_vel_msg.left_velocity = vel_cmd.L / mticks_radsec;
+    wheel_vel_msg.right_velocity = vel_cmd.R / mticks_radsec;
+
+    if (wheel_vel_msg.left_velocity > 256){
+        wheel_vel_msg.left_velocity = 256;
+    }
+
+    if (wheel_vel_msg.left_velocity < -256){
+        wheel_vel_msg.left_velocity = -256;
+    }
+
+    if (wheel_vel_msg.right_velocity > 256){
+        wheel_vel_msg.right_velocity = 256;
+    }
+
+    if (wheel_vel_msg.right_velocity < -256){
+        wheel_vel_msg.right_velocity = -256;
+    }
 
 }
 
@@ -66,13 +82,8 @@ void calc_joint_states(const nuturtlebot_msgs::SensorData &sensor_data){
     wheel_angles.L = (L_ticks * eticks_rad);
     wheel_angles.R = (R_ticks * eticks_rad);
 
-    wheel_vels.L = d_L_ticks * mticks_radsec;
-    wheel_vels.R = d_R_ticks * mticks_radsec;
-
-    wheel_msg.header.stamp = ros::Time::now();
-    wheel_msg.name = {left_wheel, right_wheel};
-    wheel_msg.position = {wheel_angles.L, wheel_angles.R};
-    wheel_msg.velocity = {wheel_vels.L, wheel_vels.R};
+    // wheel_vels.L = d_L_ticks * mticks_radsec;
+    // wheel_vels.R = d_R_ticks * mticks_radsec;
 
     saved_L_ticks = L_ticks;
     saved_R_ticks = R_ticks;
@@ -123,6 +134,11 @@ int main(int argc, char *argv[]){
     wheel_msg.velocity = {0, 0};
 
     while(ros::ok()){
+
+        wheel_msg.header.stamp = ros::Time::now();
+        wheel_msg.name = {left_wheel, right_wheel};
+        wheel_msg.position = {wheel_angles.L, wheel_angles.R};
+        wheel_msg.velocity = {vel_cmd.L, vel_cmd.R};
 
         wheel_pub.publish(wheel_vel_msg);  
         

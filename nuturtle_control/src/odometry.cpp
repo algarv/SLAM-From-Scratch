@@ -50,19 +50,23 @@ void update_odom(const sensor_msgs::JointState &wheels){
 /// \brief Receives a wheel joint states and translates into a twist for the odometry message
 ///
 /// \param wheels - wheel joint states
-
-    wheel_angles.L = wheels.position[0];
-    wheel_angles.R = wheels.position[1];
-    wheel_vels.L = wheels.velocity[0];
+    
+    wheel_vels.L = wheels.velocity[0]; 
     wheel_vels.R = wheels.velocity[1];
-    // twist = D.get_twist(wheel_angles, old_wheel_angles);
-    twist = D.get_twist(wheel_vels);
 
+    wheel_angles.L = wheels.position[0] + (wheel_vels.L /rate);
+    wheel_angles.R = wheels.position[1] + (wheel_vels.R/rate);
+
+    // twist = D.get_twist(wheel_angles, old_wheel_angles);
+
+    twist = D.get_twist(wheel_vels);
 
     // odom_msg.header.frame_id = "odom";
     odom_msg.twist.twist.linear.x = twist.vx;
     odom_msg.twist.twist.linear.y = twist.vy;
     odom_msg.twist.twist.angular.z = twist.w;
+
+    old_wheel_angles = {.L = wheels.position[0], .R = wheels.position[1]};
 }
 
 bool set_pose(nuturtle_control::set_pose::Request &pose, nuturtle_control::set_pose::Response &response){
@@ -157,7 +161,6 @@ int main(int argc, char *argv[]){
         odom_broadcaster.sendTransform(odom_tf);
 
         old_pos = pos;
-        old_wheel_angles = {.L = wheel_angles.L, .R = wheel_angles.R};
 
         teleporting = false;
 

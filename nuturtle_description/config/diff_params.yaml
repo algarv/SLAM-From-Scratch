@@ -3,4 +3,4 @@ track_width: .16
 collision_radius: .11
 motor_cmd_to_radsec: .024
 motor_cmd_max: 265
-encoder_ticks_to_rad: 0.00153398078
+encoder_ticks_to_rad: 0.00153398078789
