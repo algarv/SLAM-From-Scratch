@@ -1,0 +1,11 @@
+<launch>
+
+<include file="$(find nuturtle_control)/launch/start_robot.launch">
+    <arg name = 'cmd_src' value = 'circle' />
+    <arg name = 'robot' value = 'nusim' />
+    <arg name = 'rviz' value = 'false' />
+</include>
+
+<test test-name="turtle_odom_test_node" pkg="nuturtle_control" type="turtle_odom_test_node" />
+
+</launch>

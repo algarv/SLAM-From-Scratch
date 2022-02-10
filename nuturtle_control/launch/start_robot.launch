@@ -2,7 +2,7 @@
 
 <arg name = 'cmd_src' default = 'none' />
 <arg name = 'robot' default = 'nusim' />
-<arg name = 'rviz' default = 'false' />
+<arg name = 'rviz' default = 'true' />
 
 <param name= "rate" type="double" value="500"/>
 <param name="wheel_left" type="string" value="red_wheel_left_joint" />
@@ -18,6 +18,10 @@
         <arg name = 'use_rviz' value = 'false' />
         <arg name = 'use_jsp' value = 'false' />
     </include>
+</group>
+
+<group if="$(eval robot == 'localhost')">
+    <include file="$(find nuturtle_control)/launch/basic_remote.launch"/>
 </group>
 
 <include file="$(find nuturtle_description)/launch/load.launch">
@@ -41,8 +45,11 @@
     <node name="circle" pkg="nuturtle_control" type="circle" output = "screen" /> 
 </group>
 
-<node pkg="tf2_ros" type="static_transform_publisher" name="world_to_odom" args="0 0 0 0 0 0 world odom" />
+<group if="$(eval cmd_src == 'teleop')">
+    <node pkg="turtlebot3_teleop" type="turtlebot3_teleop_key" name="turtlebot3_teleop_keyboard"  output="screen"/>
+</group>
 
+<node pkg="tf2_ros" type="static_transform_publisher" name="world_to_odom" args="0 0 0 0 0 0 world odom" />
 
 <group if="$(arg rviz)">
     <node name="rviz" pkg ="rviz" type="rviz" args="-d $(find nusim)/config/nusim.rviz" />
