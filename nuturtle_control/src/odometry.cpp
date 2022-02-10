@@ -126,6 +126,7 @@ int main(int argc, char *argv[]){
     ros::Rate r(rate);
 
     odom_pub = pub_nh.advertise<nav_msgs::Odometry>("odom", 100);
+    
     js_sub = pub_nh.subscribe("red/joint_states",10,update_odom);
 
     pose_service = nh.advertiseService("set_pose",set_pose);
@@ -137,8 +138,6 @@ int main(int argc, char *argv[]){
     tf2_ros::TransformBroadcaster odom_broadcaster;
 
     while(ros::ok()){
-
-        odom_pub.publish(odom_msg);        
 
         if (teleporting == false){
             pos = D.get_q(wheel_angles, old_wheel_angles, old_pos);
@@ -160,12 +159,22 @@ int main(int argc, char *argv[]){
 
         odom_broadcaster.sendTransform(odom_tf);
 
+        odom_msg.pose.pose.position.x = pos.x;
+        odom_msg.pose.pose.position.y = pos.y;
+        odom_msg.pose.pose.orientation.x = q.x();
+        odom_msg.pose.pose.orientation.y = q.y();
+        odom_msg.pose.pose.orientation.z = q.z();
+        odom_msg.pose.pose.orientation.w = q.w();
+
+        odom_pub.publish(odom_msg);        
+
+
         old_pos = pos;
 
         teleporting = false;
 
-        ros::spinOnce();
         r.sleep();
+        ros::spinOnce();
     }
 
     return 0;

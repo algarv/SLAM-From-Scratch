@@ -208,8 +208,12 @@ install(TARGETS circle odometry turtle_interface
 # )
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
-install(PROGRAMS home/msr/install/share/nuturtle_control/loader.sh
+install(PROGRAMS loader.sh
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
+
+install(DIRECTORY launch/
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
 )
 
 #############
@@ -235,6 +239,8 @@ add_rostest(launch/turtle_interface.test)
 
 catch_add_rostest_node(turtle_odom_test_node tests/turtle_odom_test_node.cpp)
 add_rostest(launch/turtle_odom.test)
+
+add_rostest(launch/turtle_circle.test)
 
 target_link_libraries(${PROJECT_NAME}_test ##Thing I am adding libraries to
     turtlelib

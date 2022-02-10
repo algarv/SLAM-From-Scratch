@@ -27,7 +27,7 @@
 #include <std_srvs/Empty.h>
 
 static double vel = 0.0, rad = 0.0;
-bool stopped;
+bool stopped = false;
 
 bool control(nuturtle_control::control::Request &params, nuturtle_control::control::Response &response){
 
@@ -64,23 +64,25 @@ int main(int argc, char *argv[]){
     ros::ServiceServer stop_service = nh.advertiseService("Stop",stop);
 
     ros::Publisher cmd_vel_pub = pub_nh.advertise<geometry_msgs::Twist>("cmd_vel", 100);
-    stopped = false;
 
     geometry_msgs::Twist twist_cmd;
     
     while(stopped == false){
         twist_cmd.linear.x = vel * rad;
         twist_cmd.angular.z = vel;
+
         cmd_vel_pub.publish(twist_cmd);
-        ros::spinOnce();
+
         r.sleep();
+        ros::spinOnce();
     }
 
     twist_cmd.linear.x = 0;
     twist_cmd.angular.z = 0;
     cmd_vel_pub.publish(twist_cmd);
-    ros::spinOnce();
+
     r.sleep();
+    ros::spinOnce();
 
     return 0;
 }

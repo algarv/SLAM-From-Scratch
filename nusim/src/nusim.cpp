@@ -276,6 +276,7 @@ int main(int argc, char *argv[]){
     obj_pub = nh.advertise<visualization_msgs::MarkerArray>("visualization_marker_array", 100);
     arena_pub = nh.advertise<visualization_msgs::MarkerArray>("visualization_marker_array", 100);
     sensor_pub = pub_nh.advertise<nuturtlebot_msgs::SensorData>("sensor_data",100);
+
     wheel_sub = pub_nh.subscribe("red/wheel_cmd", 10, update_wheel_position);
 
     rs_service = nh.advertiseService("Restart", restart);
