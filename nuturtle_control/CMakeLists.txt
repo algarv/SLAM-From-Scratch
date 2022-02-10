@@ -12,6 +12,7 @@ catch_ros
 rostest
 message_generation 
 nuturtlebot_msgs
+geometry_msgs
 roscpp 
 std_msgs
 tf2_ros)
@@ -74,6 +75,7 @@ add_service_files(
 generate_messages(
   DEPENDENCIES
   std_msgs  # Or other packages containing msgs
+  geometry_msgs
 )
 
 ################################################
@@ -108,7 +110,7 @@ generate_messages(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES
-CATKIN_DEPENDS message_runtime roscpp std_msgs
+CATKIN_DEPENDS message_runtime roscpp std_msgs geometry_msgs
 #  DEPENDS system_lib
 )
 
@@ -206,8 +208,12 @@ install(TARGETS circle odometry turtle_interface
 # )
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
-install(FILES loader.sh
+install(PROGRAMS loader.sh
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
+
+install(DIRECTORY launch/
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
 )
 
 #############
@@ -231,7 +237,17 @@ if(CATKIN_ENABLE_TESTING)
 catch_add_rostest_node(${PROJECT_NAME}_test tests/turtle_interface_test.cpp)
 add_rostest(launch/turtle_interface.test)
 
+catch_add_rostest_node(turtle_odom_test_node tests/turtle_odom_test_node.cpp)
+add_rostest(launch/turtle_odom.test)
+
+add_rostest(launch/turtle_circle.test)
+
 target_link_libraries(${PROJECT_NAME}_test ##Thing I am adding libraries to
+    turtlelib
+    ${catkin_LIBRARIES}
+)
+
+target_link_libraries(turtle_odom_test_node ##Thing I am adding libraries to
     turtlelib
     ${catkin_LIBRARIES}
 )

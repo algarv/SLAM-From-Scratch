@@ -1,6 +1,15 @@
 <launch>
 
-  <machine name="turtlebot" user="msr" env-loader=$(find nuturtle_control)/loader.sh>
-  </machine>
+    <arg name = 'robot' default = 'localhost' />
+
+
+    <machine name="turtlebot" address="$(arg robot)" user="msr" env-loader="./install/share/nuturtle_control/loader.sh" />
+
+    <remap from="/wheel_cmd" to="red/wheel_cmd"/>
+
+    <node pkg="rosserial_python" type="serial_node.py" name="serial_node" machine="turtlebot">
+        <param name="port" value="/dev/ttyACM0"/>
+        <param name="baud" value="115200"/>
+    </node>
 
 </launch>

@@ -22,8 +22,8 @@ namespace turtlelib
         
         Wheel_Angular_Velocities dw;
 
-        dw.L = (twist.vx - twist.w * TRACK_WIDTH/2) / WHEEL_RADIUS;
-        dw.R = (twist.w * TRACK_WIDTH/2 + twist.vx) / WHEEL_RADIUS;
+        dw.L = (twist.vx - twist.w * TRACK_WIDTH/2.0) / WHEEL_RADIUS;
+        dw.R = (twist.w * TRACK_WIDTH/2.0 + twist.vx) / WHEEL_RADIUS;
         
         return dw;
     }

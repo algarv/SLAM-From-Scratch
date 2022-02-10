@@ -45,7 +45,9 @@ void follow_twist(const geometry_msgs::Twist &wheel_cmd){
     twist_cmd.w = wheel_cmd.angular.z;
 
     vel_cmd = D.wheel_vel(twist_cmd);
-    // ROS_WARN("vx: %f,vy: %f,w: %f",twist_cmd.vx,twist_cmd.vy,twist_cmd.w);//edit
+    ROS_WARN("vx: %f,vy: %f,w: %f\n",twist_cmd.vx,twist_cmd.vy,twist_cmd.w);
+
+    ROS_WARN("L: %f R: %f\n",vel_cmd.L, vel_cmd.R);
 
     wheel_vel_msg.left_velocity = vel_cmd.L / mticks_radsec;
     wheel_vel_msg.right_velocity = vel_cmd.R / mticks_radsec;
@@ -124,8 +126,8 @@ int main(int argc, char *argv[]){
     cmd_vel_sub = pub_nh.subscribe("cmd_vel",10,follow_twist); 
     sensor_sub = pub_nh.subscribe("sensor_data",10,calc_joint_states);
 
-    wheel_pub = pub_nh.advertise<nuturtlebot_msgs::WheelCommands>("red/wheel_cmd", 10);
-    js_pub = pub_nh.advertise<sensor_msgs::JointState>("red/joint_states", 10);
+    wheel_pub = pub_nh.advertise<nuturtlebot_msgs::WheelCommands>("red/wheel_cmd", 100);
+    js_pub = pub_nh.advertise<sensor_msgs::JointState>("red/joint_states", 100);
 
     // wheel_msg.header.frame_id = "world";
     wheel_msg.header.stamp = ros::Time::now();
@@ -144,8 +146,8 @@ int main(int argc, char *argv[]){
         
         js_pub.publish(wheel_msg);
 
-        ros::spinOnce();
         r.sleep();
+        ros::spinOnce();
     }
 
     return 0;
