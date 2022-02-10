@@ -1,0 +1,6 @@
+<launch>
+  <node name="circle" pkg="nuturtle_control" type="circle.cpp" />
+
+  <param name="nuturtle_control/cmd_vel" value="500"/>
+
+</launch>
