@@ -34,11 +34,11 @@ TEST_CASE("NU Turtle Control", "[Tests]") { // Anna Garverick
     
     nuturtle_control::set_pose set_pose_srv;
     geometry_msgs::Twist twist_cmd;
+    geometry_msgs::TransformStamped transform;
     tf2_ros::Buffer blue_tf_buffer;
+    tf2_ros::TransformListener blue_tf_listener = tf2_ros::TransformListener(blue_tf_buffer);
     
     SECTION("Set Pose") {
-
-        tf2_ros::TransformListener blue_tf_listener = tf2_ros::TransformListener(blue_tf_buffer);
 
         set_pose_srv.request.x = 1;
         set_pose_srv.request.y = 1;
@@ -47,11 +47,21 @@ TEST_CASE("NU Turtle Control", "[Tests]") { // Anna Garverick
         r.sleep();
         ros::spinOnce(); 
 
-        blue_tf_buffer.lookupTransform("/world", "/blue_base_footprint", ros::Time(0));
+        transform = blue_tf_buffer.lookupTransform("world", "blue_base_footprint", ros::Time(0));
 
-        // REQUIRE(blue_tf_listener.getOrigin().x() == 1);
-        // REQUIRE(blue_tf_listener.getOrigin().y() == 1);
-        REQUIRE(1==1);
+        REQUIRE(transform.transform.translation.x == 1);
+        REQUIRE(transform.transform.translation.y == 1);
+    }
+    
+    SECTION("Odom to Blue") {
+
+        r.sleep();
+        ros::spinOnce(); 
+
+        transform = blue_tf_buffer.lookupTransform("odom", "blue_base_footprint", ros::Time(0));
+
+        REQUIRE(transform.transform.translation.x == 1);
+        REQUIRE(transform.transform.translation.y == 1);
     }
 
 }

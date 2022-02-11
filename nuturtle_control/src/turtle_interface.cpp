@@ -45,9 +45,9 @@ void follow_twist(const geometry_msgs::Twist &wheel_cmd){
     twist_cmd.w = wheel_cmd.angular.z;
 
     vel_cmd = D.wheel_vel(twist_cmd);
-    ROS_WARN("vx: %f,vy: %f,w: %f\n",twist_cmd.vx,twist_cmd.vy,twist_cmd.w);
+    // ROS_WARN("vx: %f,vy: %f,w: %f\n",twist_cmd.vx,twist_cmd.vy,twist_cmd.w);
 
-    ROS_WARN("L: %f R: %f\n",vel_cmd.L, vel_cmd.R);
+    // ROS_WARN("L: %f R: %f\n",vel_cmd.L, vel_cmd.R);
 
     wheel_vel_msg.left_velocity = vel_cmd.L / mticks_radsec;
     wheel_vel_msg.right_velocity = vel_cmd.R / mticks_radsec;
