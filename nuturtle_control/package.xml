@@ -2,7 +2,7 @@
 <package format="2">
   <name>nuturtle_control</name>
   <version>0.0.0</version>
-  <description>The nuturtle_control package</description>
+  <description>Interfaces with the real or simulated turtlebot to send movement commands</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
@@ -57,9 +57,8 @@
   <depend> catch_ros </depend>
   <test_depend> rostest </test_depend>
   <depend> tf2_ros </depend>
-
-
-
+  <exec_depend> rosserial_python </exec_depend>
+  <exec_depend> turtlebot3_teleop </exec_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->
