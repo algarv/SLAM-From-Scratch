@@ -4,3 +4,4 @@
 # Package List
 - nuturtle_description -- modifies with TurtleBot3 URDF file to spawn multiple turtlebots in RVIZ with color arguments
 - nusim -- spawns a turlebot with obstacles in RVIZ
+- nuturtle_control -- interfaces commands with the real or simulated turtlebot
