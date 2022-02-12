@@ -241,8 +241,6 @@ void update_wheel_position(const nuturtlebot_msgs::WheelCommands::ConstPtr &whee
 
     wheel_vels.L = left_rot_vel;
     wheel_vels.R = right_rot_vel;
-    // radsec[0] = d_ticks_left * dticks_radsec;
-    // radsec[1] = d_ticks_right * dticks_radsec;
 
     wheel_angles.L = (left_rot_vel / rate) + old_wheel_angles.L;
     wheel_angles.R = (right_rot_vel / rate) + old_wheel_angles.R;
@@ -262,8 +260,7 @@ int main(int argc, char *argv[]){
     
     ros::NodeHandle nh("~"), pub_nh;
     
-    // ros::param::get("rate", rate);
-    rate = 100;
+    pub_nh.param("rate", rate, 500);
     ros::Rate r(rate);
 
     ts.data = 0;
