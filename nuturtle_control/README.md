@@ -30,3 +30,6 @@ Start: (1, 1, 0)
 End: (1.75, 1.0, 0)
 
 
+I generated significant slip between the tires and the floor by putting a weight in front of the turtlebot and driving at a high speed. 
+
+
