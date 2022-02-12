@@ -28,9 +28,11 @@
 
 static double vel = 0.0, rad = 0.0;
 bool stopped = false;
+static int flag = 0;
 
 bool control(nuturtle_control::control::Request &params, nuturtle_control::control::Response &response){
 
+    stopped = false;
     vel = params.velocity;
     rad = params.radius;
 
@@ -39,6 +41,7 @@ bool control(nuturtle_control::control::Request &params, nuturtle_control::contr
 }
 
 bool reverse(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response){
+    
     vel = -1 * vel;
 
     return true;
@@ -46,7 +49,7 @@ bool reverse(std_srvs::Empty::Request &request, std_srvs::Empty::Response &respo
 
 bool stop(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response){
     stopped = true;
-
+    flag = 0;
     return true;
 }
 
@@ -55,34 +58,37 @@ int main(int argc, char *argv[]){
     ros::init(argc, argv, "circle");
     ros::NodeHandle nh("~"), pub_nh;
 
-    int rate;
-    nh.getParam("rate", rate);
+    int rate = 500;
+    pub_nh.param("rate", rate, 500);
     ros::Rate r(rate);
 
     ros::ServiceServer control_service = nh.advertiseService("Control",control);
     ros::ServiceServer reverse_service = nh.advertiseService("Reverse",reverse);
     ros::ServiceServer stop_service = nh.advertiseService("Stop",stop);
 
-    ros::Publisher cmd_vel_pub = pub_nh.advertise<geometry_msgs::Twist>("cmd_vel", 100);
+    ros::Publisher cmd_vel_pub = pub_nh.advertise<geometry_msgs::Twist>("cmd_vel", rate);
 
     geometry_msgs::Twist twist_cmd;
     
-    while(stopped == false){
-        twist_cmd.linear.x = vel * rad;
-        twist_cmd.angular.z = vel;
+    while(ros::ok()) { 
+        if(stopped == false){
+            twist_cmd.linear.x = vel * rad;
+            twist_cmd.angular.z = vel;
 
-        cmd_vel_pub.publish(twist_cmd);
+            cmd_vel_pub.publish(twist_cmd);
+        }
 
-        r.sleep();
+        if(stopped == true && flag == 0){
+            twist_cmd.linear.x = 0;
+            twist_cmd.angular.z = 0;
+            
+            cmd_vel_pub.publish(twist_cmd);  
+            flag = 1;
+        }
+
         ros::spinOnce();
+        r.sleep();
     }
-
-    twist_cmd.linear.x = 0;
-    twist_cmd.angular.z = 0;
-    cmd_vel_pub.publish(twist_cmd);
-
-    r.sleep();
-    ros::spinOnce();
 
     return 0;
 }

@@ -106,7 +106,7 @@ int main(int argc, char *argv[]){
     // }
 
     // if (ros::param::has("/turtle_interface/motor_cmd_to_radsec")){
-        ros::param::get("red/motor_cmd_to_radsec", mticks_radsec);
+        ros::param::get("/motor_cmd_to_radsec", mticks_radsec);
     // }
     // else {
         // ROS_DEBUG_ONCE("motor_cmd_to_radsec not defined");
@@ -126,8 +126,8 @@ int main(int argc, char *argv[]){
     cmd_vel_sub = pub_nh.subscribe("cmd_vel",10,follow_twist); 
     sensor_sub = pub_nh.subscribe("sensor_data",10,calc_joint_states);
 
-    wheel_pub = pub_nh.advertise<nuturtlebot_msgs::WheelCommands>("red/wheel_cmd", 100);
-    js_pub = pub_nh.advertise<sensor_msgs::JointState>("red/joint_states", 100);
+    wheel_pub = pub_nh.advertise<nuturtlebot_msgs::WheelCommands>("red/wheel_cmd", rate);
+    js_pub = pub_nh.advertise<sensor_msgs::JointState>("red/joint_states", rate);
 
     // wheel_msg.header.frame_id = "world";
     wheel_msg.header.stamp = ros::Time::now();

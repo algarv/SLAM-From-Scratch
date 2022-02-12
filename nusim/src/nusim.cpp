@@ -40,7 +40,7 @@
 
 static int rate;
 static bool teleporting = false;
-static double x = 0, y = 0, w = 0, x_length = 0, y_length = 0, width = 0, left_rot_vel = 0.0, right_rot_vel = 0.0, old_ticks_L = 0, old_ticks_R = 0, mticks_radsec, eticks_rad;
+static double x = 0, y = 0, w = 0, x_length = 0, y_length = 0, width = 0, left_rot_vel = 0.0, right_rot_vel = 0.0, mticks_radsec, eticks_rad;
 static std::string left_wheel = "red_wheel_left_joint", right_wheel = "red_wheel_right_joint", odom_id;
 std::vector<double> obj_x_list, obj_y_list, obj_d_list, radsec;
 static std_msgs::UInt64 ts;
@@ -253,8 +253,7 @@ void update_wheel_position(const nuturtlebot_msgs::WheelCommands::ConstPtr &whee
     sensor_data.left_encoder = sensor_data.left_encoder % 4096;
     sensor_data.right_encoder = sensor_data.right_encoder % 4096;
     // ROS_WARN("Left: %6.2d Right: %6.2d", sensor_data.left_encoder, sensor_data.right_encoder);
-    // old_ticks_L = sensor_data.left_encoder;
-    // old_ticks_R = sensor_data.right_encoder;
+
 }
 
 int main(int argc, char *argv[]){
@@ -271,11 +270,11 @@ int main(int argc, char *argv[]){
 
     tf2_ros::TransformBroadcaster broadcaster;
 
-    ts_pub = nh.advertise<std_msgs::UInt64>("timestep",100);
-    // js_pub = pub_nh.advertise<sensor_msgs::JointState>("red/joint_states", 100);
-    obj_pub = nh.advertise<visualization_msgs::MarkerArray>("visualization_marker_array", 100);
-    arena_pub = nh.advertise<visualization_msgs::MarkerArray>("visualization_marker_array", 100);
-    sensor_pub = pub_nh.advertise<nuturtlebot_msgs::SensorData>("sensor_data",100);
+    ts_pub = nh.advertise<std_msgs::UInt64>("timestep", rate);
+    // js_pub = pub_nh.advertise<sensor_msgs::JointState>("red/joint_states", rate);
+    obj_pub = nh.advertise<visualization_msgs::MarkerArray>("visualization_marker_array", rate);
+    arena_pub = nh.advertise<visualization_msgs::MarkerArray>("visualization_marker_array", rate);
+    sensor_pub = pub_nh.advertise<nuturtlebot_msgs::SensorData>("sensor_data", rate);
 
     wheel_sub = pub_nh.subscribe("red/wheel_cmd", 10, update_wheel_position);
 

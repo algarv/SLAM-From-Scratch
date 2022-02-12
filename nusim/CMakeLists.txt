@@ -10,8 +10,8 @@ project(nusim)
 find_package(catkin REQUIRED COMPONENTS
 message_generation 
 nuturtlebot_msgs
-sensor_msgs
 roscpp
+sensor_msgs
 std_msgs
 tf2_ros)
 
