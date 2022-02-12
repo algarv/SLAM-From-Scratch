@@ -5,9 +5,9 @@
 ///     cmd_vel (geometry_msgs/Twist): publishes the twist corresponding to the specified arc
 /// 
 /// SERVICES:
-///     nuturtle_control/Control (control.srv): Sends the turtlebot back to the origin of the world frame
-///     nuturtle_control/Reverse (Empty): Reverses the direction of the turtlebots trajectory
-///     nuturtle_control/Stop (Empty): Stops the turtlebot
+///    circle/Control (control.srv): Sends the turtlebot back to the origin of the world frame
+///    circle/Reverse (Empty): Reverses the direction of the turtlebots trajectory
+///    circle/Stop (Empty): Stops the turtlebot
 
 #include <ros/ros.h>
 #include <string>
@@ -30,7 +30,8 @@ static double vel = 0.0, rad = 0.0;
 bool stopped = false;
 static int flag = 0;
 
-bool control(nuturtle_control::control::Request &params, nuturtle_control::control::Response &response){
+/// \brief Receives a velocity and radius input to generate a cmd_vel message.
+bool control(nuturtle_control::control::Request &params, nuturtle_control::control::Response&){
 
     stopped = false;
     vel = params.velocity;
@@ -40,14 +41,16 @@ bool control(nuturtle_control::control::Request &params, nuturtle_control::contr
 
 }
 
-bool reverse(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response){
+/// \brief Changes the sign of the velocity input to reverse the direction of the cmd_vel message.
+bool reverse(std_srvs::Empty::Request&, std_srvs::Empty::Response&){
     
     vel = -1 * vel;
 
     return true;
 }
 
-bool stop(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response){
+/// \brief Triggers the stop flag to set cmd_vel to 0 and stop publishing.
+bool stop(std_srvs::Empty::Request&, std_srvs::Empty::Response&){
     stopped = true;
     flag = 0;
     return true;
@@ -81,7 +84,7 @@ int main(int argc, char *argv[]){
         if(stopped == true && flag == 0){
             twist_cmd.linear.x = 0;
             twist_cmd.angular.z = 0;
-            
+
             cmd_vel_pub.publish(twist_cmd);  
             flag = 1;
         }

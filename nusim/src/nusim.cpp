@@ -56,7 +56,7 @@ static turtlelib::Wheel_Angular_Velocities wheel_vels;
 static turtlelib::Twist2D twist;
 static turtlelib::q pos, old_pos;
 
-bool restart(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response){
+bool restart(std_srvs::Empty::Request&, std_srvs::Empty::Response&){
 /// \brief Send the turtle bot back to the origin of the world frame and restart the timestep counter.
 ///
 /// \param request - Empty::Request
@@ -80,7 +80,7 @@ bool restart(std_srvs::Empty::Request &request, std_srvs::Empty::Response &respo
     return true;
 }
 
-bool teleport(nusim::teleport::Request &pose, nusim::teleport::Response &response){
+bool teleport(nusim::teleport::Request &pose, nusim::teleport::Response&){
 /// \brief Teleports the turtle to the specified position and rotation.
 ///
 /// \param pose - position input from parameter
@@ -106,7 +106,7 @@ visualization_msgs::MarkerArray add_obstacles(std::vector<double> obj_x_list, st
 
     int id = 0;
     obstacle.markers.resize(obj_x_list.size());
-    for (int i = 0; i<obj_x_list.size(); i+=1) {
+    for (unsigned int i = 0; i<obj_x_list.size(); i+=1) {
         
         obstacle.markers[i].header.frame_id = "world";
         obstacle.markers[i].ns = "nusim_node";

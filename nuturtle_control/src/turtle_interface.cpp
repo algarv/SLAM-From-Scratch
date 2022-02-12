@@ -26,7 +26,7 @@
 static int rate;
 static ros::Subscriber cmd_vel_sub, sensor_sub;
 static ros::Publisher wheel_pub, js_pub;
-static double eticks_rad, mticks_radsec, L_ticks, R_ticks, d_L_ticks, d_R_ticks, saved_L_ticks = 0, saved_R_ticks = 0;
+static double eticks_rad, mticks_radsec, L_ticks, R_ticks, saved_L_ticks = 0, saved_R_ticks = 0;
 static std::string left_wheel = "red_wheel_left_joint", right_wheel = "red_wheel_right_joint";
 static turtlelib::DiffDrive D; 
 static turtlelib::Twist2D twist_cmd;
@@ -35,11 +35,11 @@ static turtlelib::Wheel_Angle wheel_angles;
 static sensor_msgs::JointState wheel_msg;
 static nuturtlebot_msgs::WheelCommands wheel_vel_msg;
 
-void follow_twist(const geometry_msgs::Twist &wheel_cmd){
 /// \brief Recieves a twist message and returns a wheel cmd message.
 ///
 /// \param wheel_cmd - Twist recieved from geometry messages 
-
+void follow_twist(const geometry_msgs::Twist &wheel_cmd){
+    
     twist_cmd.vx = wheel_cmd.linear.x;
     twist_cmd.vy = wheel_cmd.linear.y;
     twist_cmd.w = wheel_cmd.angular.z;
@@ -70,22 +70,16 @@ void follow_twist(const geometry_msgs::Twist &wheel_cmd){
 
 }
 
-void calc_joint_states(const nuturtlebot_msgs::SensorData &sensor_data){
 /// \brief Receives a sensor data message and uses the encoder ticks to return wheel positions.
 ///
 /// \param sensor_data - Sensor data recieved from nuturtlebot_msgs
-    
+void calc_joint_states(const nuturtlebot_msgs::SensorData &sensor_data){
+
     L_ticks = sensor_data.left_encoder;
     R_ticks = sensor_data.right_encoder;
 
-    d_L_ticks = L_ticks - saved_L_ticks;
-    d_R_ticks = R_ticks - saved_R_ticks;
-
     wheel_angles.L = (L_ticks * eticks_rad);
     wheel_angles.R = (R_ticks * eticks_rad);
-
-    // wheel_vels.L = d_L_ticks * mticks_radsec;
-    // wheel_vels.R = d_R_ticks * mticks_radsec;
 
     saved_L_ticks = L_ticks;
     saved_R_ticks = R_ticks;

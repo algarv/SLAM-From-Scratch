@@ -10,9 +10,6 @@
 #include <geometry_msgs/Twist.h>
 #include <nav_msgs/Odometry.h>
 
-// // ros::Subscriber cmd_vel_sub = pub_nh.subscribe("cmd_vel",10,follow_twist); 
-// // ros::Subscriber sensor_sub = pub_nh.subscribe("sensor_data",10,calc_joint_states);
-
 static turtlelib::Wheel_Angle wheel_angles;
 static turtlelib::DiffDrive D; 
 double L_cmd = 0;
@@ -20,28 +17,6 @@ double R_cmd = 0;
 double wheel_rad = 0.033;
 double chassis_rad = .08;
 double eticks_rad = 0.00153398078789;
-
-
-
-void update_wheel_position(const nuturtlebot_msgs::WheelCommands::ConstPtr &wheel_cmd){
-    // L_cmd = wheel_cmd->left_velocity;
-    // R_cmd = wheel_cmd->right_velocity;
-}
-
-void update_odom(const sensor_msgs::JointState &wheels){
-
-    // wheel_angles.L = wheels.position[0];
-    // wheel_angles.R = wheels.position[1];
-    // wheel_vels.L = (wheel_angles.L - old_wheel_angles.L)*rate;//wheels.velocity[0];
-    // wheel_vels.R = (wheel_angles.R - old_wheel_angles.R)*rate;//wheels.velocity[1];
-    // // twist = D.get_twist(wheel_angles, old_wheel_angles);
-    // twist = D.get_twist(wheel_vels);
-
-    // // odom_msg.header.frame_id = "odom";
-    // odom_msg.twist.twist.linear.x = twist.vx;
-    // odom_msg.twist.twist.linear.y = twist.vy;
-    // odom_msg.twist.twist.angular.z = twist.w;
-}
 
 void follow_twist(const geometry_msgs::Twist &wheel_cmd){
 
@@ -74,14 +49,10 @@ TEST_CASE("NU Turtle Control", "[Tests]") { // Anna Garverick
     double rate = .25;
     ros::Rate r(rate);
 
-    ros::Publisher wheel_pub = pub_nh.advertise<nuturtlebot_msgs::WheelCommands>("red/wheel_cmd", 10);
-    ros::Publisher js_pub = pub_nh.advertise<sensor_msgs::JointState>("red/joint_states", 10);
+
     ros::Publisher cmd_vel_pub = pub_nh.advertise<geometry_msgs::Twist>("cmd_vel", 100);
     ros::Publisher sensor_pub = pub_nh.advertise<nuturtlebot_msgs::SensorData>("sensor_data",100);
-    ros::Publisher odom_pub = pub_nh.advertise<nav_msgs::Odometry>("odom", 100);
     
-    ros::Subscriber js_sub = pub_nh.subscribe("red/joint_states",10,update_odom);
-    ros::Subscriber wheel_sub = pub_nh.subscribe("red/wheel_cmd", 10, update_wheel_position);
     ros::Subscriber cmd_vel_sub = pub_nh.subscribe("cmd_vel",10,follow_twist); 
     ros::Subscriber sensor_sub = pub_nh.subscribe("sensor_data",10,calc_joint_states);
 

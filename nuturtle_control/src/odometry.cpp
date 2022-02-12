@@ -14,6 +14,8 @@
 /// 
 /// SUBSCRIBERS:
 ///     joint_states (sensor_msgs/JointState): Receives the wheel joint angles
+/// SERVICES:
+///     nuturtle_control/set_pose (set_pose.srv): Teleports the blue turtle bot to the specfied x, y, and theta position
 
 #include <ros/ros.h>
 #include <string>
@@ -46,10 +48,11 @@ ros::Publisher odom_pub;
 static ros::ServiceServer pose_service;
 nav_msgs::Odometry odom_msg;
 
-void update_odom(const sensor_msgs::JointState &wheels){
 /// \brief Receives a wheel joint states and translates into a twist for the odometry message
 ///
 /// \param wheels - wheel joint states
+void update_odom(const sensor_msgs::JointState &wheels){
+
     
     wheel_vels.L = wheels.velocity[0]; 
     wheel_vels.R = wheels.velocity[1];
@@ -69,7 +72,8 @@ void update_odom(const sensor_msgs::JointState &wheels){
     old_wheel_angles = {.L = wheels.position[0], .R = wheels.position[1]};
 }
 
-bool set_pose(nuturtle_control::set_pose::Request &pose, nuturtle_control::set_pose::Response &response){
+/// \brief Receives an x, y, and theta input to teleport the blue turtlebot to a new position.
+bool set_pose(nuturtle_control::set_pose::Request &pose, nuturtle_control::set_pose::Response&){
 
     pos.x = pose.x;
     pos.y = pose.y;

@@ -142,6 +142,10 @@ target_link_libraries(frame_main ##Thing I am adding libraries to
     ${catkin_LIBRARIES}
 )
 
+install(TARGETS frame_main
+  RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
+)
+
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -223,10 +227,6 @@ catch_add_test(${PROJECT_NAME}_test
 target_link_libraries(${PROJECT_NAME}_test ##Thing I am adding libraries to
     ${PROJECT_NAME}
     ${catkin_LIBRARIES}
-)
-
-install(TARGETS frame_main
-  RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
 )
 
 # enable C++ 17
