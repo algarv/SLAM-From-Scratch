@@ -158,9 +158,9 @@ visualization_msgs::MarkerArray make_arena(float x_length, float y_length){
     arena_array.markers[0].scale.y = y_length - width;
     arena_array.markers[0].scale.z = .25;
     arena_array.markers[0].color.a = 1.0;
-    arena_array.markers[0].color.r = .75;
+    arena_array.markers[0].color.r = 1.0;
     arena_array.markers[0].color.g = 0.0;
-    arena_array.markers[0].color.b = 1.0;
+    arena_array.markers[0].color.b = 0.0;
 
     arena_array.markers[1].header.frame_id = "world";
     arena_array.markers[1].ns = "nusim_node";
@@ -179,9 +179,9 @@ visualization_msgs::MarkerArray make_arena(float x_length, float y_length){
     arena_array.markers[1].scale.y = width;
     arena_array.markers[1].scale.z = .25;
     arena_array.markers[1].color.a = 1.0;
-    arena_array.markers[1].color.r = .75;
+    arena_array.markers[1].color.r = 1.0;
     arena_array.markers[1].color.g = 0.0;
-    arena_array.markers[1].color.b = 1.0;
+    arena_array.markers[1].color.b = 0.0;
 
     arena_array.markers[2].header.frame_id = "world";
     arena_array.markers[2].ns = "nusim_node";
@@ -200,9 +200,9 @@ visualization_msgs::MarkerArray make_arena(float x_length, float y_length){
     arena_array.markers[2].scale.y = y_length - width;
     arena_array.markers[2].scale.z = .25;
     arena_array.markers[2].color.a = 1.0;
-    arena_array.markers[2].color.r = .75;
+    arena_array.markers[2].color.r = 1.0;
     arena_array.markers[2].color.g = 0.0;
-    arena_array.markers[2].color.b = 1.0;
+    arena_array.markers[2].color.b = 0.0;
 
     arena_array.markers[3].header.frame_id = "world";
     arena_array.markers[3].ns = "nusim_node";
@@ -221,9 +221,9 @@ visualization_msgs::MarkerArray make_arena(float x_length, float y_length){
     arena_array.markers[3].scale.y = width;
     arena_array.markers[3].scale.z = .25;
     arena_array.markers[3].color.a = 1.0;
-    arena_array.markers[3].color.r = .75;
+    arena_array.markers[3].color.r = 1.0;
     arena_array.markers[3].color.g = 0.0;
-    arena_array.markers[3].color.b = 1.0;
+    arena_array.markers[3].color.b = 0.0;
     
     return arena_array;
 

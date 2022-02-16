@@ -1,5 +1,6 @@
 <launch>
 
+    <arg name="set_frame_id" default="base_scan"/>
     <arg name = 'robot' default = 'localhost' />
 
 
@@ -10,6 +11,11 @@
     <node pkg="rosserial_python" type="serial_node.py" name="serial_node" machine="turtlebot">
         <param name="port" value="/dev/ttyACM0"/>
         <param name="baud" value="115200"/>
+    </node>
+
+    <node pkg="hls_lfcd_lds_driver" type="hlds_laser_publisher" name="turtlebot3_lds" output="screen">
+      <param name="port" value="/dev/ttyUSB0"/>
+      <param name="frame_id" value="$(arg set_frame_id)"/>
     </node>
 
 </launch>
