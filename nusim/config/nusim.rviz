@@ -235,6 +235,14 @@ Visualization Manager:
       Update Interval: 0
       Value: true
       Visual Enabled: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /fake_sensor
+      Name: MarkerArray
+      Namespaces:
+        nusim_node: true
+      Queue Size: 100
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -263,7 +271,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 1.797385811805725
+      Distance: 7.108311176300049
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -279,9 +287,9 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.5653977990150452
+      Pitch: 0.9853978157043457
       Target Frame: <Fixed Frame>
-      Yaw: 3.970404624938965
+      Yaw: 3.645402431488037
     Saved: ~
 Window Geometry:
   Displays:
