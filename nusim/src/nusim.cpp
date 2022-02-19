@@ -384,7 +384,7 @@ void laser_scan(turtlelib::q robot_pos, std::vector<double> obj_x_list, std::vec
         robot_o = T_ow(robot_w);
 
         int j = 0;
-        for(double angle = angle_min; angle <=angle_max; angle+=angle_increment){
+        for(double angle = angle_min; angle<=angle_max; angle+=angle_increment){
             //object frame
             double dx_r = range * cos(angle);
             double dy_r = range * sin(angle);
@@ -425,30 +425,43 @@ void laser_scan(turtlelib::q robot_pos, std::vector<double> obj_x_list, std::vec
                 double int_y_plus = (-1*D*dx + abs(dy)*sqrt((pow(r,2)*pow(dr,2))-pow(D,2)))/pow(dr,2);
                 double int_y_minus = (-1*D*dx - abs(dy)*sqrt((pow(r,2)*pow(dr,2))-pow(D,2)))/pow(dr,2);
             
+
                 //Calculate the 4 possible vectors
                 turtlelib::Vector2D r1 = {.x = int_x_plus, .y = int_y_plus};
-                turtlelib::Vector2D r2 = {.x = int_x_plus, .y = int_y_minus};
-                turtlelib::Vector2D r3 = {.x = int_x_minus, .y = int_y_plus};
-                turtlelib::Vector2D r4 = {.x = int_x_minus, .y = int_y_minus};
+                turtlelib::Vector2D r2 = {.x = int_x_minus, .y = int_y_minus};
+                // turtlelib::Vector2D r3 = {.x = int_x_minus, .y = int_y_plus};
+                // turtlelib::Vector2D r4 = {.x = int_x_minus, .y = int_y_minus};
                 
                 //Transform to robot frame
                 r1 = T_ro(r1);
                 r2 = T_ro(r2);
-                r3 = T_ro(r3);
-                r4 = T_ro(r4);
+                // r3 = T_ro(r3);
+                // r4 = T_ro(r4);
 
                 //Consider the intersection point closest to the robot frame
                 double m1 = sqrt(pow(r1.x,2)+pow(r1.y,2));
                 double m2 = sqrt(pow(r2.x,2)+pow(r2.y,2));
-                double m3 = sqrt(pow(r3.x,2)+pow(r3.y,2));
-                double m4 = sqrt(pow(r4.x,2)+pow(r4.y,2));
+                // double m3 = sqrt(pow(r3.x,2)+pow(r3.y,2));
+                // double m4 = sqrt(pow(r4.x,2)+pow(r4.y,2));
 
-                //Save the closest non-zero point to the robot
-                if (std::min({m1,m2,m3,m4}) < laser_hits[j]){
-                    laser_hits[j] = std::min({m1,m2,m3,m4}); 
+                double x_min = std::min({x1,x2});
+                double x_max = std::max({x1,x2});
+                double y_min = std::min({y1,y2});
+                double y_max = std::max({y1,y2});
+                if ((int_x_plus > x_min) & (int_x_minus > x_min) & (int_x_minus < x_max) & (int_x_plus < x_max) & (int_y_plus > y_min) & (int_y_minus > y_min) & (int_y_minus < y_max) & (int_y_plus < y_max)){
+                    if (std::min({m1,m2}) < laser_hits[j] | laser_hits[j]==0){
+                        laser_hits[j] = std::min({m1,m2}); 
+                    }
                 }
-                if (laser_hits[j]==0){
-                    laser_hits[j] = std::min({m1,m2,m3,m4});
+                else if ((int_x_plus > x_min) & (int_x_plus < x_max) & (int_y_plus > y_min) & (int_y_plus < y_max)){
+                    if (m1 < laser_hits[j] | laser_hits[j]==0){
+                        laser_hits[j] = m1; 
+                    }
+                }
+                else if ((int_x_minus > x_min) & (int_x_minus < x_max) & (int_y_minus > y_min) & (int_y_minus < y_max)){
+                    if (m2 < laser_hits[j] | laser_hits[j]==0){
+                        laser_hits[j] = m2;
+                    } 
                 }
             }   
             j++;  
