@@ -10,6 +10,7 @@
 <param name="body_id" type="string" value="red_base_footprint" />
 <param name="odom_id" type="string" value="odom" />
 <rosparam command="load" file="$(find nusim)/config/initial.yaml" />
+<rosparam command="load" file="$(find nusim)/config/sensor.yaml" />
 <rosparam command="load" file="$(find nuturtle_description)/config/diff_params.yaml" />
 
 <group if="$(eval robot == 'nusim')">

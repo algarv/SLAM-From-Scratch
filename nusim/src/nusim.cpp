@@ -21,6 +21,7 @@
 #include <string>
 #include <vector>
 #include <sensor_msgs/JointState.h>
+#include <sensor_msgs/LaserScan.h>
 #include <ros/ros.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <std_msgs/UInt64.h>
@@ -41,14 +42,20 @@
 
 static int rate;
 static bool teleporting = false;
-static double x = 0, y = 0, w = 0, x_length = 0, y_length = 0, width = 0, left_rot_vel = 0.0, right_rot_vel = 0.0, mticks_radsec, eticks_rad, max_range, slip_min, slip_max, ada_L, ada_R;
+static double x = 0, y = 0, w = 0;
+static double x_length = 0, y_length = 0, width = 0;
+static double left_rot_vel = 0.0, right_rot_vel = 0.0;
+static double ada_L, ada_R;
+static double int_x, int_y, r = .25/2;
+static double mticks_radsec, eticks_rad, slip_min, slip_max, collision_radius, min_range, max_range, angle_min, angle_max, angle_increment;
 static std::string left_wheel = "red_wheel_left_joint", right_wheel = "red_wheel_right_joint", odom_id;
 std::vector<double> obj_x_list, obj_y_list, obj_d_list, radsec;
 static std_msgs::UInt64 ts;
 static sensor_msgs::JointState wheels;
+static sensor_msgs::LaserScan laser_msg;
 static geometry_msgs::TransformStamped sim_tf;
 static nuturtlebot_msgs::SensorData sensor_data; 
-static ros::Publisher obj_pub, js_pub, ts_pub, arena_pub, sensor_pub, fake_sensor_pub;
+static ros::Publisher obj_pub, js_pub, ts_pub, arena_pub, sensor_pub, fake_sensor_pub, laser_pub;
 static ros::Subscriber wheel_sub;
 static ros::ServiceServer rs_service, tp_service;
 static visualization_msgs::MarkerArray obstacle, obj_array, marker_arena, arena_array, fake_sensor_array;
@@ -269,10 +276,10 @@ visualization_msgs::MarkerArray fake_sensor(turtlelib::q robot_pos, std::vector<
         ros::Duration duration(1.0);
 
         double d = sqrt(pow(robot_pos.x-obj_x_list[i],2) + pow(robot_pos.y-obj_y_list[i],2));
-        ROS_WARN("Distance %d: %6.2f",i,d);
+        // ROS_WARN("Distance %d: %6.2f",i,d);
         if (d > max_range) {
             fake_sensor_array.markers[i].action = visualization_msgs::Marker::DELETE;
-            ROS_WARN("Deleting %d",i);
+            // ROS_WARN("Deleting %d",i);
         }
         else {
             fake_sensor_array.markers[i].action = visualization_msgs::Marker::ADD;
@@ -346,6 +353,110 @@ void update_wheel_position(const nuturtlebot_msgs::WheelCommands::ConstPtr &whee
 
 }
 
+void laser_scan(turtlelib::q robot_pos, std::vector<double> obj_x_list, std::vector<double> obj_y_list){
+    
+    double num_measurements = (angle_max - angle_min)/angle_increment;
+    std::vector<float> laser_hits(num_measurements,0);
+    double range = max_range - min_range;
+
+    for (unsigned int i = 0; i<obj_x_list.size(); i+=1) { 
+
+        turtlelib::Vector2D trans_wo;
+        trans_wo.x = obj_x_list[i];
+        trans_wo.y = obj_y_list[i];
+
+        turtlelib::Transform2D T_wo(trans_wo, 0);
+        turtlelib::Transform2D T_ow(0);
+        T_ow = T_wo.inv();
+
+        turtlelib::Vector2D robot_w;
+        robot_w.x = robot_pos.x;
+        robot_w.y = robot_pos.y;
+        turtlelib::Transform2D T_wr(robot_w, pos.theta);
+
+        turtlelib::Transform2D T_or(0);
+        T_or = T_ow * T_wr;
+
+        turtlelib::Transform2D T_ro(0);
+        T_ro = T_or.inv();
+
+        turtlelib::Vector2D robot_o;
+        robot_o = T_ow(robot_w);
+
+        int j = 0;
+        for(double angle = angle_min; angle <=angle_max; angle+=angle_increment){
+            //object frame
+            double dx_r = range * cos(angle);
+            double dy_r = range * sin(angle);
+
+            turtlelib::Vector2D v1_r;
+            v1_r.x = min_range*cos(angle);
+            v1_r.y = min_range*sin(angle);
+            turtlelib::Vector2D v1_o;
+            v1_o = T_or(v1_r);
+
+            double x1 = v1_o.x;
+            double y1 = v1_o.y;
+
+            turtlelib::Vector2D v2_r;
+            v2_r.x = v1_r.x + dx_r;
+            v2_r.y = v1_r.y + dy_r;
+            turtlelib::Vector2D v2_o;
+            v2_o = T_or(v2_r);
+
+            double x2 = v2_o.x;
+            double y2 = v2_o.y;
+
+            double D = x1*y2 - x2*y1;
+            double dx = x2 - x1;
+            double dy = y2 - y1;
+            double dr = sqrt(pow(dx,2)+pow(dy,2));
+            //ROS_WARN("range: %3.2f",range);
+            //ROS_WARN("dr: %3.2f",dr);
+
+            int sgn = 1;
+            if (dy < 0){
+                sgn = -1;
+            }
+
+            if ((pow(.25/2,2)*pow(dr,2)-pow(D,2))>=0){
+                double int_x_plus = (D*dy + sgn*dx*sqrt((pow(r,2)*pow(dr,2))-pow(D,2)))/pow(dr,2);
+                double int_x_minus = (D*dy - sgn*dx*sqrt((pow(r,2)*pow(dr,2))-pow(D,2)))/pow(dr,2);          
+                double int_y_plus = (-1*D*dx + abs(dy)*sqrt((pow(r,2)*pow(dr,2))-pow(D,2)))/pow(dr,2);
+                double int_y_minus = (-1*D*dx - abs(dy)*sqrt((pow(r,2)*pow(dr,2))-pow(D,2)))/pow(dr,2);
+            
+                //Calculate the 4 possible vectors
+                turtlelib::Vector2D r1 = {.x = int_x_plus, .y = int_y_plus};
+                turtlelib::Vector2D r2 = {.x = int_x_plus, .y = int_y_minus};
+                turtlelib::Vector2D r3 = {.x = int_x_minus, .y = int_y_plus};
+                turtlelib::Vector2D r4 = {.x = int_x_minus, .y = int_y_minus};
+                
+                //Transform to robot frame
+                r1 = T_ro(r1);
+                r2 = T_ro(r2);
+                r3 = T_ro(r3);
+                r4 = T_ro(r4);
+
+                //Consider the intersection point closest to the robot frame
+                double m1 = sqrt(pow(r1.x,2)+pow(r1.y,2));
+                double m2 = sqrt(pow(r2.x,2)+pow(r2.y,2));
+                double m3 = sqrt(pow(r3.x,2)+pow(r3.y,2));
+                double m4 = sqrt(pow(r4.x,2)+pow(r4.y,2));
+
+                //Save the closest non-zero point to the robot
+                if (std::min({m1,m2,m3,m4}) < laser_hits[j]){
+                    laser_hits[j] = std::min({m1,m2,m3,m4}); 
+                }
+                if (laser_hits[j]==0){
+                    laser_hits[j] = std::min({m1,m2,m3,m4});
+                }
+            }   
+            j++;  
+        }
+    }
+    laser_msg.ranges = laser_hits;
+}
+
 int main(int argc, char *argv[]){
     
     ros::init(argc, argv, "nusim");
@@ -365,6 +476,7 @@ int main(int argc, char *argv[]){
     arena_pub = nh.advertise<visualization_msgs::MarkerArray>("visualization_marker_array", rate);
     sensor_pub = pub_nh.advertise<nuturtlebot_msgs::SensorData>("sensor_data", rate);
     fake_sensor_pub = nh.advertise<visualization_msgs::MarkerArray>("/fake_sensor", 5);
+    laser_pub = pub_nh.advertise<sensor_msgs::LaserScan>("laser_scan",5);
 
     wheel_sub = pub_nh.subscribe("red/wheel_cmd", 10, update_wheel_position);
 
@@ -379,9 +491,14 @@ int main(int argc, char *argv[]){
     nh.getParam("wall_width", width);
     nh.getParam("/motor_cmd_to_radsec", mticks_radsec);
     nh.getParam("/encoder_ticks_to_rad", eticks_rad);
-    nh.getParam("/max_range",max_range);
     nh.getParam("/slip_min",slip_min);
     nh.getParam("/slip_max",slip_max);
+    nh.getParam("/collision_radius",collision_radius);
+    nh.getParam("/min_range",min_range);
+    nh.getParam("/max_range",max_range);
+    nh.getParam("/angle_min",angle_min);
+    nh.getParam("/angle_max",angle_max);
+    nh.getParam("/angle_increment",angle_increment);
 
     nh.param<std::string>("odom_id",odom_id,"odom");
 
@@ -400,6 +517,15 @@ int main(int argc, char *argv[]){
 
     wheels.header.stamp = ros::Time::now();
     wheels.name = {left_wheel, right_wheel};
+
+    laser_msg.header.frame_id = "red_base_footprint";
+    laser_msg.angle_min = angle_min;
+    laser_msg.angle_max = angle_max;
+    laser_msg.angle_increment = angle_increment;
+    laser_msg.time_increment = 1/1800;
+    laser_msg.scan_time = 1/5;
+    laser_msg.range_min = min_range;
+    laser_msg.range_max = max_range;
 
     while(ros::ok()) {
         
@@ -425,6 +551,16 @@ int main(int argc, char *argv[]){
             pos = DD.get_q(theoretical_wheel_angles, old_wheel_angles, old_pos);
             // pos = DD.get_q(twist,old_pos);
         }
+
+        for (unsigned int i = 0; i<obj_x_list.size(); i+=1) {
+            double dx = pos.x - obj_x_list[i];
+            double dy = pos.y - obj_y_list[i];
+            double dist = sqrt(pow(dx,2)+pow(dy,2));
+            double dif = dist - (collision_radius + obj_d_list[i]/2);
+            if (dif < 0){
+               pos = old_pos;
+            }
+        }
         
         sim_tf.header.stamp = ros::Time::now();
         sim_tf.header.frame_id = "world";
@@ -443,6 +579,9 @@ int main(int argc, char *argv[]){
         
         fake_sensor_array = fake_sensor(pos, obj_x_list, obj_y_list);
         fake_sensor_pub.publish(fake_sensor_array);
+
+        laser_scan(pos, obj_x_list, obj_y_list);
+        laser_pub.publish(laser_msg);
 
         nh.getParam("/obj_x",obj_x_list);
         nh.getParam("/obj_y",obj_y_list);
