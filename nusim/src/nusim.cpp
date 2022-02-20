@@ -46,7 +46,7 @@ static double x = 0, y = 0, w = 0;
 static double x_length = 0, y_length = 0, width = 0;
 static double left_rot_vel = 0.0, right_rot_vel = 0.0;
 static double ada_L, ada_R;
-static double int_x, int_y, r = .25/2;
+static double r = .25/2;
 static double mticks_radsec, eticks_rad, slip_min, slip_max, collision_radius, min_range, max_range, angle_min, angle_max, angle_increment;
 static std::string left_wheel = "red_wheel_left_joint", right_wheel = "red_wheel_right_joint", odom_id;
 std::vector<double> obj_x_list, obj_y_list, obj_d_list, radsec;
@@ -185,9 +185,9 @@ visualization_msgs::MarkerArray make_arena(float x_length, float y_length){
     arena_array.markers[1].header.stamp = ros::Time::now();
     arena_array.markers[1].type = visualization_msgs::Marker::CUBE;
     arena_array.markers[1].action = visualization_msgs::Marker::ADD;
-    arena_array.markers[1].id = i+1;
+    arena_array.markers[1].id = i+3;
     arena_array.markers[1].pose.position.x = 0;
-    arena_array.markers[1].pose.position.y = y_length/2;
+    arena_array.markers[1].pose.position.y = -y_length/2;
     arena_array.markers[1].pose.position.z = 0.125;
     arena_array.markers[1].pose.orientation.x = 0.0;
     arena_array.markers[1].pose.orientation.y = 0.0;
@@ -221,15 +221,15 @@ visualization_msgs::MarkerArray make_arena(float x_length, float y_length){
     arena_array.markers[2].color.r = 1.0;
     arena_array.markers[2].color.g = 0.0;
     arena_array.markers[2].color.b = 0.0;
-
+    
     arena_array.markers[3].header.frame_id = "world";
     arena_array.markers[3].ns = "nusim_node";
     arena_array.markers[3].header.stamp = ros::Time::now();
     arena_array.markers[3].type = visualization_msgs::Marker::CUBE;
     arena_array.markers[3].action = visualization_msgs::Marker::ADD;
-    arena_array.markers[3].id = i+3;
+    arena_array.markers[3].id = i+1;
     arena_array.markers[3].pose.position.x = 0;
-    arena_array.markers[3].pose.position.y = -y_length/2;
+    arena_array.markers[3].pose.position.y = y_length/2;
     arena_array.markers[3].pose.position.z = 0.125;
     arena_array.markers[3].pose.orientation.x = 0.0;
     arena_array.markers[3].pose.orientation.y = 0.0;
@@ -242,7 +242,7 @@ visualization_msgs::MarkerArray make_arena(float x_length, float y_length){
     arena_array.markers[3].color.r = 1.0;
     arena_array.markers[3].color.g = 0.0;
     arena_array.markers[3].color.b = 0.0;
-    
+
     return arena_array;
 
 }
@@ -359,48 +359,96 @@ void laser_scan(turtlelib::q robot_pos, std::vector<double> obj_x_list, std::vec
     std::vector<float> laser_hits(num_measurements,0);
     double range = max_range - min_range;
 
-    for (unsigned int i = 0; i<obj_x_list.size(); i+=1) { 
+    turtlelib::Vector2D robot_w;
+    robot_w.x = robot_pos.x;
+    robot_w.y = robot_pos.y;
+    turtlelib::Transform2D T_wr(robot_w, pos.theta);
 
-        turtlelib::Vector2D trans_wo;
-        trans_wo.x = obj_x_list[i];
-        trans_wo.y = obj_y_list[i];
+    turtlelib::Transform2D T_rw;
+    T_rw = T_wr.inv();
 
-        turtlelib::Transform2D T_wo(trans_wo, 0);
-        turtlelib::Transform2D T_ow(0);
-        T_ow = T_wo.inv();
+    int j = 0;
+    for(double angle = angle_min; angle<=angle_max; angle+=angle_increment){
+        
+        turtlelib::Vector2D v1_r;
+        v1_r.x = min_range*cos(angle);
+        v1_r.y = min_range*sin(angle);
+        
+        double dx_r = range * cos(angle);
+        double dy_r = range * sin(angle);
 
-        turtlelib::Vector2D robot_w;
-        robot_w.x = robot_pos.x;
-        robot_w.y = robot_pos.y;
-        turtlelib::Transform2D T_wr(robot_w, pos.theta);
+        turtlelib::Vector2D v2_r;
+        v2_r.x = v1_r.x + dx_r;
+        v2_r.y = v1_r.y + dy_r;
 
-        turtlelib::Transform2D T_or(0);
-        T_or = T_ow * T_wr;
+        double slope = std::tan(angle); //This is the same as dy_r/dx_r (good)
 
-        turtlelib::Transform2D T_ro(0);
-        T_ro = T_or.inv();
+        turtlelib::Vector2D wall1_w = {.x = x_length/2, .y = y_length/2};
+        turtlelib::Vector2D wall2_w = {.x = x_length/2, .y = -1*y_length/2};
+        turtlelib::Vector2D wall3_w = {.x = -1 * x_length/2, .y = -1*y_length/2};
+        turtlelib::Vector2D wall4_w = {.x = -1 * x_length/2, .y = y_length/2};
+        
+        double x_min_r = std::min({v1_r.x,v2_r.x});
+        double x_max_r = std::max({v1_r.x,v2_r.x});
+        double y_min_r = std::min({v1_r.y,v2_r.y});
+        double y_max_r = std::max({v1_r.y,v2_r.y});
 
-        turtlelib::Vector2D robot_o;
-        robot_o = T_ow(robot_w);
+        std::vector<turtlelib::Vector2D> wall_pts = {wall1_w, wall2_w, wall3_w, wall4_w};
+        for (int k=0; k<3; k++){
+            if (wall_pts[k].y == wall_pts[k+1].y){
+                turtlelib::Vector2D wall_r;
+                wall_r = T_rw(wall_pts[k]);
+                double int_x = wall_r.y / slope;
+                double int_y = wall_r.y;
+                double m = sqrt(pow(int_x,2)+pow(int_y,2));
+                laser_hits[j] = m;
+                if ((int_x > x_min_r) & (int_x < x_max_r) & (int_y > y_min_r) & (int_y < y_max_r)){
+                    if ((m < laser_hits[j]) | (laser_hits[j] == 0)){
+                        laser_hits[j] = m;
+                    }
+                }
+            }  
+            else if (wall_pts[k].x == wall_pts[k+1].x){
+                turtlelib::Vector2D wall_r;
+                wall_r = T_rw(wall_pts[k]);
+                double int_x = wall_r.x;
+                double int_y = wall_r.x * slope;
+                double m = sqrt(pow(int_x,2)+pow(int_y,2));
+                laser_hits[j] = m;
+                if ((int_x > x_min_r) & (int_x < x_max_r) & (int_y > y_min_r) & (int_y < y_max_r)){
+                    if ((m < laser_hits[j]) | (laser_hits[j]==0)){
+                        laser_hits[j] = m;
+                    }
+                }
+            }
+        }
 
-        int j = 0;
-        for(double angle = angle_min; angle<=angle_max; angle+=angle_increment){
+        for (unsigned int i = 0; i<obj_x_list.size(); i+=1) { 
+            turtlelib::Vector2D trans_wo;
+            trans_wo.x = obj_x_list[i];
+            trans_wo.y = obj_y_list[i];
+
+            turtlelib::Transform2D T_wo(trans_wo, 0);
+            turtlelib::Transform2D T_ow(0);
+            T_ow = T_wo.inv();
+
+            turtlelib::Transform2D T_or(0);
+            T_or = T_ow * T_wr; 
+
+            turtlelib::Transform2D T_ro(0);
+            T_ro = T_or.inv();
+
+            turtlelib::Vector2D robot_o;
+            robot_o = T_ow(robot_w);
+
             //object frame
-            double dx_r = range * cos(angle);
-            double dy_r = range * sin(angle);
 
-            turtlelib::Vector2D v1_r;
-            v1_r.x = min_range*cos(angle);
-            v1_r.y = min_range*sin(angle);
             turtlelib::Vector2D v1_o;
             v1_o = T_or(v1_r);
 
             double x1 = v1_o.x;
             double y1 = v1_o.y;
 
-            turtlelib::Vector2D v2_r;
-            v2_r.x = v1_r.x + dx_r;
-            v2_r.y = v1_r.y + dy_r;
             turtlelib::Vector2D v2_o;
             v2_o = T_or(v2_r);
 
@@ -418,7 +466,8 @@ void laser_scan(turtlelib::q robot_pos, std::vector<double> obj_x_list, std::vec
             if (dy < 0){
                 sgn = -1;
             }
-
+        
+            // Check for intersection with object
             if ((pow(.25/2,2)*pow(dr,2)-pow(D,2))>=0){
                 double int_x_plus = (D*dy + sgn*dx*sqrt((pow(r,2)*pow(dr,2))-pow(D,2)))/pow(dr,2);
                 double int_x_minus = (D*dy - sgn*dx*sqrt((pow(r,2)*pow(dr,2))-pow(D,2)))/pow(dr,2);          
@@ -449,25 +498,25 @@ void laser_scan(turtlelib::q robot_pos, std::vector<double> obj_x_list, std::vec
                 double y_min = std::min({y1,y2});
                 double y_max = std::max({y1,y2});
                 if ((int_x_plus > x_min) & (int_x_minus > x_min) & (int_x_minus < x_max) & (int_x_plus < x_max) & (int_y_plus > y_min) & (int_y_minus > y_min) & (int_y_minus < y_max) & (int_y_plus < y_max)){
-                    if (std::min({m1,m2}) < laser_hits[j] | laser_hits[j]==0){
+                    if ((std::min({m1,m2}) < laser_hits[j]) | (laser_hits[j]==0)){
                         laser_hits[j] = std::min({m1,m2}); 
                     }
                 }
                 else if ((int_x_plus > x_min) & (int_x_plus < x_max) & (int_y_plus > y_min) & (int_y_plus < y_max)){
-                    if (m1 < laser_hits[j] | laser_hits[j]==0){
+                    if ((m1 < laser_hits[j]) | (laser_hits[j]==0)){
                         laser_hits[j] = m1; 
                     }
                 }
                 else if ((int_x_minus > x_min) & (int_x_minus < x_max) & (int_y_minus > y_min) & (int_y_minus < y_max)){
-                    if (m2 < laser_hits[j] | laser_hits[j]==0){
+                    if ((m2 < laser_hits[j]) | (laser_hits[j]==0)){
                         laser_hits[j] = m2;
                     } 
                 }
-            }   
-            j++;  
-        }
-    }
-    laser_msg.ranges = laser_hits;
+            }
+        }    
+    j++;  
+    } 
+    laser_msg.ranges = laser_hits;        
 }
 
 int main(int argc, char *argv[]){
