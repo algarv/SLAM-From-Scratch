@@ -362,62 +362,72 @@ void laser_scan(turtlelib::q robot_pos, std::vector<double> obj_x_list, std::vec
     turtlelib::Vector2D robot_w;
     robot_w.x = robot_pos.x;
     robot_w.y = robot_pos.y;
-    turtlelib::Transform2D T_wr(robot_w, pos.theta);
+    turtlelib::Transform2D T_wr(robot_w, robot_pos.theta); //used to be pos.theta
 
     turtlelib::Transform2D T_rw;
     T_rw = T_wr.inv();
+
+    turtlelib::Vector2D wall1_w = {.x = x_length/2, .y = y_length/2};
+    turtlelib::Vector2D wall2_w = {.x = x_length/2, .y = -1*y_length/2};
+    turtlelib::Vector2D wall3_w = {.x = -1 * x_length/2, .y = -1*y_length/2};
+    turtlelib::Vector2D wall4_w = {.x = -1 * x_length/2, .y = y_length/2};
+    std::vector<turtlelib::Vector2D> wall_pts = {wall1_w, wall2_w, wall3_w, wall4_w};
 
     int j = 0;
     for(double angle = angle_min; angle<=angle_max; angle+=angle_increment){
         
         turtlelib::Vector2D v1_r;
-        v1_r.x = min_range*cos(angle);
-        v1_r.y = min_range*sin(angle);
+        // v1_r.x = min_range*std::cos(angle);
+        // v1_r.y = min_range*std::sin(angle);
+
+        // angle = angle + robot_pos.theta; // JAMES ADDED THIS
+        v1_r.x = robot_w.x;
+        v1_r.y = robot_w.y;
         
-        double dx_r = range * cos(angle);
-        double dy_r = range * sin(angle);
+        double dx_r = range * std::cos(angle); 
+        double dy_r = range * std::sin(angle);
 
         turtlelib::Vector2D v2_r;
-        v2_r.x = v1_r.x + dx_r;
-        v2_r.y = v1_r.y + dy_r;
+        v2_r.x = max_range*std::cos(angle); //v1_r.x + dx_r; JAMES CHANGED THIS
+        v2_r.y = max_range*std::sin(angle);//v1_r.y + dy_r;
+
+        // v2_r.x = v1_r.x + dx_r;
+        // v2_r.y = v1_r.y + dy_r;
 
         double slope = std::tan(angle); //This is the same as dy_r/dx_r (good)
-
-        turtlelib::Vector2D wall1_w = {.x = x_length/2, .y = y_length/2};
-        turtlelib::Vector2D wall2_w = {.x = x_length/2, .y = -1*y_length/2};
-        turtlelib::Vector2D wall3_w = {.x = -1 * x_length/2, .y = -1*y_length/2};
-        turtlelib::Vector2D wall4_w = {.x = -1 * x_length/2, .y = y_length/2};
         
         double x_min_r = std::min({v1_r.x,v2_r.x});
         double x_max_r = std::max({v1_r.x,v2_r.x});
         double y_min_r = std::min({v1_r.y,v2_r.y});
         double y_max_r = std::max({v1_r.y,v2_r.y});
 
-        std::vector<turtlelib::Vector2D> wall_pts = {wall1_w, wall2_w, wall3_w, wall4_w};
-        for (int k=0; k<3; k++){
+        // double int_x = 0;
+        // double int_y = 0;
+        // double m = 0;
+        for (int k=0; k<4; k++){
             if (wall_pts[k].y == wall_pts[k+1].y){
                 turtlelib::Vector2D wall_r;
                 wall_r = T_rw(wall_pts[k]);
-                double int_x = wall_r.y / slope;
                 double int_y = wall_r.y;
-                double m = sqrt(pow(int_x,2)+pow(int_y,2));
-                laser_hits[j] = m;
+                double int_x = int_y / slope;
+                double m = std::sqrt(std::pow(int_x,2)+std::pow(int_y,2));
                 if ((int_x > x_min_r) & (int_x < x_max_r) & (int_y > y_min_r) & (int_y < y_max_r)){
-                    if ((m < laser_hits[j]) | (laser_hits[j] == 0)){
+                    if ((m < laser_hits[j]) || (laser_hits[j] == 0)){
                         laser_hits[j] = m;
                     }
                 }
             }  
-            else if (wall_pts[k].x == wall_pts[k+1].x){
+            if (wall_pts[k].x == wall_pts[k+1].x){
                 turtlelib::Vector2D wall_r;
                 wall_r = T_rw(wall_pts[k]);
                 double int_x = wall_r.x;
-                double int_y = wall_r.x * slope;
-                double m = sqrt(pow(int_x,2)+pow(int_y,2));
-                laser_hits[j] = m;
+                double int_y = int_x * slope;
+                double m = std::sqrt(std::pow(int_x,2)+std::pow(int_y,2));
+                //ROS_WARN("slope: %3.2f, y: %3.2f, x: %3.2f", slope, int_y, int_x);
                 if ((int_x > x_min_r) & (int_x < x_max_r) & (int_y > y_min_r) & (int_y < y_max_r)){
-                    if ((m < laser_hits[j]) | (laser_hits[j]==0)){
+                    if ((m < laser_hits[j]) || (laser_hits[j]==0)){
                         laser_hits[j] = m;
+                //ROS_WARN("int_x: %3.2f, int_y: %3.2f", int_x, int_y);
                     }
                 }
             }
@@ -514,7 +524,7 @@ void laser_scan(turtlelib::q robot_pos, std::vector<double> obj_x_list, std::vec
                 }
             }
         }    
-    j++;  
+    j = j+1;  
     } 
     laser_msg.ranges = laser_hits;        
 }
