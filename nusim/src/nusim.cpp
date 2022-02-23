@@ -39,6 +39,7 @@
 #include "turtlelib/diff_drive.hpp"
 #include <ros/console.h>
 #include <random>
+#include <armadillo>
 
 static int rate;
 static bool teleporting = false;
@@ -64,15 +65,15 @@ static turtlelib::Wheel_Angular_Velocities wheel_vels;
 static turtlelib::Twist2D twist;
 static turtlelib::q pos, old_pos;
 
- std::mt19937 & get_random()
- {
-     // static variables inside a function are created once and persist for the remainder of the program
-     static std::random_device rd{}; 
-     static std::mt19937 mt{rd()};
-     // we return a reference to the pseudo-random number genrator object. This is always the
-     // same object every time get_random is called
-     return mt;
- }
+std::mt19937 & get_random()
+{
+    // static variables inside a function are created once and persist for the remainder of the program
+    static std::random_device rd{}; 
+    static std::mt19937 mt{rd()};
+    // we return a reference to the pseudo-random number genrator object. This is always the
+    // same object every time get_random is called
+    return mt;
+}
 
 bool restart(std_srvs::Empty::Request&, std_srvs::Empty::Response&){
 /// \brief Send the turtle bot back to the origin of the world frame and restart the timestep counter.
@@ -327,14 +328,14 @@ void update_wheel_position(const nuturtlebot_msgs::WheelCommands::ConstPtr &whee
     std::normal_distribution<> L(mean_L, std);
     std::normal_distribution<> R(mean_R, std);
 
-    wheel_vels.L = L(get_random());
-    wheel_vels.R = R(get_random());
+    wheel_vels.L = left_rot_vel; //L(get_random());
+    wheel_vels.R = right_rot_vel; //R(get_random());
 
     // ROS_WARN("Without Noise: %6.2f, With Noise: %6.2f \n",L_cmd * mticks_radsec, wheel_vels.L);
     std::uniform_real_distribution dist(slip_min, slip_max);
 
-    ada_L = dist(get_random());
-    ada_R = dist(get_random());
+    ada_L = 0; //dist(get_random());
+    ada_R = 0; //dist(get_random());
 
     // ROS_WARN("L: %6.5f, R: %6.5f", slip_min, slip_max);
 
@@ -362,7 +363,7 @@ void laser_scan(turtlelib::q robot_pos, std::vector<double> obj_x_list, std::vec
     turtlelib::Vector2D robot_w;
     robot_w.x = robot_pos.x;
     robot_w.y = robot_pos.y;
-    turtlelib::Transform2D T_wr(robot_w, robot_pos.theta); //used to be pos.theta
+    turtlelib::Transform2D T_wr(robot_w, robot_pos.theta);
 
     turtlelib::Transform2D T_rw;
     T_rw = T_wr.inv();
@@ -377,22 +378,15 @@ void laser_scan(turtlelib::q robot_pos, std::vector<double> obj_x_list, std::vec
     for(double angle = angle_min; angle<=angle_max; angle+=angle_increment){
         
         turtlelib::Vector2D v1_r;
-        // v1_r.x = min_range*std::cos(angle);
-        // v1_r.y = min_range*std::sin(angle);
-
-        // angle = angle + robot_pos.theta; // JAMES ADDED THIS
-        v1_r.x = robot_w.x;
-        v1_r.y = robot_w.y;
+        v1_r.x = min_range*std::cos(angle);
+        v1_r.y = min_range*std::sin(angle);
         
         double dx_r = range * std::cos(angle); 
         double dy_r = range * std::sin(angle);
 
         turtlelib::Vector2D v2_r;
-        v2_r.x = max_range*std::cos(angle); //v1_r.x + dx_r; JAMES CHANGED THIS
+        v2_r.x = max_range*std::cos(angle); //v1_r.x + dx_r;
         v2_r.y = max_range*std::sin(angle);//v1_r.y + dy_r;
-
-        // v2_r.x = v1_r.x + dx_r;
-        // v2_r.y = v1_r.y + dy_r;
 
         double slope = std::tan(angle); //This is the same as dy_r/dx_r (good)
         
@@ -404,7 +398,8 @@ void laser_scan(turtlelib::q robot_pos, std::vector<double> obj_x_list, std::vec
         // double int_x = 0;
         // double int_y = 0;
         // double m = 0;
-        for (int k=0; k<4; k++){
+        for (int k=0; k<=3; k++){
+
             if (wall_pts[k].y == wall_pts[k+1].y){
                 turtlelib::Vector2D wall_r;
                 wall_r = T_rw(wall_pts[k]);
@@ -524,7 +519,7 @@ void laser_scan(turtlelib::q robot_pos, std::vector<double> obj_x_list, std::vec
                 }
             }
         }    
-    j = j+1;  
+    j++;  
     } 
     laser_msg.ranges = laser_hits;        
 }
@@ -542,11 +537,11 @@ int main(int argc, char *argv[]){
 
     tf2_ros::TransformBroadcaster broadcaster;
 
-    ts_pub = nh.advertise<std_msgs::UInt64>("timestep", rate);
+    ts_pub = nh.advertise<std_msgs::UInt64>("timestep", 10);
     // js_pub = pub_nh.advertise<sensor_msgs::JointState>("red/joint_states", rate);
-    obj_pub = nh.advertise<visualization_msgs::MarkerArray>("visualization_marker_array", rate);
-    arena_pub = nh.advertise<visualization_msgs::MarkerArray>("visualization_marker_array", rate);
-    sensor_pub = pub_nh.advertise<nuturtlebot_msgs::SensorData>("sensor_data", rate);
+    obj_pub = nh.advertise<visualization_msgs::MarkerArray>("visualization_marker_array", 10);
+    arena_pub = nh.advertise<visualization_msgs::MarkerArray>("visualization_marker_array", 10);
+    sensor_pub = pub_nh.advertise<nuturtlebot_msgs::SensorData>("sensor_data", 10);
     fake_sensor_pub = nh.advertise<visualization_msgs::MarkerArray>("/fake_sensor", 5);
     laser_pub = pub_nh.advertise<sensor_msgs::LaserScan>("laser_scan",5);
 

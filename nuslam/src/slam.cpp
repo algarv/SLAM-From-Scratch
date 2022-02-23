@@ -129,7 +129,7 @@ int main(int argc, char *argv[]){
 
     ros::Rate r(rate);
 
-    odom_pub = pub_nh.advertise<nav_msgs::Odometry>("odom", 10);
+    odom_pub = pub_nh.advertise<nav_msgs::Odometry>("odom", rate);
     
     js_sub = pub_nh.subscribe("red/joint_states",10,update_odom);
 
