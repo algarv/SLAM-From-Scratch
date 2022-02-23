@@ -14,8 +14,6 @@
 /// 
 /// SUBSCRIBERS:
 ///     joint_states (sensor_msgs/JointState): Receives the wheel joint angles
-/// SERVICES:
-///     nuturtle_control/set_pose (set_pose.srv): Teleports the blue turtle bot to the specfied x, y, and theta position
 
 #include <ros/ros.h>
 #include <string>
@@ -32,6 +30,8 @@
 #include <geometry_msgs/TransformStamped.h>
 #include <turtlesim/Pose.h>
 #include "nuturtle_control/set_pose.h"
+#include "kalman/kalman.hpp"
+#include <armadillo>
 
 int rate;
 static bool teleporting = false;
@@ -43,10 +43,21 @@ turtlelib::DiffDrive D;
 turtlelib::Twist2D twist;
 turtlelib::q pos, old_pos;
 static geometry_msgs::TransformStamped odom_tf;
-ros::Subscriber js_sub;
+ros::Subscriber js_sub, cmd_vel_sub, sensor_sub;
 ros::Publisher odom_pub;
 static ros::ServiceServer pose_service;
 nav_msgs::Odometry odom_msg;
+
+arma::mat A = arma::eye(3,3);
+arma::mat B = arma::eye(3,3);
+arma::mat H = arma::eye(3,3);
+arma::mat Q = arma::eye(3,3);
+arma::mat R = arma::eye(3,3);
+arma::mat u(3,1);
+arma::mat z(3,1);
+arma::mat x_0(3,1);
+arma::mat S_0(3,3);
+kalman::filter EKF_config(A,B,H,Q,R);
 
 /// \brief Receives a wheel joint states and translates into a twist for the odometry message
 ///
@@ -72,17 +83,22 @@ void update_odom(const sensor_msgs::JointState &wheels){
     old_wheel_angles = {.L = wheels.position[0], .R = wheels.position[1]};
 }
 
-/// \brief Receives an x, y, and theta input to teleport the blue turtlebot to a new position.
-bool set_pose(nuturtle_control::set_pose::Request &pose, nuturtle_control::set_pose::Response&){
+void get_u(const geometry_msgs::Twist &wheel_cmd){
+    
+    u(0,0) = wheel_cmd.linear.x;
+    u(1,0) = wheel_cmd.linear.y;
+    u(2,0) = wheel_cmd.angular.z;
 
-    pos.x = pose.x;
-    pos.y = pose.y;
-    pos.theta = pose.w;
-
-    teleporting = true;
-
-    return true;
 }
+
+void get_z(const nuturtlebot_msgs::SensorData &sensor_data){
+    
+    z(0,0) = x;
+    z(1,0) = y;
+    z(2,0) = w;
+
+}
+
 
 int main(int argc, char *argv[]){
 
@@ -133,13 +149,21 @@ int main(int argc, char *argv[]){
     
     js_sub = pub_nh.subscribe("red/joint_states",10,update_odom);
 
-    pose_service = nh.advertiseService("set_pose",set_pose);
+    cmd_vel_sub = pub_nh.subscribe("cmd_vel",10,get_u); 
+
+    sensor_sub = pub_nh.subscribe("/fake_sensor",10,get_z);
 
     old_pos.theta = w;
     old_pos.x = x;
     old_pos.y = y;
 
     tf2_ros::TransformBroadcaster odom_broadcaster;
+
+    S_0 = arma::eye(3,3);
+
+    x_0(0,0) = x;
+    x_0(1,0) = y;
+    x_0(2,0) = w;
 
     while(ros::ok()){
 
@@ -172,10 +196,20 @@ int main(int argc, char *argv[]){
 
         odom_pub.publish(odom_msg);        
 
-
         old_pos = pos;
 
         teleporting = false;
+
+        // Kalman Filter //
+
+        EKF_config.predict(x_0, S_0, u);
+
+        x_0 = EKF_config.correct_x(z);
+
+        S_0 = EKF_config.correct_S();
+
+        ///////////////////
+
 
         r.sleep();
         ros::spinOnce();

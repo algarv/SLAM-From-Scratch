@@ -49,7 +49,17 @@
   <!-- Use doc_depend for packages you need only for building documentation: -->
   <!--   <doc_depend>doxygen</doc_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
-
+  <depend>armadillo</depend>
+  <build_depend>nuturtlebot_msgs</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_export_depend>geometry_msgs</build_export_depend>
+  <exec_depend>message_runtime</exec_depend>
+  <exec_depend>nuturtle_description</exec_depend>
+  <depend>std_msgs</depend>
+  <exec_depend> rviz </exec_depend>
+  <depend> roscpp </depend>
+  <depend> tf2_ros </depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>
