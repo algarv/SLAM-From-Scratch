@@ -24,6 +24,7 @@
 #include <sensor_msgs/LaserScan.h>
 #include <ros/ros.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <nav_msgs/Path.h>
 #include <std_msgs/UInt64.h>
 #include "std_msgs/String.h"
 #include <std_srvs/Empty.h>
@@ -56,7 +57,8 @@ static sensor_msgs::JointState wheels;
 static sensor_msgs::LaserScan laser_msg;
 static geometry_msgs::TransformStamped sim_tf;
 static nuturtlebot_msgs::SensorData sensor_data; 
-static ros::Publisher obj_pub, js_pub, ts_pub, arena_pub, sensor_pub, fake_sensor_pub, laser_pub;
+static nav_msgs::Path path_msg;
+static ros::Publisher obj_pub, js_pub, ts_pub, arena_pub, sensor_pub, fake_sensor_pub, laser_pub, path_pub;
 static ros::Subscriber wheel_sub;
 static ros::ServiceServer rs_service, tp_service;
 static visualization_msgs::MarkerArray obstacle, obj_array, marker_arena, arena_array, fake_sensor_array;
@@ -258,8 +260,8 @@ visualization_msgs::MarkerArray fake_sensor(turtlelib::q robot_pos, std::vector<
 
     for (unsigned int i = 0; i<obj_x_list.size(); i+=1) {
         
-        double noise_x = noise(get_random());
-        double noise_y = noise(get_random());
+        double noise_r = noise(get_random());
+        double noise_phi = noise(get_random());
 
         turtlelib::Vector2D trans_wr;
         trans_wr.x = robot_pos.x;
@@ -285,14 +287,21 @@ visualization_msgs::MarkerArray fake_sensor(turtlelib::q robot_pos, std::vector<
         else {
             fake_sensor_array.markers[i].action = visualization_msgs::Marker::ADD;
         }
+        d += noise_r;
+
+        double phi = atan2(obj_y_list[i]-robot_pos.y, obj_x_list[i]-robot_pos.x) - robot_pos.theta;
+        phi += noise_phi;
+
+        double mx = d * cos(phi);
+        double my = d * sin(phi);
 
         fake_sensor_array.markers[i].header.frame_id = "red_base_footprint";
         fake_sensor_array.markers[i].ns = "nusim_node";
         fake_sensor_array.markers[i].header.stamp = ros::Time::now();
         fake_sensor_array.markers[i].type = visualization_msgs::Marker::CYLINDER;
         fake_sensor_array.markers[i].id = id;
-        fake_sensor_array.markers[i].pose.position.x = obstacle_robot.x + noise_x;
-        fake_sensor_array.markers[i].pose.position.y = obstacle_robot.y + noise_y;
+        fake_sensor_array.markers[i].pose.position.x = mx; //obstacle_robot.x + noise_x;
+        fake_sensor_array.markers[i].pose.position.y = my; //obstacle_robot.y + noise_y;
         fake_sensor_array.markers[i].pose.position.z = .125;
         fake_sensor_array.markers[i].pose.orientation.x = 0.0;
         fake_sensor_array.markers[i].pose.orientation.y = 0.0;
@@ -302,7 +311,7 @@ visualization_msgs::MarkerArray fake_sensor(turtlelib::q robot_pos, std::vector<
         fake_sensor_array.markers[i].scale.y = obj_d_list[i];
         fake_sensor_array.markers[i].scale.z = .25;
         fake_sensor_array.markers[i].color.a = 1.0;
-        fake_sensor_array.markers[i].color.r = 0.0;
+        fake_sensor_array.markers[i].color.r = 1.0;
         fake_sensor_array.markers[i].color.g = 1.0;
         fake_sensor_array.markers[i].color.b = 0.0;
         fake_sensor_array.markers[i].lifetime = duration;
@@ -401,25 +410,32 @@ void laser_scan(turtlelib::q robot_pos, std::vector<double> obj_x_list, std::vec
         for (int k=0; k<=3; k++){
 
             if (wall_pts[k].y == wall_pts[k+1].y){
-                turtlelib::Vector2D wall_r;
-                wall_r = T_rw(wall_pts[k]);
-                double int_y = wall_r.y;
-                double int_x = int_y / slope;
+                // turtlelib::Vector2D wall_r;
+                // wall_r = T_rw(wall_pts[k]);
+                // y = slope * x + b
+                double int_y = wall_pts[k].y;
+                double int_x = (int_y - robot_pos.y) / slope;
                 double m = std::sqrt(std::pow(int_x,2)+std::pow(int_y,2));
-                if ((int_x > x_min_r) & (int_x < x_max_r) & (int_y > y_min_r) & (int_y < y_max_r)){
+                turtlelib::Vector2D int_w{.x = int_x, .y = int_y};
+                turtlelib::Vector2D int_r;
+                int_r = T_rw(int_w);
+                if ((int_r.x > x_min_r) & (int_r.x < x_max_r) & (int_r.y > y_min_r) & (int_r.y < y_max_r)){
                     if ((m < laser_hits[j]) || (laser_hits[j] == 0)){
                         laser_hits[j] = m;
                     }
                 }
             }  
             if (wall_pts[k].x == wall_pts[k+1].x){
-                turtlelib::Vector2D wall_r;
-                wall_r = T_rw(wall_pts[k]);
-                double int_x = wall_r.x;
-                double int_y = int_x * slope;
+                // turtlelib::Vector2D wall_r;
+                // wall_r = T_rw(wall_pts[k]);
+                double int_x = wall_pts[k].x;
+                double int_y = (int_x-robot_pos.x) * slope;
                 double m = std::sqrt(std::pow(int_x,2)+std::pow(int_y,2));
                 //ROS_WARN("slope: %3.2f, y: %3.2f, x: %3.2f", slope, int_y, int_x);
-                if ((int_x > x_min_r) & (int_x < x_max_r) & (int_y > y_min_r) & (int_y < y_max_r)){
+                turtlelib::Vector2D int_w{.x = int_x, .y = int_y};
+                turtlelib::Vector2D int_r;
+                int_r = T_rw(int_w);
+                if ((int_r.x > x_min_r) & (int_r.x < x_max_r) & (int_r.y > y_min_r) & (int_r.y < y_max_r)){
                     if ((m < laser_hits[j]) || (laser_hits[j]==0)){
                         laser_hits[j] = m;
                 //ROS_WARN("int_x: %3.2f, int_y: %3.2f", int_x, int_y);
@@ -542,8 +558,9 @@ int main(int argc, char *argv[]){
     obj_pub = nh.advertise<visualization_msgs::MarkerArray>("visualization_marker_array", 10);
     arena_pub = nh.advertise<visualization_msgs::MarkerArray>("visualization_marker_array", 10);
     sensor_pub = pub_nh.advertise<nuturtlebot_msgs::SensorData>("sensor_data", 10);
-    fake_sensor_pub = nh.advertise<visualization_msgs::MarkerArray>("/fake_sensor", 5);
-    laser_pub = pub_nh.advertise<sensor_msgs::LaserScan>("laser_scan",5);
+    fake_sensor_pub = nh.advertise<visualization_msgs::MarkerArray>("/fake_sensor", 10);
+    laser_pub = pub_nh.advertise<sensor_msgs::LaserScan>("laser_scan",10);
+    path_pub = pub_nh.advertise<nav_msgs::Path>("nav_msgs/Path",10);
 
     wheel_sub = pub_nh.subscribe("red/wheel_cmd", 10, update_wheel_position);
 
@@ -644,6 +661,19 @@ int main(int argc, char *argv[]){
 
         broadcaster.sendTransform(sim_tf);
         
+        geometry_msgs::PoseStamped pose;
+        pose.pose.position.x = pos.x;
+        pose.pose.position.y = pos.y;
+        pose.pose.orientation.x = q.x();
+        pose.pose.orientation.y = q.y();
+        pose.pose.orientation.z = q.z();
+        pose.pose.orientation.w = q.w();
+        path_msg.header.frame_id = "world";
+        path_msg.header.stamp = ros::Time::now();
+        path_msg.poses.push_back(pose);
+
+        path_pub.publish(path_msg);
+
         fake_sensor_array = fake_sensor(pos, obj_x_list, obj_y_list);
         fake_sensor_pub.publish(fake_sensor_array);
 

@@ -14,10 +14,9 @@ public:
     /// \brief Set-Up the frame work for an extended kalman filter
     /// \param a - Prediction Matrix
     /// \param b - Control Matrix
-    /// \param h - Observation Matrix
     /// \param q - State Noise Matrix
     /// \param r - Sensor Noise Matrix
-    filter(arma::mat a, arma::mat b, arma::mat h, arma::mat q, arma::mat r);
+    filter(arma::mat a, arma::mat b, arma::mat q);
 
     /// \brief Prediction step of the Kalman filter
     /// \param x_0 - current configuration
@@ -27,7 +26,7 @@ public:
 
     /// \brief State correction step of the Kalman filter
     /// \param z_k - measured state
-    arma::mat correct_x(arma::mat z_k);
+    arma::mat correct_x(arma::mat z_k, arma::mat v_k);
 
     /// \brief Covariance correction step of the Kalman filter
     arma::mat correct_S();
@@ -42,6 +41,7 @@ private:
     arma::mat S_pred; //predicted covariance
 
     arma::mat z_k; //measured state
+    arma::mat v_k; //sensor noise
 
     arma::mat A; //prediction matrix
     arma::mat B; //control matrix
@@ -50,6 +50,7 @@ private:
     arma::mat H; //Observation matrix
     arma::mat K; //Kalman gain
     arma::mat I; //identity
+    arma::mat h; //observation matrix
 };
 
 }
