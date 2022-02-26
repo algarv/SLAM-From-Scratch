@@ -413,10 +413,10 @@ void laser_scan(turtlelib::q robot_pos, std::vector<double> obj_x_list, std::vec
                 // turtlelib::Vector2D wall_r;
                 // wall_r = T_rw(wall_pts[k]);
                 // y = slope * x + b
-                double int_y = wall_pts[k].y;
-                double int_x = (int_y - robot_pos.y) / slope;
-                double m = std::sqrt(std::pow(int_x,2)+std::pow(int_y,2));
-                turtlelib::Vector2D int_w{.x = int_x, .y = int_y};
+                double int_y_w = wall_pts[k].y;
+                double int_x_w = robot_w.x + (int_y_w - robot_w.y) / slope;
+                double m = std::sqrt(std::pow(int_x_w - robot_w.x,2)+std::pow(int_y_w - robot_w.y,2));
+                turtlelib::Vector2D int_w{.x = int_x_w, .y = int_y_w};
                 turtlelib::Vector2D int_r;
                 int_r = T_rw(int_w);
                 if ((int_r.x > x_min_r) & (int_r.x < x_max_r) & (int_r.y > y_min_r) & (int_r.y < y_max_r)){
@@ -428,11 +428,11 @@ void laser_scan(turtlelib::q robot_pos, std::vector<double> obj_x_list, std::vec
             if (wall_pts[k].x == wall_pts[k+1].x){
                 // turtlelib::Vector2D wall_r;
                 // wall_r = T_rw(wall_pts[k]);
-                double int_x = wall_pts[k].x;
-                double int_y = (int_x-robot_pos.x) * slope;
-                double m = std::sqrt(std::pow(int_x,2)+std::pow(int_y,2));
+                double int_x_w = wall_pts[k].x;
+                double int_y_w = robot_w.y + (int_x_w-robot_w.x) * slope;
+                double m = std::sqrt(std::pow(int_x_w - robot_w.x,2)+std::pow(int_y_w - robot_w.y,2));
                 //ROS_WARN("slope: %3.2f, y: %3.2f, x: %3.2f", slope, int_y, int_x);
-                turtlelib::Vector2D int_w{.x = int_x, .y = int_y};
+                turtlelib::Vector2D int_w{.x = int_x_w, .y = int_y_w};
                 turtlelib::Vector2D int_r;
                 int_r = T_rw(int_w);
                 if ((int_r.x > x_min_r) & (int_r.x < x_max_r) & (int_r.y > y_min_r) & (int_r.y < y_max_r)){

@@ -51,11 +51,9 @@ nav_msgs::Odometry odom_msg;
 std::vector<double> obj_x_list, obj_y_list;
 
 arma::mat A = arma::eye(5,5);
-arma::mat A_T = A.t();
-arma::mat B = arma::eye(3,3);
 arma::mat Q = arma::eye(5,5);
 arma::mat I = arma::eye(5,5);
-arma::mat R = arma::zeros(2,1);
+arma::mat R = arma::zeros(2,2);
 arma::mat K(5,2);
 arma::mat H(2,5);
 arma::mat h(2,1);
@@ -64,10 +62,12 @@ arma::mat z(2,3);
 arma::mat v_k(2,1);
 arma::mat z_k(2,1);
 arma::mat z_0(2,1);
+arma::mat z_measured(2,1);
 arma::mat x_0(5,1);
-turtlelib::q x_pred; 
+arma::mat x_prev(5,1);
+arma::mat x_est(5,1);
+arma::mat w_t = arma::zeros(3,1);
 arma::mat S_0(5,5);
-arma::mat S_k(5,5);
 
 /// \brief Receives a wheel joint states and translates into a twist for the odometry message
 ///
@@ -93,7 +93,7 @@ void update_odom(const sensor_msgs::JointState &wheels){
     old_wheel_angles = {.L = wheels.position[0], .R = wheels.position[1]};
 }
 
-void get_h(const visualization_msgs::MarkerArray &obstacles){
+void get_obj(const visualization_msgs::MarkerArray &obstacles){
     std::vector<double> temp_x_list;
     std::vector<double> temp_y_list;
 
@@ -157,7 +157,7 @@ int main(int argc, char *argv[]){
     
     js_sub = pub_nh.subscribe("red/joint_states",10,update_odom);
 
-    sensor_sub = pub_nh.subscribe("/fake_sensor",10,get_h);
+    sensor_sub = pub_nh.subscribe("/fake_sensor",10,get_obj);
 
     old_pos.theta = w;
     old_pos.x = x;
@@ -167,13 +167,26 @@ int main(int argc, char *argv[]){
     tf2_ros::TransformBroadcaster kalman_broadcaster;
     tf2_ros::TransformBroadcaster map_broadcaster;
 
-    x_0(0,0) = x;
-    x_0(1,0) = y;
-    x_0(2,0) = w;
+    x_prev(0,0) = w;
+    x_prev(1,0) = x;
+    x_prev(2,0) = y;
+    x_prev(3,0) = 0;
+    x_prev(4,0) = 0;
+    // x_prev(5,0) = 0;
+    // x_prev(6,0) = 0;
+    // x_prev(7,0) = 0;
+    // x_prev(8,0) = 0;
 
     S_0 = arma::zeros(5,5);
+    S_0(0,0) = 0;
+    S_0(1,1) = 0;
+    S_0(2,2) = 0;
     S_0(3,3) = 1000;
     S_0(4,4) = 1000;
+    // S_0(5,5) = 1000;
+    // S_0(6,6) = 1000;
+    // S_0(7,7) = 1000;
+    // S_0(8,8) = 1000;
 
     Q = arma::eye(5,5);
 
@@ -218,29 +231,43 @@ int main(int argc, char *argv[]){
         u(1,0) = twist.vy;
         u(2,0) = twist.w;
 
-        // Kalman Filter //
-        ROS_WARN("A: ");
-        A.print(std::cout);
-        ROS_WARN("B: ");
-        B.print(std::cout);
-        ROS_WARN("x_0: ");
-        x_0.print(std::cout);
-        ROS_WARN("S_0: ");
-        S_0.print(std::cout);
         ROS_WARN("u: ");
         u.print(std::cout);
 
-        //EKF_config.predict(x_0, S_0, u);
-        //Prediction
-        turtlelib::q x_0_pos {.theta = x_0(2,0), .x = x_0(0,0), .y = x_0(1,0)};
+        // Kalman Filter //
 
-        x_pred = D.get_q(twist,x_0_pos);
-        x_0(0,0) = x_pred.x;
-        x_0(1,0) = x_pred.y;
-        x_0(2,0) = x_pred.theta; 
+        if (twist.w != 0){
+            x_0(0,0) = x_prev(0,0) + (twist.w/rate) + w_t(0,0);
+            x_0(1,0) = x_prev(1,0) + (-1*twist.vx/twist.w)*sin(x_prev(0,0)) + (twist.vx/twist.w)*sin(x_prev(0,0)+(twist.w/rate)) + w_t(1,0);
+            x_0(2,0) = x_prev(2,0) + (twist.vx/twist.w)*cos(x_prev(0,0)) - (twist.vx/twist.w)*cos(x_prev(0,0)+(twist.w/rate)) + w_t(2,0);
+            x_0(3,0) = x_prev(3,0);
+            x_0(4,0) = x_prev(4,0);
+
+            A = arma::eye(5,5);
+            A(1,0) = -1*twist.vx/twist.w * cos(x_prev(0,0)) + twist.vx/twist.w * cos(x_prev(0,0)+(twist.w/rate));
+            A(2,0) = -twist.vx/twist.w * sin(x_prev(0,0)) + sin(x_prev(0,0)+(twist.w/rate));
+
+        }
+        else{
+            x_0(0,0) = x_prev(0,0) + w_t(0,0);
+            x_0(1,0) = x_prev(1,0) + (twist.vx/rate)*cos(x_prev(0,0)) + w_t(1,0);
+            x_0(2,0) = x_prev(2,0) + (twist.vx/rate)*sin(x_prev(0,0)) + w_t(2,0);
+            x_0(3,0) = x_prev(3,0);
+            x_0(4,0) = x_prev(4,0);
+
+            A = arma::eye(5,5);
+            A(1,0) = -1*twist.vx/rate * sin(x_0(0,0));
+            A(2,0) = -1*twist.vx/rate * cos(x_0(0,0));
+
+        }
 
         ROS_WARN("x_0: ");
         x_0.print(std::cout);
+
+        ROS_WARN("A: ");
+        A.print(std::cout);
+
+        arma::mat A_T = A.t();
 
         S_0 = A * S_0 * A_T + Q;
 
@@ -248,26 +275,43 @@ int main(int argc, char *argv[]){
         S_0.print(std::cout);
 
         if (obj_x_list.size()>0){
-            for (int i=0; i<=obj_x_list.size(); i++){
-                double x = obj_x_list[i];
-                double y = obj_y_list[i];
-                z_0(0,0) = sqrt(pow(x,2)+pow(y,2));
-                z_0(1,0) = atan2(y,x);
-                
-                ROS_WARN("z_0: ");
-                z_0.print(std::cout);
+            for (int i=0; i<obj_x_list.size(); i++){
 
-                //Compute theoretical measurement
-                h(0,0) = x_0(1,0);
-                h(1,0) = x_0(2,0);
+                double obj_x = obj_x_list[i];
+                double obj_y = obj_y_list[i];
+                z_measured(0,0) = sqrt(pow(obj_x,2)+pow(obj_y,2));
+                z_measured(1,0) = atan2(obj_y,obj_x);
                 
-                v_k(0,0) = 1;
-                v_k(1,0) = 1;
+                ROS_WARN("z_measured: ");
+                z_measured.print(std::cout);
+                
+                //Compute theoretical measurement
+                x_0(3,0) = x_0(1,0) + z_measured(0,0)*cos(z_measured(1,0)+x_0(0,0));
+                x_0(4,0) = x_0(2,0) + z_measured(0,0)*sin(z_measured(1,0)+x_0(0,0));
+                ROS_WARN("m_x %3.2f", x_0(3,0));
+                ROS_WARN("m_y %3.2f", x_0(4,0));
+                ROS_WARN("x: %3.2f", x_0(1,0));
+                ROS_WARN("y: %3.2f", x_0(2,0));
+
+                h(0,0) = sqrt(pow(x_0(3,0) - x_0(1,0),2)+pow(x_0(4,0) - x_0(2,0),2));
+                if((x_0(3,0) - x_0(1,0)) == 0){
+                    h(1,0) = 0;
+                }
+                else{
+                    h(1,0) = atan2(x_0(4,0) - x_0(2,0), x_0(3,0) - x_0(1,0)) - x_0(0,0);
+                }
+
+                ROS_WARN("h: ");
+                h.print(std::cout);
+
+                v_k(0,0) = .000001;
+                v_k(1,0) = .000001;
                 
                 z_k = h + v_k;
 
                 ROS_WARN("z_k: ");
                 z_k.print(std::cout);
+
 
                 //Compute the Kalman gain
                 double r = z_k(0,0);
@@ -284,11 +328,13 @@ int main(int argc, char *argv[]){
                 H(0,3) = dx/d; 
                 H(0,4) = dy/d; 
 
+
                 H(1,0) = -1; 
                 H(1,1) = dy/pow(d,2); 
                 H(1,2) = -dx/pow(d,2); 
                 H(1,3) = -dy/pow(d,2); 
                 H(1,4) = dx/pow(d,2); 
+
                 
                 ROS_WARN("H: ");
                 H.print(std::cout);
@@ -304,13 +350,15 @@ int main(int argc, char *argv[]){
                 ROS_WARN("R: ");
                 R.print(std::cout);
 
-                K = S_k * H_T * (H*S_k*H_T+R).i();
+                K = S_0 * H_T * (H*S_0*H_T+R).i();
 
                 ROS_WARN("K: ");
                 K.print(std::cout);
 
                 //Posterior State Update
-                x_0 = x_0 + K * (z_0 - z_k);
+                arma::mat dz = z_0 - z_k;
+                // dz(1,0) = turtlelib::normalize_angle(dz(1,0));
+                x_0 = x_0 + K * dz;
 
                 //Posterior Covariance
                 S_0 = (I - K*H) * S_0; 
@@ -323,8 +371,8 @@ int main(int argc, char *argv[]){
         map_tf.header.stamp = ros::Time::now();
         map_tf.header.frame_id = "world";
         map_tf.child_frame_id = "map";
-        map_tf.transform.translation.x = x_0(3,0);
-        map_tf.transform.translation.y = x_0(4,0);
+        map_tf.transform.translation.x = 0;
+        map_tf.transform.translation.y = 0;
         map_tf.transform.translation.z = 0;
         map_tf.transform.rotation.x = 0;
         map_tf.transform.rotation.y = 0;
@@ -336,10 +384,10 @@ int main(int argc, char *argv[]){
         kalman_tf.header.stamp = ros::Time::now();
         kalman_tf.header.frame_id = "map";
         kalman_tf.child_frame_id = "green_base_footprint";
-        kalman_tf.transform.translation.x = x_0(0,0);
-        kalman_tf.transform.translation.y = x_0(1,0);
+        kalman_tf.transform.translation.x = x_0(1,0);
+        kalman_tf.transform.translation.y = x_0(2,0);
         kalman_tf.transform.translation.z = 0;
-        q.setRPY(0, 0, x_0(2,0));
+        q.setRPY(0, 0, x_0(0,0));
         kalman_tf.transform.rotation.x = q.x();
         kalman_tf.transform.rotation.y = q.y();
         kalman_tf.transform.rotation.z = q.z();
@@ -353,27 +401,3 @@ int main(int argc, char *argv[]){
 
     return 0;
 }
-
-
-
-/*
-        if (obj_x_list.size()>0){
-            for (int i=0; i<=obj_x_list.size(); i++){
-                double x = obj_x_list[i];
-                double y = obj_y_list[i];
-
-                h(0,0) = sqrt(pow(x,2)+pow(y,2));
-                h(1,0) = atan2(y,x);
-
-                v_k(0,0) = 0;
-                v_k(1,0) = 0;
-
-                h.print(std::cout);
-                v_k.print(std::cout);
-
-                x_0 = EKF_config.correct_x(h, v_k);
-                ROS_WARN("Corrected X");
-            }
-            S_0 = EKF_config.correct_S();
-        }
-*/

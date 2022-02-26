@@ -22,10 +22,6 @@
 
     <node name="turtle_interface" pkg="nuturtle_control" type="turtle_interface" output = "screen"/> 
 
-    <node name="odometry" pkg="nuturtle_control" type="odometry" output = "screen"> 
-        <rosparam command="load" file="$(find nusim)/config/initial.yaml" />
-    </node>
-
     <node name="nusim_node" pkg="nusim" type="nusim_node" output = "screen"> 
         <rosparam command="load" file="$(find nusim)/config/initial.yaml" />
     </node>
@@ -39,9 +35,6 @@
 
     <node name="turtle_interface" pkg="nuturtle_control" type="turtle_interface" output = "screen"/> 
 
-    <node name="odometry" pkg="nuturtle_control" type="odometry" output = "screen"> 
-        <rosparam command="load" file="$(find nusim)/config/initial.yaml" />
-    </node>
 </group>
 
 <include file="$(find nuturtle_description)/launch/load.launch">
@@ -72,10 +65,6 @@
 </group>
 
 <group if="$(eval robot == 'raphael')">
-    <node name="odometry" pkg="nuturtle_control" type="odometry" output = "screen" machine="turtlebot"> 
-        <rosparam command="load" file="$(find nusim)/config/initial.yaml" />
-    </node>
-
     <node name="turtle_interface" pkg="nuturtle_control" type="turtle_interface" output = "screen" machine="turtlebot"/> 
 
     <include file="$(find nuturtle_control)/launch/basic_remote.launch">
