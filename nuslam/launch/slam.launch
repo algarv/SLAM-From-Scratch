@@ -3,6 +3,7 @@
 <arg name = 'cmd_src' default = 'teleop' />
 <arg name = 'robot' default = 'nusim' />
 <arg name = 'rviz' default = 'true' />
+<arg name = 'nuslam' default= 'false'/>
 
 <param name= "rate" type="double" value="500"/>
 <param name="wheel_left" type="string" value="red_wheel_left_joint" />
@@ -26,8 +27,9 @@
         <rosparam command="load" file="$(find nusim)/config/initial.yaml" />
     </node>
 
-    <node name="nuslam_node" pkg="nuslam" type="nuslam_node" output = "screen"> 
-    </node>
+    <group if="$(arg nuslam)">
+        <node name="nuslam_node" pkg="nuslam" type="nuslam_node" output = "screen"/> 
+    </group>
 </group>
 
 <group if="$(eval robot == 'localhost')">
@@ -62,6 +64,7 @@
 
 <group if="$(arg rviz)">
     <node name="rviz" pkg ="rviz" type="rviz" args="-d $(find nusim)/config/nusim.rviz" />
+    <!-- <node name="rviz" pkg ="rviz" type="rviz" /> -->
 </group>
 
 <group if="$(eval robot == 'raphael')">

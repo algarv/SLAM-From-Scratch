@@ -60,14 +60,15 @@ arma::mat h(2,1);
 arma::mat u(3,1);
 arma::mat z(2,3);
 arma::mat v_k(2,1);
-arma::mat z_k(2,1);
-arma::mat z_0(2,1);
+arma::mat z_est(2,1);
 arma::mat z_measured(2,1);
 arma::mat x_0(5,1);
 arma::mat x_prev(5,1);
 arma::mat x_est(5,1);
 arma::mat w_t = arma::zeros(3,1);
 arma::mat S_0(5,5);
+arma::mat S_prev(5,5);
+arma::mat S_est(5,5);
 
 /// \brief Receives a wheel joint states and translates into a twist for the odometry message
 ///
@@ -150,7 +151,7 @@ int main(int argc, char *argv[]){
 
     nh.param<std::string>("odom_id",odom_id,"odom");
 
-    rate = 500;
+    rate = 5;
     ros::Rate r(rate);
     
     odom_pub = pub_nh.advertise<nav_msgs::Odometry>("odom", rate);
@@ -167,15 +168,19 @@ int main(int argc, char *argv[]){
     tf2_ros::TransformBroadcaster kalman_broadcaster;
     tf2_ros::TransformBroadcaster map_broadcaster;
 
-    x_prev(0,0) = w;
-    x_prev(1,0) = x;
-    x_prev(2,0) = y;
-    x_prev(3,0) = 0;
-    x_prev(4,0) = 0;
-    // x_prev(5,0) = 0;
-    // x_prev(6,0) = 0;
-    // x_prev(7,0) = 0;
-    // x_prev(8,0) = 0;
+    x_0(0,0) = w;
+    x_0(1,0) = x;
+    x_0(2,0) = y;
+    x_0(3,0) = 0;
+    x_0(4,0) = 0;
+    
+    x_prev(0,0) = x_0(0,0);
+    x_prev(1,0) = x_0(1,0);
+    x_prev(2,0) = x_0(2,0);
+    x_prev(3,0) = x_0(3,0);
+    x_prev(4,0) = x_0(4,0);
+
+    x_est = arma::zeros(5,1);
 
     S_0 = arma::zeros(5,5);
     S_0(0,0) = 0;
@@ -183,12 +188,17 @@ int main(int argc, char *argv[]){
     S_0(2,2) = 0;
     S_0(3,3) = 1000;
     S_0(4,4) = 1000;
-    // S_0(5,5) = 1000;
-    // S_0(6,6) = 1000;
-    // S_0(7,7) = 1000;
-    // S_0(8,8) = 1000;
+
+    S_prev = arma::zeros(5,5);
+    S_prev = S_0;
+    S_est = arma::zeros(5,5);
 
     Q = arma::eye(5,5);
+    Q(0,0) = .00001;
+    Q(1,1) = .00001;
+    Q(2,2) = .00001;
+    Q(3,3) = 0;
+    Q(4,4) = 0;
 
     //kalman::filter EKF_config(A,B,Q);
     
@@ -223,151 +233,6 @@ int main(int argc, char *argv[]){
 
         odom_pub.publish(odom_msg);        
 
-        old_pos = pos;
-
-        teleporting = false;
-
-        u(0,0) = twist.vx;
-        u(1,0) = twist.vy;
-        u(2,0) = twist.w;
-
-        ROS_WARN("u: ");
-        u.print(std::cout);
-
-        // Kalman Filter //
-
-        if (twist.w != 0){
-            x_0(0,0) = x_prev(0,0) + (twist.w/rate) + w_t(0,0);
-            x_0(1,0) = x_prev(1,0) + (-1*twist.vx/twist.w)*sin(x_prev(0,0)) + (twist.vx/twist.w)*sin(x_prev(0,0)+(twist.w/rate)) + w_t(1,0);
-            x_0(2,0) = x_prev(2,0) + (twist.vx/twist.w)*cos(x_prev(0,0)) - (twist.vx/twist.w)*cos(x_prev(0,0)+(twist.w/rate)) + w_t(2,0);
-            x_0(3,0) = x_prev(3,0);
-            x_0(4,0) = x_prev(4,0);
-
-            A = arma::eye(5,5);
-            A(1,0) = -1*twist.vx/twist.w * cos(x_prev(0,0)) + twist.vx/twist.w * cos(x_prev(0,0)+(twist.w/rate));
-            A(2,0) = -twist.vx/twist.w * sin(x_prev(0,0)) + sin(x_prev(0,0)+(twist.w/rate));
-
-        }
-        else{
-            x_0(0,0) = x_prev(0,0) + w_t(0,0);
-            x_0(1,0) = x_prev(1,0) + (twist.vx/rate)*cos(x_prev(0,0)) + w_t(1,0);
-            x_0(2,0) = x_prev(2,0) + (twist.vx/rate)*sin(x_prev(0,0)) + w_t(2,0);
-            x_0(3,0) = x_prev(3,0);
-            x_0(4,0) = x_prev(4,0);
-
-            A = arma::eye(5,5);
-            A(1,0) = -1*twist.vx/rate * sin(x_0(0,0));
-            A(2,0) = -1*twist.vx/rate * cos(x_0(0,0));
-
-        }
-
-        ROS_WARN("x_0: ");
-        x_0.print(std::cout);
-
-        ROS_WARN("A: ");
-        A.print(std::cout);
-
-        arma::mat A_T = A.t();
-
-        S_0 = A * S_0 * A_T + Q;
-
-        ROS_WARN("S_0: ");
-        S_0.print(std::cout);
-
-        if (obj_x_list.size()>0){
-            for (int i=0; i<obj_x_list.size(); i++){
-
-                double obj_x = obj_x_list[i];
-                double obj_y = obj_y_list[i];
-                z_measured(0,0) = sqrt(pow(obj_x,2)+pow(obj_y,2));
-                z_measured(1,0) = atan2(obj_y,obj_x);
-                
-                ROS_WARN("z_measured: ");
-                z_measured.print(std::cout);
-                
-                //Compute theoretical measurement
-                x_0(3,0) = x_0(1,0) + z_measured(0,0)*cos(z_measured(1,0)+x_0(0,0));
-                x_0(4,0) = x_0(2,0) + z_measured(0,0)*sin(z_measured(1,0)+x_0(0,0));
-                ROS_WARN("m_x %3.2f", x_0(3,0));
-                ROS_WARN("m_y %3.2f", x_0(4,0));
-                ROS_WARN("x: %3.2f", x_0(1,0));
-                ROS_WARN("y: %3.2f", x_0(2,0));
-
-                h(0,0) = sqrt(pow(x_0(3,0) - x_0(1,0),2)+pow(x_0(4,0) - x_0(2,0),2));
-                if((x_0(3,0) - x_0(1,0)) == 0){
-                    h(1,0) = 0;
-                }
-                else{
-                    h(1,0) = atan2(x_0(4,0) - x_0(2,0), x_0(3,0) - x_0(1,0)) - x_0(0,0);
-                }
-
-                ROS_WARN("h: ");
-                h.print(std::cout);
-
-                v_k(0,0) = .000001;
-                v_k(1,0) = .000001;
-                
-                z_k = h + v_k;
-
-                ROS_WARN("z_k: ");
-                z_k.print(std::cout);
-
-
-                //Compute the Kalman gain
-                double r = z_k(0,0);
-                double phi = z_k(1,0);
-                double dx = r * cos(phi);
-                double dy = r * sin(phi);
-                double d = sqrt(pow(dx,2)+pow(dy,2));
-
-                H.set_size(2,5);
-
-                H(0,0) = 0;  
-                H(0,1) = -dx/d; 
-                H(0,2) = -dy/d; 
-                H(0,3) = dx/d; 
-                H(0,4) = dy/d; 
-
-
-                H(1,0) = -1; 
-                H(1,1) = dy/pow(d,2); 
-                H(1,2) = -dx/pow(d,2); 
-                H(1,3) = -dy/pow(d,2); 
-                H(1,4) = dx/pow(d,2); 
-
-                
-                ROS_WARN("H: ");
-                H.print(std::cout);
-
-                arma::mat H_T = H.t();
-
-                R.set_size(2,2);
-                R(0,0) = v_k(0,0);
-                R(0,1) = 0;
-                R(1,0) = 0;
-                R(1,1) = v_k(1,0);
-
-                ROS_WARN("R: ");
-                R.print(std::cout);
-
-                K = S_0 * H_T * (H*S_0*H_T+R).i();
-
-                ROS_WARN("K: ");
-                K.print(std::cout);
-
-                //Posterior State Update
-                arma::mat dz = z_0 - z_k;
-                // dz(1,0) = turtlelib::normalize_angle(dz(1,0));
-                x_0 = x_0 + K * dz;
-
-                //Posterior Covariance
-                S_0 = (I - K*H) * S_0; 
-            }
-        }
-
-        ROS_WARN("--------------------");
-        ///////////////////
-
         map_tf.header.stamp = ros::Time::now();
         map_tf.header.frame_id = "world";
         map_tf.child_frame_id = "map";
@@ -394,6 +259,157 @@ int main(int argc, char *argv[]){
         kalman_tf.transform.rotation.w = q.w();
 
         kalman_broadcaster.sendTransform(kalman_tf);
+
+        old_pos = pos;
+
+        teleporting = false;
+
+        u(0,0) = twist.w / rate;
+        u(1,0) = twist.vx / rate;
+        u(2,0) = 0;
+ 
+        ROS_WARN("u: ");
+        u.print(std::cout);
+
+        // Kalman Filter //
+        if (obj_x_list.size()>0){
+            for (int i=0; i<obj_x_list.size(); i++){
+
+                if (twist.w != 0){
+                    x_est(0,0) = x_prev(0,0) + u(0,0) + w_t(0,0);
+                    x_est(1,0) = x_prev(1,0) - (u(1,0)/u(0,0))*sin(x_prev(0,0)) + (u(1,0)/u(0,0))*sin(x_prev(0,0)+u(0,0)) + w_t(1,0);
+                    x_est(2,0) = x_prev(2,0) + (u(1,0)/u(0,0))*cos(x_prev(0,0)) - (u(1,0)/u(0,0))*cos(x_prev(0,0)+u(0,0)) + w_t(2,0);
+                    x_est(3,0) = x_prev(3,0);
+                    x_est(4,0) = x_prev(4,0);
+
+                    A = arma::eye(5,5);
+                    A(1,0) = -1*(u(1,0)/u(0,0)) * cos(x_est(0,0)) + (u(1,0)/u(0,0)) * cos(x_est(0,0)+ u(0,0));
+                    A(2,0) = -1*(u(1,0)/u(0,0)) * sin(x_est(0,0)) + (u(1,0)/u(0,0)) * sin(x_est(0,0)+ u(0,0));
+
+                }
+                else{
+                    x_est(0,0) = x_prev(0,0) + w_t(0,0);
+                    x_est(1,0) = x_prev(1,0) + u(1,0)*cos(x_prev(0,0)) + w_t(1,0);
+                    x_est(2,0) = x_prev(2,0) + u(1,0)*sin(x_prev(0,0)) + w_t(2,0);
+                    x_est(3,0) = x_prev(3,0);
+                    x_est(4,0) = x_prev(4,0);
+
+                    A = arma::eye(5,5);
+                    A(1,0) = -1*u(1,0) * sin(x_0(0,0));
+                    A(2,0) = u(1,0) * cos(x_0(0,0));
+
+                }
+
+                ROS_WARN("x_est: ");
+                x_est.print(std::cout);
+
+                ROS_WARN("A: ");
+                A.print(std::cout);
+
+                arma::mat A_T = A.t();
+
+                S_est = A * S_prev * A_T + Q;
+
+                ROS_WARN("S_0: ");
+                S_est.print(std::cout);
+
+                double obj_x = obj_x_list[i];
+                double obj_y = obj_y_list[i];
+                z_measured(0,0) = sqrt(pow(obj_x,2)+pow(obj_y,2));
+                z_measured(1,0) = atan2(obj_y,obj_x);
+                
+                ROS_WARN("z_measured: ");
+                z_measured.print(std::cout);
+                
+                //Compute theoretical measurement
+                x_est(3,0) = x_est(1,0) + z_measured(0,0)*cos(z_measured(1,0)+x_est(0,0));
+                x_est(4,0) = x_est(2,0) + z_measured(0,0)*sin(z_measured(1,0)+x_est(0,0));
+                
+                h(0,0) = sqrt(pow(x_est(3,0) - x_est(1,0),2)+pow(x_est(4,0) - x_est(2,0),2));
+                if ((x_est(3,0) - x_est(1,0)) != 0){
+                    h(1,0) = atan2(x_est(4,0) - x_est(2,0), x_est(3,0) - x_est(1,0)) - x_est(0,0);
+                }
+                else {
+                    h(1,0) = 0;
+                }
+
+                ROS_WARN("h: ");
+                h.print(std::cout);
+
+                v_k(0,0) = .000001;
+                v_k(1,0) = .000001;
+                
+                z_est = h + v_k;
+
+                ROS_WARN("z_est: ");
+                z_est.print(std::cout);
+
+                //Compute the Kalman gain
+                double dx = x_est(3,0) - x_est(1,0);
+                double dy = x_est(4,0) - x_est(2,0);
+                double d = pow(dx,2)+pow(dy,2);
+
+                H.set_size(2,5);
+
+                H(0,0) = 0;  
+                H(0,1) = -1*dx/sqrt(d); 
+                H(0,2) = -1*dy/sqrt(d); 
+                H(0,3) = dx/sqrt(d); 
+                H(0,4) = dy/sqrt(d); 
+
+                H(1,0) = -1; 
+                H(1,1) = dy/d; 
+                H(1,2) = -1*dx/d; 
+                H(1,3) = -1*dy/d; 
+                H(1,4) = dx/d; 
+                
+                ROS_WARN("H: ");
+                H.print(std::cout);
+
+                arma::mat H_T = H.t();
+
+                R.set_size(2,2);
+                R(0,0) = v_k(0,0);
+                R(0,1) = 0;
+                R(1,0) = 0;
+                R(1,1) = v_k(1,0);
+
+                K = S_est * H_T * (H*S_est*H_T+R).i();
+
+                ROS_WARN("K: ");
+                K.print(std::cout);
+
+                //Posterior State Update
+                arma::mat dz = z_measured - z_est;
+                dz(1,0) = turtlelib::normalize_angle(dz(1,0));
+                ROS_WARN("dz: ");
+                dz.print(std::cout);
+                
+                x_0 = x_est + K * dz;
+                x_0.print(std::cout);
+                
+                //Posterior Covariance
+                S_0 = (I - K*H) * S_est; 
+
+                ROS_WARN("S_0: ");
+                S_0.print(std::cout);
+
+                x_prev(0,0) = x_0(0,0);
+                x_prev(1,0) = x_0(1,0);
+                x_prev(2,0) = x_0(2,0);
+                x_prev(3,0) = x_0(3,0);
+                x_prev(4,0) = x_0(4,0);
+
+                S_prev(0,0) = S_0(0,0);
+                S_prev(1,0) = S_0(1,0);
+                S_prev(2,0) = S_0(2,0);
+                S_prev(3,0) = S_0(3,0);
+                S_prev(4,0) = S_0(4,0);
+            }
+        }
+        
+        ROS_WARN("--------------------");
+        /////////////////
 
         r.sleep();
         ros::spinOnce();

@@ -250,13 +250,12 @@ visualization_msgs::MarkerArray make_arena(float x_length, float y_length){
 
 }
 
-visualization_msgs::MarkerArray fake_sensor(turtlelib::q robot_pos, std::vector<double> obj_x_list, std::vector<double> obj_y_list){
-
+void fake_sensor(const ros::TimerEvent& event){
     int id = 0;
 
     fake_sensor_array.markers.resize(obj_x_list.size());
 
-    std::normal_distribution<> noise(0, .01);
+    std::normal_distribution<> noise(0, 0);
 
     for (unsigned int i = 0; i<obj_x_list.size(); i+=1) {
         
@@ -264,10 +263,10 @@ visualization_msgs::MarkerArray fake_sensor(turtlelib::q robot_pos, std::vector<
         double noise_phi = noise(get_random());
 
         turtlelib::Vector2D trans_wr;
-        trans_wr.x = robot_pos.x;
-        trans_wr.y = robot_pos.y;
+        trans_wr.x = pos.x;
+        trans_wr.y = pos.y;
 
-        turtlelib::Transform2D T_wr(trans_wr, robot_pos.theta);
+        turtlelib::Transform2D T_wr(trans_wr, pos.theta);
         turtlelib::Transform2D T_rw(0);
         T_rw = T_wr.inv();
 
@@ -278,7 +277,7 @@ visualization_msgs::MarkerArray fake_sensor(turtlelib::q robot_pos, std::vector<
         turtlelib::Vector2D obstacle_robot = T_rw(obstacle_world);
         ros::Duration duration(1.0);
 
-        double d = sqrt(pow(robot_pos.x-obj_x_list[i],2) + pow(robot_pos.y-obj_y_list[i],2));
+        double d = sqrt(pow(pos.x-obstacle_world.x,2) + pow(pos.y-obstacle_world.y,2));
         // ROS_WARN("Distance %d: %6.2f",i,d);
         if (d > max_range) {
             fake_sensor_array.markers[i].action = visualization_msgs::Marker::DELETE;
@@ -289,7 +288,7 @@ visualization_msgs::MarkerArray fake_sensor(turtlelib::q robot_pos, std::vector<
         }
         d += noise_r;
 
-        double phi = atan2(obj_y_list[i]-robot_pos.y, obj_x_list[i]-robot_pos.x) - robot_pos.theta;
+        double phi = atan2(obj_y_list[i]-pos.y, obj_x_list[i]-pos.x) - pos.theta;
         phi += noise_phi;
 
         double mx = d * cos(phi);
@@ -318,8 +317,8 @@ visualization_msgs::MarkerArray fake_sensor(turtlelib::q robot_pos, std::vector<
         fake_sensor_array.markers[i].frame_locked = true;
         id += 1;
     }
-
-    return fake_sensor_array;
+    
+    fake_sensor_pub.publish(fake_sensor_array);
 }
 
 void update_wheel_position(const nuturtlebot_msgs::WheelCommands::ConstPtr &wheel_cmd){
@@ -374,7 +373,7 @@ void laser_scan(turtlelib::q robot_pos, std::vector<double> obj_x_list, std::vec
     robot_w.y = robot_pos.y;
     turtlelib::Transform2D T_wr(robot_w, robot_pos.theta);
 
-    turtlelib::Transform2D T_rw;
+    turtlelib::Transform2D T_rw(0);
     T_rw = T_wr.inv();
 
     turtlelib::Vector2D wall1_w = {.x = x_length/2, .y = y_length/2};
@@ -397,7 +396,7 @@ void laser_scan(turtlelib::q robot_pos, std::vector<double> obj_x_list, std::vec
         v2_r.x = max_range*std::cos(angle); //v1_r.x + dx_r;
         v2_r.y = max_range*std::sin(angle);//v1_r.y + dy_r;
 
-        double slope = std::tan(angle); //This is the same as dy_r/dx_r (good)
+        double slope = std::tan(angle+robot_pos.theta);
         
         double x_min_r = std::min({v1_r.x,v2_r.x});
         double x_max_r = std::max({v1_r.x,v2_r.x});
@@ -407,39 +406,51 @@ void laser_scan(turtlelib::q robot_pos, std::vector<double> obj_x_list, std::vec
         // double int_x = 0;
         // double int_y = 0;
         // double m = 0;
-        for (int k=0; k<=3; k++){
+        turtlelib::Vector2D a;
+        turtlelib::Vector2D b;
+        for (int k=0; k<=4; k++){
+            if (k==4){
+                a = wall_pts[4];
+                b = wall_pts[0];
+            }
+            else{
+                a = wall_pts[k];
+                b = wall_pts[k+1];
+            }
 
-            if (wall_pts[k].y == wall_pts[k+1].y){
+            if (a.y == b.y){
                 // turtlelib::Vector2D wall_r;
                 // wall_r = T_rw(wall_pts[k]);
                 // y = slope * x + b
                 double int_y_w = wall_pts[k].y;
                 double int_x_w = robot_w.x + (int_y_w - robot_w.y) / slope;
-                double m = std::sqrt(std::pow(int_x_w - robot_w.x,2)+std::pow(int_y_w - robot_w.y,2));
                 turtlelib::Vector2D int_w{.x = int_x_w, .y = int_y_w};
                 turtlelib::Vector2D int_r;
                 int_r = T_rw(int_w);
-                if ((int_r.x > x_min_r) & (int_r.x < x_max_r) & (int_r.y > y_min_r) & (int_r.y < y_max_r)){
+                double m = std::sqrt(std::pow(int_r.x,2)+std::pow(int_r.y,2));
+                if (m < range) {
+                // if ((int_r.x > x_min_r) & (int_r.x < x_max_r) & (int_r.y > y_min_r) & (int_r.y < y_max_r)){
                     if ((m < laser_hits[j]) || (laser_hits[j] == 0)){
                         laser_hits[j] = m;
                     }
+                // }
                 }
             }  
-            if (wall_pts[k].x == wall_pts[k+1].x){
+            if (a.x == b.x){
                 // turtlelib::Vector2D wall_r;
                 // wall_r = T_rw(wall_pts[k]);
                 double int_x_w = wall_pts[k].x;
                 double int_y_w = robot_w.y + (int_x_w-robot_w.x) * slope;
-                double m = std::sqrt(std::pow(int_x_w - robot_w.x,2)+std::pow(int_y_w - robot_w.y,2));
-                //ROS_WARN("slope: %3.2f, y: %3.2f, x: %3.2f", slope, int_y, int_x);
                 turtlelib::Vector2D int_w{.x = int_x_w, .y = int_y_w};
                 turtlelib::Vector2D int_r;
                 int_r = T_rw(int_w);
-                if ((int_r.x > x_min_r) & (int_r.x < x_max_r) & (int_r.y > y_min_r) & (int_r.y < y_max_r)){
+                double m = std::sqrt(std::pow(int_r.x,2)+std::pow(int_r.y,2));
+                if (m < range) {
+                // if ((int_r.x > x_min_r) & (int_r.x < x_max_r) & (int_r.y > y_min_r) & (int_r.y < y_max_r)){
                     if ((m < laser_hits[j]) || (laser_hits[j]==0)){
                         laser_hits[j] = m;
-                //ROS_WARN("int_x: %3.2f, int_y: %3.2f", int_x, int_y);
                     }
+                // }
                 }
             }
         }
@@ -519,17 +530,17 @@ void laser_scan(turtlelib::q robot_pos, std::vector<double> obj_x_list, std::vec
                 double y_min = std::min({y1,y2});
                 double y_max = std::max({y1,y2});
                 if ((int_x_plus > x_min) & (int_x_minus > x_min) & (int_x_minus < x_max) & (int_x_plus < x_max) & (int_y_plus > y_min) & (int_y_minus > y_min) & (int_y_minus < y_max) & (int_y_plus < y_max)){
-                    if ((std::min({m1,m2}) < laser_hits[j]) | (laser_hits[j]==0)){
+                    if ((std::min({m1,m2}) < laser_hits[j]) || (laser_hits[j]==0)){
                         laser_hits[j] = std::min({m1,m2}); 
                     }
                 }
                 else if ((int_x_plus > x_min) & (int_x_plus < x_max) & (int_y_plus > y_min) & (int_y_plus < y_max)){
-                    if ((m1 < laser_hits[j]) | (laser_hits[j]==0)){
+                    if ((m1 < laser_hits[j]) || (laser_hits[j]==0)){
                         laser_hits[j] = m1; 
                     }
                 }
                 else if ((int_x_minus > x_min) & (int_x_minus < x_max) & (int_y_minus > y_min) & (int_y_minus < y_max)){
-                    if ((m2 < laser_hits[j]) | (laser_hits[j]==0)){
+                    if ((m2 < laser_hits[j]) || (laser_hits[j]==0)){
                         laser_hits[j] = m2;
                     } 
                 }
@@ -558,11 +569,13 @@ int main(int argc, char *argv[]){
     obj_pub = nh.advertise<visualization_msgs::MarkerArray>("visualization_marker_array", 10);
     arena_pub = nh.advertise<visualization_msgs::MarkerArray>("visualization_marker_array", 10);
     sensor_pub = pub_nh.advertise<nuturtlebot_msgs::SensorData>("sensor_data", 10);
-    fake_sensor_pub = nh.advertise<visualization_msgs::MarkerArray>("/fake_sensor", 10);
+    fake_sensor_pub = pub_nh.advertise<visualization_msgs::MarkerArray>("/fake_sensor", 10);
     laser_pub = pub_nh.advertise<sensor_msgs::LaserScan>("laser_scan",10);
     path_pub = pub_nh.advertise<nav_msgs::Path>("nav_msgs/Path",10);
 
     wheel_sub = pub_nh.subscribe("red/wheel_cmd", 10, update_wheel_position);
+
+    ros::Timer timer_5Hz = nh.createTimer(ros::Duration(0.2), fake_sensor);
 
     rs_service = nh.advertiseService("Restart", restart);
     tp_service = nh.advertiseService("Teleport", teleport);
@@ -674,8 +687,8 @@ int main(int argc, char *argv[]){
 
         path_pub.publish(path_msg);
 
-        fake_sensor_array = fake_sensor(pos, obj_x_list, obj_y_list);
-        fake_sensor_pub.publish(fake_sensor_array);
+        //fake_sensor_array = fake_sensor(pos, obj_x_list, obj_y_list);
+        
 
         laser_scan(pos, obj_x_list, obj_y_list);
         laser_pub.publish(laser_msg);
