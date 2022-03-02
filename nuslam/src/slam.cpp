@@ -50,25 +50,25 @@ static ros::ServiceServer pose_service;
 nav_msgs::Odometry odom_msg;
 std::vector<double> obj_x_list, obj_y_list;
 
-arma::mat A = arma::eye(5,5);
-arma::mat Q = arma::eye(5,5);
-arma::mat I = arma::eye(5,5);
+arma::mat A = arma::eye(9,9);
+arma::mat Q = arma::eye(9,9);
+arma::mat I = arma::eye(9,9);
 arma::mat R = arma::zeros(2,2);
-arma::mat K(5,2);
-arma::mat H(2,5);
+arma::mat K(9,2);
+arma::mat H(2,9);
 arma::mat h(2,1);
 arma::mat u(3,1);
 arma::mat z(2,3);
 arma::mat v_k(2,1);
 arma::mat z_est(2,1);
 arma::mat z_measured(2,1);
-arma::mat x_0(5,1);
-arma::mat x_prev(5,1);
-arma::mat x_est(5,1);
-arma::mat w_t = arma::zeros(3,1);
-arma::mat S_0(5,5);
-arma::mat S_prev(5,5);
-arma::mat S_est(5,5);
+arma::mat x_0(9,1);
+arma::mat x_prev(9,1);
+arma::mat x_est(9,1);
+arma::mat S_0(9,9);
+arma::mat S_prev(9,9);
+arma::mat S_est(9,9);
+double n = 3;
 
 /// \brief Receives a wheel joint states and translates into a twist for the odometry message
 ///
@@ -151,6 +151,7 @@ int main(int argc, char *argv[]){
 
     nh.param<std::string>("odom_id",odom_id,"odom");
 
+    //nh.getParam("rate", rate);
     rate = 5;
     ros::Rate r(rate);
     
@@ -168,37 +169,40 @@ int main(int argc, char *argv[]){
     tf2_ros::TransformBroadcaster kalman_broadcaster;
     tf2_ros::TransformBroadcaster map_broadcaster;
 
+    x_0 = arma::zeros(9,1);
     x_0(0,0) = w;
     x_0(1,0) = x;
     x_0(2,0) = y;
-    x_0(3,0) = 0;
-    x_0(4,0) = 0;
     
-    x_prev(0,0) = x_0(0,0);
-    x_prev(1,0) = x_0(1,0);
-    x_prev(2,0) = x_0(2,0);
-    x_prev(3,0) = x_0(3,0);
-    x_prev(4,0) = x_0(4,0);
+    x_prev = x_0;
 
-    x_est = arma::zeros(5,1);
+    x_est = arma::zeros(9,1);
 
-    S_0 = arma::zeros(5,5);
+    S_0 = arma::zeros(9,9);
     S_0(0,0) = 0;
     S_0(1,1) = 0;
     S_0(2,2) = 0;
     S_0(3,3) = 1000;
     S_0(4,4) = 1000;
+    S_0(5,5) = 1000;
+    S_0(6,6) = 1000;
+    S_0(7,7) = 1000;
+    S_0(8,8) = 1000;
 
-    S_prev = arma::zeros(5,5);
+    S_prev = arma::zeros(9,9);
     S_prev = S_0;
-    S_est = arma::zeros(5,5);
+    S_est = arma::zeros(9,9);
 
-    Q = arma::eye(5,5);
-    Q(0,0) = .00001;
-    Q(1,1) = .00001;
-    Q(2,2) = .00001;
-    Q(3,3) = 0;
-    Q(4,4) = 0;
+    Q = arma::eye(9,9);
+    Q(0,0) = .00001; //.00001;
+    Q(1,1) = .00001; //.00001;
+    Q(2,2) = .00001; //.00001;
+    Q(3,3) = 1000.0; //1000.0;
+    Q(4,4) = 1000.0; //1000.0;
+    Q(5,5) = 1000.0; //1000.0;
+    Q(6,6) = 1000.0; //1000.0;
+    Q(7,7) = 1000.0; //1000.0;
+    Q(8,8) = 1000.0; //1000.0;
 
     //kalman::filter EKF_config(A,B,Q);
     
@@ -210,7 +214,7 @@ int main(int argc, char *argv[]){
         }
 
         odom_tf.header.stamp = ros::Time::now();
-        odom_tf.header.frame_id = "odom";
+        odom_tf.header.frame_id = "world";
         odom_tf.child_frame_id = "blue_base_footprint";
         odom_tf.transform.translation.x = pos.x;
         odom_tf.transform.translation.y = pos.y;
@@ -264,63 +268,66 @@ int main(int argc, char *argv[]){
 
         teleporting = false;
 
-        u(0,0) = twist.w / rate;
-        u(1,0) = twist.vx / rate;
+        u(0,0) = twist.w;
+        u(1,0) = twist.vx;
         u(2,0) = 0;
  
         ROS_WARN("u: ");
         u.print(std::cout);
 
+        if (turtlelib::almost_equal(twist.w,0,.0001)){
+            x_est(0,0) = x_prev(0,0);
+            x_est(1,0) = x_prev(1,0) + u(1,0)*cos(x_prev(0,0));
+            x_est(2,0) = x_prev(2,0) + u(1,0)*sin(x_prev(0,0));
+            x_est(3,0) = x_prev(3,0);
+            x_est(4,0) = x_prev(4,0);
+            x_est(5,0) = x_prev(5,0);
+            x_est(6,0) = x_prev(6,0);
+            x_est(7,0) = x_prev(7,0);
+            x_est(8,0) = x_prev(8,0);
+
+            A = arma::eye(9,9);
+            A(1,0) = -1*u(1,0) * sin(x_0(0,0));
+            A(2,0) = u(1,0) * cos(x_0(0,0));
+        }
+        else{
+            x_est(0,0) = x_prev(0,0) + u(0,0);
+            x_est(1,0) = x_prev(1,0) - (u(1,0)/u(0,0))*sin(x_prev(0,0)) + (u(1,0)/u(0,0))*sin(x_prev(0,0)+u(0,0));
+            x_est(2,0) = x_prev(2,0) + (u(1,0)/u(0,0))*cos(x_prev(0,0)) - (u(1,0)/u(0,0))*cos(x_prev(0,0)+u(0,0));
+            x_est(3,0) = x_prev(3,0);
+            x_est(4,0) = x_prev(4,0);
+            x_est(5,0) = x_prev(5,0);
+            x_est(6,0) = x_prev(6,0);
+            x_est(7,0) = x_prev(7,0);
+            x_est(8,0) = x_prev(8,0);
+
+            A = arma::eye(9,9);
+            A(1,0) = -1*(u(1,0)/u(0,0)) * cos(x_est(0,0)) + (u(1,0)/u(0,0)) * cos(x_est(0,0)+ u(0,0));
+            A(2,0) = -1*(u(1,0)/u(0,0)) * sin(x_est(0,0)) + (u(1,0)/u(0,0)) * sin(x_est(0,0)+ u(0,0));
+        }
+
+        ROS_WARN("x_est: ");
+        x_est.print(std::cout);
+
+        ROS_WARN("A: ");
+        A.print(std::cout);
+        
+        arma::mat A_T = A.t();
+
+        S_est = A * S_prev * A_T + Q;
+
+        ROS_WARN("S_0: ");
+        S_est.print(std::cout);
+
         // Kalman Filter //
         if (obj_x_list.size()>0){
-            for (int i=0; i<obj_x_list.size(); i++){
-
-                if (twist.w != 0){
-                    x_est(0,0) = x_prev(0,0) + u(0,0) + w_t(0,0);
-                    x_est(1,0) = x_prev(1,0) - (u(1,0)/u(0,0))*sin(x_prev(0,0)) + (u(1,0)/u(0,0))*sin(x_prev(0,0)+u(0,0)) + w_t(1,0);
-                    x_est(2,0) = x_prev(2,0) + (u(1,0)/u(0,0))*cos(x_prev(0,0)) - (u(1,0)/u(0,0))*cos(x_prev(0,0)+u(0,0)) + w_t(2,0);
-                    x_est(3,0) = x_prev(3,0);
-                    x_est(4,0) = x_prev(4,0);
-
-                    A = arma::eye(5,5);
-                    A(1,0) = -1*(u(1,0)/u(0,0)) * cos(x_est(0,0)) + (u(1,0)/u(0,0)) * cos(x_est(0,0)+ u(0,0));
-                    A(2,0) = -1*(u(1,0)/u(0,0)) * sin(x_est(0,0)) + (u(1,0)/u(0,0)) * sin(x_est(0,0)+ u(0,0));
-
-                }
-                else{
-                    x_est(0,0) = x_prev(0,0) + w_t(0,0);
-                    x_est(1,0) = x_prev(1,0) + u(1,0)*cos(x_prev(0,0)) + w_t(1,0);
-                    x_est(2,0) = x_prev(2,0) + u(1,0)*sin(x_prev(0,0)) + w_t(2,0);
-                    x_est(3,0) = x_prev(3,0);
-                    x_est(4,0) = x_prev(4,0);
-
-                    A = arma::eye(5,5);
-                    A(1,0) = -1*u(1,0) * sin(x_0(0,0));
-                    A(2,0) = u(1,0) * cos(x_0(0,0));
-
-                }
-
-                ROS_WARN("x_est: ");
-                x_est.print(std::cout);
-
-                ROS_WARN("A: ");
-                A.print(std::cout);
-
-                arma::mat A_T = A.t();
-
-                S_est = A * S_prev * A_T + Q;
-
-                ROS_WARN("S_0: ");
-                S_est.print(std::cout);
+            for (unsigned int i=0; i<obj_x_list.size(); i++){
 
                 double obj_x = obj_x_list[i];
                 double obj_y = obj_y_list[i];
                 z_measured(0,0) = sqrt(pow(obj_x,2)+pow(obj_y,2));
                 z_measured(1,0) = atan2(obj_y,obj_x);
-                
-                ROS_WARN("z_measured: ");
-                z_measured.print(std::cout);
-                
+
                 //Compute theoretical measurement
                 x_est(3,0) = x_est(1,0) + z_measured(0,0)*cos(z_measured(1,0)+x_est(0,0));
                 x_est(4,0) = x_est(2,0) + z_measured(0,0)*sin(z_measured(1,0)+x_est(0,0));
@@ -335,11 +342,8 @@ int main(int argc, char *argv[]){
 
                 ROS_WARN("h: ");
                 h.print(std::cout);
-
-                v_k(0,0) = .000001;
-                v_k(1,0) = .000001;
                 
-                z_est = h + v_k;
+                z_est = h;
 
                 ROS_WARN("z_est: ");
                 z_est.print(std::cout);
@@ -349,26 +353,29 @@ int main(int argc, char *argv[]){
                 double dy = x_est(4,0) - x_est(2,0);
                 double d = pow(dx,2)+pow(dy,2);
 
-                H.set_size(2,5);
+                H = arma::zeros(2,9);
 
                 H(0,0) = 0;  
                 H(0,1) = -1*dx/sqrt(d); 
                 H(0,2) = -1*dy/sqrt(d); 
-                H(0,3) = dx/sqrt(d); 
-                H(0,4) = dy/sqrt(d); 
-
+                H(0,3+i) = dx/sqrt(d); 
+                H(0,4+i) = dy/sqrt(d); 
+                
                 H(1,0) = -1; 
                 H(1,1) = dy/d; 
                 H(1,2) = -1*dx/d; 
-                H(1,3) = -1*dy/d; 
-                H(1,4) = dx/d; 
+                H(1,3+i) = -1*dy/d; 
+                H(1,4+i) = dx/d; 
                 
                 ROS_WARN("H: ");
                 H.print(std::cout);
 
                 arma::mat H_T = H.t();
 
-                R.set_size(2,2);
+                v_k(0,0) = 0.000001; //Sensor reading variance
+                v_k(1,0) =  0.000001;
+
+                R.set_size(2,2); 
                 R(0,0) = v_k(0,0);
                 R(0,1) = 0;
                 R(1,0) = 0;
@@ -385,35 +392,37 @@ int main(int argc, char *argv[]){
                 ROS_WARN("dz: ");
                 dz.print(std::cout);
                 
-                x_0 = x_est + K * dz;
-                x_0.print(std::cout);
+                x_est = x_est + K * dz;
+                x_est.print(std::cout);
                 
                 //Posterior Covariance
-                S_0 = (I - K*H) * S_est; 
+                S_est = (I - K*H) * S_est; 
 
-                ROS_WARN("S_0: ");
-                S_0.print(std::cout);
+                ROS_WARN("S_est: ");
+                S_est.print(std::cout);
 
-                x_prev(0,0) = x_0(0,0);
-                x_prev(1,0) = x_0(1,0);
-                x_prev(2,0) = x_0(2,0);
-                x_prev(3,0) = x_0(3,0);
-                x_prev(4,0) = x_0(4,0);
-
-                S_prev(0,0) = S_0(0,0);
-                S_prev(1,0) = S_0(1,0);
-                S_prev(2,0) = S_0(2,0);
-                S_prev(3,0) = S_0(3,0);
-                S_prev(4,0) = S_0(4,0);
             }
+            x_0 = x_est;
+            S_0 = S_est;
         }
+        
+        x_prev(0,0) = x_0(0,0);
+        x_prev(1,0) = x_0(1,0);
+        x_prev(2,0) = x_0(2,0);
+        x_prev(3,0) = x_0(3,0);
+        x_prev(4,0) = x_0(4,0);
+
+        S_prev(0,0) = S_0(0,0);
+        S_prev(1,0) = S_0(1,0);
+        S_prev(2,0) = S_0(2,0);
+        S_prev(3,0) = S_0(3,0);
+        S_prev(4,0) = S_0(4,0);
         
         ROS_WARN("--------------------");
         /////////////////
-
+        
         r.sleep();
         ros::spinOnce();
     }
-
     return 0;
 }

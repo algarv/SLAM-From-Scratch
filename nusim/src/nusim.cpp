@@ -250,7 +250,7 @@ visualization_msgs::MarkerArray make_arena(float x_length, float y_length){
 
 }
 
-void fake_sensor(const ros::TimerEvent& event){
+void fake_sensor(const ros::TimerEvent& ){
     int id = 0;
 
     fake_sensor_array.markers.resize(obj_x_list.size());
@@ -274,7 +274,7 @@ void fake_sensor(const ros::TimerEvent& event){
         obstacle_world.x = obj_x_list[i];
         obstacle_world.y = obj_y_list[i];
 
-        turtlelib::Vector2D obstacle_robot = T_rw(obstacle_world);
+        //turtlelib::Vector2D obstacle_robot = T_rw(obstacle_world);
         ros::Duration duration(1.0);
 
         double d = sqrt(pow(pos.x-obstacle_world.x,2) + pow(pos.y-obstacle_world.y,2));
@@ -393,8 +393,8 @@ void laser_scan(turtlelib::q robot_pos, std::vector<double> obj_x_list, std::vec
         double dy_r = range * std::sin(angle);
 
         turtlelib::Vector2D v2_r;
-        v2_r.x = max_range*std::cos(angle); //v1_r.x + dx_r;
-        v2_r.y = max_range*std::sin(angle);//v1_r.y + dy_r;
+        v2_r.x = v1_r.x + dx_r; //max_range*std::cos(angle); //v1_r.x + dx_r;
+        v2_r.y = v1_r.y + dy_r; //max_range*std::sin(angle);//v1_r.y + dy_r;
 
         double slope = std::tan(angle+robot_pos.theta);
         
@@ -428,12 +428,10 @@ void laser_scan(turtlelib::q robot_pos, std::vector<double> obj_x_list, std::vec
                 turtlelib::Vector2D int_r;
                 int_r = T_rw(int_w);
                 double m = std::sqrt(std::pow(int_r.x,2)+std::pow(int_r.y,2));
-                if (m < range) {
-                // if ((int_r.x > x_min_r) & (int_r.x < x_max_r) & (int_r.y > y_min_r) & (int_r.y < y_max_r)){
+                if ((int_r.x > x_min_r) && (int_r.x < x_max_r) && (int_r.y > y_min_r) && (int_r.y < y_max_r)){
                     if ((m < laser_hits[j]) || (laser_hits[j] == 0)){
                         laser_hits[j] = m;
                     }
-                // }
                 }
             }  
             if (a.x == b.x){
@@ -445,12 +443,12 @@ void laser_scan(turtlelib::q robot_pos, std::vector<double> obj_x_list, std::vec
                 turtlelib::Vector2D int_r;
                 int_r = T_rw(int_w);
                 double m = std::sqrt(std::pow(int_r.x,2)+std::pow(int_r.y,2));
-                if (m < range) {
-                // if ((int_r.x > x_min_r) & (int_r.x < x_max_r) & (int_r.y > y_min_r) & (int_r.y < y_max_r)){
+                // ROS_WARN("min_x: %3.2f, max_x: %3.2f", x_min_r, x_max_r);
+                // ROS_WARN("int_x: %3.2f, int_y: %3.2f",int_x_w,int_y_w);
+                if ((abs(int_r.x) > x_min_r) && (int_r.x < x_max_r) && (int_r.y > y_min_r) && (int_r.y < y_max_r)){
                     if ((m < laser_hits[j]) || (laser_hits[j]==0)){
                         laser_hits[j] = m;
                     }
-                // }
                 }
             }
         }
