@@ -5,7 +5,7 @@
 <arg name = 'rviz' default = 'true' />
 <arg name = 'nuslam' default= 'false'/>
 
-<param name= "rate" type="double" value="500"/>
+<param name= "rate" type="double" value="100"/>
 <param name="wheel_left" type="string" value="red_wheel_left_joint" />
 <param name="wheel_right" type="string" value="red_wheel_right_joint" />
 <param name="body_id" type="string" value="red_base_footprint" />
