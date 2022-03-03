@@ -44,12 +44,11 @@ turtlelib::DiffDrive D;
 turtlelib::Twist2D twist;
 turtlelib::q pos, old_pos;
 static geometry_msgs::TransformStamped odom_tf, kalman_tf, map_tf;
-ros::Subscriber js_sub, sensor_sub;
-ros::Publisher odom_pub;
+static ros::Subscriber js_sub, sensor_sub;
+static ros::Publisher odom_pub, SLAM_marker_pub;
 static ros::ServiceServer pose_service;
 nav_msgs::Odometry odom_msg;
-std::vector<double> obj_x_list, obj_y_list;
-visualization_msgs::MarkerArray found_obstacles;
+static visualization_msgs::MarkerArray found_obstacles, SLAM_marker_array;
 
 arma::mat A = arma::eye(9,9);
 arma::mat I = arma::eye(9,9);
@@ -93,6 +92,46 @@ void update_odom(const sensor_msgs::JointState &wheels){
     odom_msg.twist.twist.angular.z = twist.w;
 
     old_wheel_angles = {.L = wheels.position[0], .R = wheels.position[1]};
+}
+
+void update_obstacles(arma::mat state){
+    int id = 0;
+
+    if (state.n_rows > .5){
+        double size = (state.n_rows - 3)/2;
+
+        SLAM_marker_array.markers.resize(size);
+        ros::Duration duration(1.0);
+
+        for (unsigned int i = 0; i<size; i+=1) {
+            
+            SLAM_marker_array.markers[i].header.frame_id = "map";
+            SLAM_marker_array.markers[i].header.stamp = ros::Time::now();
+            SLAM_marker_array.markers[i].type = visualization_msgs::Marker::CYLINDER;
+            SLAM_marker_array.markers[i].id = id;
+            SLAM_marker_array.markers[i].pose.position.x = state(3+2*i,0);
+            SLAM_marker_array.markers[i].pose.position.y = state(4+2*i,0);
+            SLAM_marker_array.markers[i].pose.position.z = .125;
+            SLAM_marker_array.markers[i].pose.orientation.x = 0.0;
+            SLAM_marker_array.markers[i].pose.orientation.y = 0.0;
+            SLAM_marker_array.markers[i].pose.orientation.z = 0.0;
+            SLAM_marker_array.markers[i].pose.orientation.w = 1.0;
+            SLAM_marker_array.markers[i].scale.x = .25;
+            SLAM_marker_array.markers[i].scale.y = .25;
+            SLAM_marker_array.markers[i].scale.z = .25;
+            SLAM_marker_array.markers[i].color.a = 1.0;
+            SLAM_marker_array.markers[i].color.r = 0.0;
+            SLAM_marker_array.markers[i].color.g = 1.0;
+            SLAM_marker_array.markers[i].color.b = 0.0;
+            SLAM_marker_array.markers[i].lifetime = duration;
+            SLAM_marker_array.markers[i].frame_locked = true;
+            id += 1;
+        }
+        SLAM_marker_pub.publish(SLAM_marker_array);
+    }
+    else{
+        ROS_WARN("I know basic math");
+    }
 }
 
 void get_obj(const visualization_msgs::MarkerArray &obstacles){
@@ -149,7 +188,8 @@ int main(int argc, char *argv[]){
     ros::Rate r(rate);
     
     odom_pub = pub_nh.advertise<nav_msgs::Odometry>("odom", rate);
-    
+    SLAM_marker_pub = pub_nh.advertise<visualization_msgs::MarkerArray>("/SLAM_markers", 10);
+
     js_sub = pub_nh.subscribe("red/joint_states",10,update_odom);
 
     sensor_sub = pub_nh.subscribe("/fake_sensor",10,get_obj);
@@ -186,9 +226,9 @@ int main(int argc, char *argv[]){
     S_est = S_0;
 
     arma::mat Q = arma::eye(9,9);
-    Q(0,0) = 1000.0; //.00001;
-    Q(1,1) = 1000.0; //.00001;
-    Q(2,2) = 1000.0; //.00001;
+    Q(0,0) = 100.0; //.00001;
+    Q(1,1) = 100.0; //.00001;
+    Q(2,2) = 100.0; //.00001;
     Q(3,3) = 0; //Leave these as zero
     Q(4,4) = 0;
     Q(5,5) = 0;
@@ -196,8 +236,8 @@ int main(int argc, char *argv[]){
     Q(7,7) = 0;
     Q(8,8) = 0;
 
-    arma::mat R = arma::mat{{100000.0,  0.0},
-                            {0.0,  1000000.0}};
+    arma::mat R = arma::mat{{10.0,  0.0},
+                            {0.0,  10.0}};
     
     while(ros::ok()){
 
@@ -396,7 +436,7 @@ int main(int argc, char *argv[]){
                 //Posterior State Update
                 dz(0,0) = z_measured(0,0) - z_est(0,0);
                 dz(1,0) = z_measured(1,0) - z_est(1,0);                
-                //dz(1,0) = turtlelib::normalize_angle(dz(1,0));
+                dz(1,0) = turtlelib::normalize_angle(dz(1,0));
                 
                 ROS_WARN("dz: ");
                 dz.print(std::cout);
@@ -415,10 +455,11 @@ int main(int argc, char *argv[]){
                 S_est.print(std::cout);
 
             }
-            x_0 = x_est;
-            S_0 = S_est;
         }
-        
+        x_0 = x_est;
+        S_0 = S_est;
+        update_obstacles(x_0);            
+
         x_prev = x_0;
         S_prev = S_0;
         
