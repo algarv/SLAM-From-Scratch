@@ -3,7 +3,7 @@
 <arg name = 'cmd_src' default = 'teleop' />
 <arg name = 'robot' default = 'nusim' />
 <arg name = 'rviz' default = 'true' />
-<arg name = 'nuslam' default= 'false'/>
+<arg name = 'nuslam' default= 'true'/>
 
 <param name= "rate" type="double" value="100"/>
 <param name="wheel_left" type="string" value="red_wheel_left_joint" />

@@ -23,6 +23,7 @@
 #include "nuturtlebot_msgs/WheelCommands.h"
 #include "nuturtlebot_msgs/SensorData.h"
 #include <sensor_msgs/JointState.h>
+#include <nav_msgs/Path.h>
 #include <nav_msgs/Odometry.h>
 #include <ros/console.h>
 #include <tf2/LinearMath/Quaternion.h>
@@ -45,9 +46,10 @@ turtlelib::Twist2D twist;
 turtlelib::q pos, old_pos;
 static geometry_msgs::TransformStamped odom_tf, kalman_tf, map_tf;
 static ros::Subscriber js_sub, sensor_sub;
-static ros::Publisher odom_pub, SLAM_marker_pub;
+static ros::Publisher odom_pub, SLAM_marker_pub, odom_path_pub, SLAM_path_pub;
 static ros::ServiceServer pose_service;
 nav_msgs::Odometry odom_msg;
+static nav_msgs::Path odom_path_msg, SLAM_path_msg;
 static visualization_msgs::MarkerArray found_obstacles, SLAM_marker_array;
 
 arma::mat A = arma::eye(9,9);
@@ -189,6 +191,8 @@ int main(int argc, char *argv[]){
     
     odom_pub = pub_nh.advertise<nav_msgs::Odometry>("odom", rate);
     SLAM_marker_pub = pub_nh.advertise<visualization_msgs::MarkerArray>("/SLAM_markers", 10);
+    odom_path_pub = pub_nh.advertise<nav_msgs::Path>("blue_nav_msgs/Path",10);
+    SLAM_path_pub = pub_nh.advertise<nav_msgs::Path>("green_nav_msgs/Path",10);
 
     js_sub = pub_nh.subscribe("red/joint_states",10,update_odom);
 
@@ -273,6 +277,19 @@ int main(int argc, char *argv[]){
 
         odom_pub.publish(odom_msg);        
 
+        geometry_msgs::PoseStamped pose;
+        pose.pose.position.x = pos.x;
+        pose.pose.position.y = pos.y;
+        pose.pose.orientation.x = q.x();
+        pose.pose.orientation.y = q.y();
+        pose.pose.orientation.z = q.z();
+        pose.pose.orientation.w = q.w();
+        odom_path_msg.header.frame_id = "world";
+        odom_path_msg.header.stamp = ros::Time::now();
+        odom_path_msg.poses.push_back(pose);
+
+        odom_path_pub.publish(odom_path_msg);
+
         map_tf.header.stamp = ros::Time::now();
         map_tf.header.frame_id = "world";
         map_tf.child_frame_id = "map";
@@ -299,6 +316,18 @@ int main(int argc, char *argv[]){
         kalman_tf.transform.rotation.w = q.w();
 
         kalman_broadcaster.sendTransform(kalman_tf);
+
+        pose.pose.position.x = x_0(1,0);
+        pose.pose.position.y = x_0(2,0);
+        pose.pose.orientation.x = q.x();
+        pose.pose.orientation.y = q.y();
+        pose.pose.orientation.z = q.z();
+        pose.pose.orientation.w = q.w();
+        SLAM_path_msg.header.frame_id = "map";
+        SLAM_path_msg.header.stamp = ros::Time::now();
+        SLAM_path_msg.poses.push_back(pose);
+
+        SLAM_path_pub.publish(SLAM_path_msg);
 
         old_pos = pos;
 
