@@ -2,4 +2,4 @@ The kalman filter library is currently under construction and should not be used
 
         roslaunch nuslam slam.launch
 
-![SLAM Demo]()
+![SLAM Demo](slam-project-algarv/nuslam/Kalman_Filter.png)
