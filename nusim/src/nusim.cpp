@@ -255,7 +255,7 @@ void fake_sensor(const ros::TimerEvent& ){
 
     fake_sensor_array.markers.resize(obj_x_list.size());
 
-    std::normal_distribution<> noise(0, 0);
+    std::normal_distribution<> noise(0, 0.001);
 
     for (unsigned int i = 0; i<obj_x_list.size(); i+=1) {
         
@@ -342,8 +342,8 @@ void update_wheel_position(const nuturtlebot_msgs::WheelCommands::ConstPtr &whee
     // ROS_WARN("Without Noise: %6.2f, With Noise: %6.2f \n",L_cmd * mticks_radsec, wheel_vels.L);
     std::uniform_real_distribution dist(slip_min, slip_max);
 
-    ada_L = 0; //dist(get_random());
-    ada_R = 0; //dist(get_random());
+    ada_L = dist(get_random());
+    ada_R = dist(get_random());
 
     // ROS_WARN("L: %6.5f, R: %6.5f", slip_min, slip_max);
 

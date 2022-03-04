@@ -38,6 +38,7 @@
 int rate;
 static bool teleporting = false;
 static double x = 0, y = 0, w = 0;
+static double max_range;
 std::string body_id, odom_id, wheel_left, wheel_right;
 turtlelib::Wheel_Angle wheel_angles = {.L = 0, .R = 0}, old_wheel_angles = {.L = 0, .R = 0};
 turtlelib::Wheel_Angular_Velocities wheel_vels;
@@ -103,10 +104,20 @@ void update_obstacles(arma::mat state){
         double size = (state.n_rows - 3)/2;
 
         SLAM_marker_array.markers.resize(size);
-        ros::Duration duration(1.0);
+        // ros::Duration duration(5.0);
 
-        for (unsigned int i = 0; i<size; i+=1) {
-            
+        for (unsigned int i = 0; i<size; i++) {
+            ROS_WARN("size: ",size);
+            double d = sqrt(pow(x_est(3+2*i,0)-state(1,0),2)+pow(x_est(4+2*i,0)-state(2,0),2));
+            ROS_WARN("Distance %d: %6.2f",i,d);
+            if (d > max_range) {
+                SLAM_marker_array.markers[i].action = visualization_msgs::Marker::DELETE;
+                ROS_WARN("Deleting %d",i);
+            }
+            else {
+                SLAM_marker_array.markers[i].action = visualization_msgs::Marker::ADD;
+            }
+
             SLAM_marker_array.markers[i].header.frame_id = "map";
             SLAM_marker_array.markers[i].header.stamp = ros::Time::now();
             SLAM_marker_array.markers[i].type = visualization_msgs::Marker::CYLINDER;
@@ -125,7 +136,7 @@ void update_obstacles(arma::mat state){
             SLAM_marker_array.markers[i].color.r = 0.0;
             SLAM_marker_array.markers[i].color.g = 1.0;
             SLAM_marker_array.markers[i].color.b = 0.0;
-            SLAM_marker_array.markers[i].lifetime = duration;
+            // SLAM_marker_array.markers[i].lifetime = duration;
             SLAM_marker_array.markers[i].frame_locked = true;
             id += 1;
         }
@@ -178,6 +189,7 @@ int main(int argc, char *argv[]){
     //     ROS_DEBUG_ONCE("rate not defined");
     //     ros::shutdown();
     // }
+    nh.getParam("/max_range",max_range);
 
     nh.getParam("x0", x);
     nh.getParam("y0", y);
