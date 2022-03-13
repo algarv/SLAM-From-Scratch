@@ -1,0 +1,4 @@
+Fix the compile warnings. The "too many arguments for format" is actually a very serious warning that can cause your code to completely crash at any time.
+
+Your slam is working pretty well it seems, but keep in mind that if you
+can see only 1 obstacle at a time you can't localize.  You may want to add some obstacles for the demo.
