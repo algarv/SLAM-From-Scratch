@@ -2,4 +2,11 @@ The kalman filter library is currently under construction and should not be used
 
         roslaunch nuslam slam.launch
 
-![SLAM Demo](slam-project-algarv/nuslam/Kalman_Filter.png)
+![SLAM Demo](Kalman_Filter.png)
+Red: The state of the simulated real-world 
+
+Yellow: The state according to the LiDAR sensor 
+
+Blue: The state according to odometry 
+
+Green: The state according to the kalman filter
