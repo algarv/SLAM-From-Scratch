@@ -1,5 +1,5 @@
-/// \file odometry.cpp
-/// \brief Publishes odometry messages for the turtlebot to follow.
+/// \file slam.cpp
+/// \brief Publishes odometry messages and then the predicted state of the turtlebot using Kalman filter.
 ///
 /// PARAMETERS:
 ///     rate: ros rate
@@ -11,9 +11,12 @@
 ///
 /// PUBLISHES:
 ///     odom (nav_msgs/Odometry): publishes the velocity of each wheel
-/// 
+///     SLAM_Markers (visualization_msgs/MarkerArray): publishes a marker array corresponding to the estimated location of landmarks
+///     blue_nav_msgs/Path (nav_msgs/Path): Publishes the path of the blue robot
+///     green_nav_msgs/Path (nav_msgs/Path): Publishes the path of the green robot
 /// SUBSCRIBERS:
 ///     joint_states (sensor_msgs/JointState): Receives the wheel joint angles
+///     fake_sensor (visualization_msgs/MarkerArray): Recieves the obstacle positions from a simulated sensor
 
 #include <ros/ros.h>
 #include <string>
@@ -48,7 +51,6 @@ turtlelib::q pos, old_pos;
 static geometry_msgs::TransformStamped odom_tf, kalman_tf, map_tf;
 static ros::Subscriber js_sub, sensor_sub;
 static ros::Publisher odom_pub, SLAM_marker_pub, odom_path_pub, SLAM_path_pub;
-static ros::ServiceServer pose_service;
 nav_msgs::Odometry odom_msg;
 static nav_msgs::Path odom_path_msg, SLAM_path_msg;
 static visualization_msgs::MarkerArray found_obstacles, SLAM_marker_array;
@@ -97,6 +99,9 @@ void update_odom(const sensor_msgs::JointState &wheels){
     old_wheel_angles = {.L = wheels.position[0], .R = wheels.position[1]};
 }
 
+/// \brief Publishes a marker array corresponding to the estimated state of landmarks according to the Kalman filter
+///
+/// \param state - The state vector from the kalman filter
 void update_obstacles(arma::mat state){
     int id = 0;
 
@@ -142,11 +147,11 @@ void update_obstacles(arma::mat state){
         }
         SLAM_marker_pub.publish(SLAM_marker_array);
     }
-    else{
-        ROS_WARN("I know basic math");
-    }
 }
 
+/// \brief Callback for the marker array subscriber that assigns data from the LiDAR to the global obstacle variable
+///
+/// \param obstacles - Marker array received from the sensor publisher
 void get_obj(const visualization_msgs::MarkerArray &obstacles){
 
     found_obstacles = obstacles;
