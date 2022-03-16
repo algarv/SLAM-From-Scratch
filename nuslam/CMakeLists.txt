@@ -148,6 +148,16 @@ target_link_libraries(${PROJECT_NAME}_node
   ${ARMADILLO_LIBRARIES}
 )
 
+
+add_executable(landmarks_node src/landmarks.cpp)
+add_dependencies(landmarks_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+install(TARGETS landmarks_node RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+target_link_libraries(landmarks_node
+  turtlelib
+  ${catkin_LIBRARIES}
+  ${ARMADILLO_LIBRARIES}
+)
+
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use

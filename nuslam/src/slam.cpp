@@ -160,7 +160,7 @@ void get_obj(const visualization_msgs::MarkerArray &obstacles){
 
 int main(int argc, char *argv[]){
 
-    ros::init(argc, argv, "odometry");
+    ros::init(argc, argv, "nusalm");
     ros::NodeHandle nh("~"), pub_nh;
 
     // if (ros::param::has("body_id")){
@@ -202,8 +202,8 @@ int main(int argc, char *argv[]){
 
     nh.param<std::string>("odom_id",odom_id,"odom");
 
-    //nh.getParam("rate", rate);
-    rate = 5;
+    nh.getParam("rate", rate);
+    // rate = 5;
     ros::Rate r(rate);
     
     odom_pub = pub_nh.advertise<nav_msgs::Odometry>("odom", rate);
