@@ -48,6 +48,7 @@ arma::mat H(4,4);
 arma::mat H_inv(4,4);
 
 ros::Publisher obstacle_pub;
+ros::Publisher sensor_pub;
 
 point saved_pt;
 
@@ -275,10 +276,10 @@ void circle_classification(std::vector<cluster> clusters){
                 }
                 double angle_StD = 0;
                 ROS_WARN("Mean Cluster Angles: %3.2f",mean_angle);
-                if ( mean_angle > 0 && mean_angle < 135){
+                if (mean_angle > 0 && mean_angle < 135){
                     if (circles[i].R2 != 0){
                         for (unsigned long int j=0; j < clusters[i].pt.size() - 2; j++){
-                            angle_StD += pow((angles[i] - angle_StD),2);
+                            angle_StD += pow((angles[i] - mean_angle),2);
                         }
                         angle_StD /= clusters[i].pt.size() - 2;
                         ROS_WARN("STD: %3.2f",angle_StD);
@@ -324,6 +325,7 @@ void publish_landmarks(const ros::TimerEvent&){
     }
 
     obstacle_pub.publish(obstacle);
+    sensor_pub.publish(obstacle);
 }
 
 int main(int argc, char *argv[]){
@@ -338,6 +340,7 @@ int main(int argc, char *argv[]){
     ros::Timer timer_5Hz = nh.createTimer(ros::Duration(0.2), publish_landmarks);
     ros::Subscriber sensor_sub = pub_nh.subscribe("laser_scan", 10, get_clusters);
     obstacle_pub = nh.advertise<visualization_msgs::MarkerArray>("visualization_marker_array", 10);
+    sensor_pub =  pub_nh.advertise<visualization_msgs::MarkerArray>("/sensor", 10);
 
     while(ros::ok()){
 

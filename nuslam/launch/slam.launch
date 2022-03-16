@@ -26,17 +26,16 @@
     <node name="nusim_node" pkg="nusim" type="nusim_node" output = "screen"> 
         <rosparam command="load" file="$(find nusim)/config/initial.yaml" />
     </node>
-
-    <group if="$(arg nuslam)">
-        <node name="nuslam_node" pkg="nuslam" type="nuslam_node" output = "screen"/> 
-    </group>
 </group>
 
 <group if="$(eval robot == 'localhost')">
     <include file="$(find nuturtle_control)/launch/basic_remote.launch"/>
 
     <node name="turtle_interface" pkg="nuturtle_control" type="turtle_interface" output = "screen"/> 
+</group>
 
+<group if="$(arg nuslam)">
+    <node name="nuslam_node" pkg="nuslam" type="nuslam_node" output = "screen"/> 
 </group>
 
 <include file="$(find nuturtle_description)/launch/load.launch">
