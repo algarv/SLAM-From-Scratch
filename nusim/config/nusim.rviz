@@ -434,6 +434,14 @@ Visualization Manager:
       Topic: /blue_nav_msgs/Path
       Unreliable: false
       Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /landmarks/visualization_marker_array
+      Name: MarkerArray
+      Namespaces:
+        nusim_node: true
+      Queue Size: 100
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -462,7 +470,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 2.757758140563965
+      Distance: 3.793123245239258
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
