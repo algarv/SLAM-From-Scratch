@@ -279,7 +279,7 @@ void circle_classification(std::vector<cluster> clusters){
                 if (mean_angle > 0 && mean_angle < 135){
                     if (circles[i].R2 != 0){
                         for (unsigned long int j=0; j < clusters[i].pt.size() - 2; j++){
-                            angle_StD += pow((angles[i] - mean_angle),2);
+                            angle_StD += pow((angles[i] - angle_StD),2);
                         }
                         angle_StD /= clusters[i].pt.size() - 2;
                         ROS_WARN("STD: %3.2f",angle_StD);

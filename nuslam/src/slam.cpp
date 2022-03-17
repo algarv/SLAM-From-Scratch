@@ -130,7 +130,6 @@ void update_obstacles(arma::mat state){
             else {
                 SLAM_marker_array.markers[i].action = visualization_msgs::Marker::ADD;
             }
-
             SLAM_marker_array.markers[i].header.frame_id = "map";
             SLAM_marker_array.markers[i].header.stamp = ros::Time::now();
             SLAM_marker_array.markers[i].type = visualization_msgs::Marker::CYLINDER;
@@ -153,7 +152,6 @@ void update_obstacles(arma::mat state){
             SLAM_marker_array.markers[i].frame_locked = true;
             id += 1;
         }
-
         SLAM_marker_pub.publish(SLAM_marker_array);
     }
 }
@@ -165,9 +163,9 @@ void get_obj(const visualization_msgs::MarkerArray &obstacles){
 
     unsigned long int N = obj_list.size(); 
     ROS_WARN("Starting with %d obstacles",N);
-
+    ROS_WARN("Sorting through %d potential new markers",  obstacles.markers.size());
     for (unsigned long int i = 0; i < obstacles.markers.size(); i++){
-        ROS_WARN("Sorting through %d potential new marker",  obstacles.markers.size());
+        N = obj_list.size();
 
         obstacle new_obstacle;
         new_obstacle.d = obstacles.markers[i].scale.x;
@@ -179,9 +177,9 @@ void get_obj(const visualization_msgs::MarkerArray &obstacles){
         std::vector<double> d_list;
         temp_list.push_back(new_obstacle);
 
-        for (unsigned long int i = 0; i < temp_list.size() - 1; i++){
-            double dx = temp_list[i].x - x_est(1,0);
-            double dy = temp_list[i].y - x_est(2,0);
+        for (unsigned long int j = 0; j < temp_list.size() - 1; j++){
+            double dx = temp_list[j].x - x_est(1,0);
+            double dy = temp_list[j].y - x_est(2,0);
             double d = pow(dx,2)+pow(dy,2);
 
             H = arma::zeros(2,9);
@@ -197,8 +195,8 @@ void get_obj(const visualization_msgs::MarkerArray &obstacles){
 
                 H(1,1) = dy/d; 
                 H(1,2) = -1*dx/d; 
-                H(1,3+2*i) = -1*dy/d; 
-                H(1,4+2*i) = dx/d;                     
+                H(1,3) = -1*dy/d; 
+                H(1,4) = dx/d;                     
             }
 
             ROS_WARN("H: ");
@@ -213,19 +211,19 @@ void get_obj(const visualization_msgs::MarkerArray &obstacles){
             ROS_WARN("Psi: ");
             psi.print(std::cout);
 
-            arma::mat z_mes(2,0);
-            z_mes(0,0) = sqrt(pow(temp_list[i].x,2)+pow(temp_list[i].y,2));
-            z_mes(1,0) = atan2(temp_list[i].y,temp_list[i].x);
+            arma::mat z_mes(2,1);
+            z_mes(0,0) = sqrt(pow(temp_list[j].x,2)+pow(temp_list[j].y,2));
+            z_mes(1,0) = atan2(temp_list[j].y,temp_list[j].x);
             ROS_WARN("z_measured: ");
             z_mes.print(std::cout);
 
-            arma::mat z_est(2,0);
-            z_est(0,0) = sqrt(pow(temp_list[i].x - x_est(1,0),2)+pow(temp_list[i].y - x_est(2,0),2));
-            z_est(1,0) = atan2(temp_list[i].y - x_est(2,0), temp_list[i].x - x_est(1,0)) - x_est(0,0);
+            arma::mat z_est(2,1);
+            z_est(0,0) = sqrt(pow(temp_list[j].x - x_est(1,0),2)+pow(temp_list[j].y - x_est(2,0),2));
+            z_est(1,0) = atan2(temp_list[j].y - x_est(2,0), temp_list[j].x - x_est(1,0)) - x_est(0,0);
             ROS_WARN("z_estimated: ");
             z_est.print(std::cout);
 
-            arma::mat dz(2,0);
+            arma::mat dz(2,1);
             dz(0,0) = z_mes(0,0) - z_est(0,0);
             dz(1,0) = z_mes(1,0) - z_est(1,0);                
             dz(1,0) = turtlelib::normalize_angle(dz(1,0));
@@ -242,32 +240,41 @@ void get_obj(const visualization_msgs::MarkerArray &obstacles){
             ROS_WARN("Added mahalanobis distance: %3.2f", d_mah);
         }
 
-        double d_sum = 0;
-        for (unsigned long int j=0; j < d_list.size(); j++){
-            d_sum += d_list[j];
-        }
-        double mean_d = d_sum/(d_list.size());
-        double d_StD = 0;
-        for (unsigned long int j=0; j < d_list.size(); j++){
-            d_StD += pow((d_list[i] - mean_d),2);
-        }
-        d_StD /= d_list.size();
+        if (d_list.size()>0){
+            double d_sum = 0;
+            for (unsigned long int j=0; j < d_list.size(); j++){
+                d_sum += d_list[j];
+            }
+            double mean_d = d_sum/(d_list.size());
+            double d_StD = 0;
+            for (unsigned long int j=0; j < d_list.size(); j++){
+                d_StD += pow((d_list[i] - mean_d),2);
+            }
+            d_StD /= d_list.size();
 
-        double threshold = 3 * d_StD;
+            double threshold = 3 * d_StD;
+            
+            d_list.push_back(threshold);
+            ROS_WARN("Adding threshold distance: %3.2f", threshold);
 
-        d_list.push_back(threshold);
-        ROS_WARN("Adding threshold distance: ", threshold);
-
-        int min_index = 0;
-        for (int j=0; j<d_list.size(); j++){
-            if (d_list[i] <= d_list[min_index]){
-                    min_index = i;
+            int min_index = 0;
+            for (int j=0; j<d_list.size(); j++){
+                if (d_list[j] <= d_list[min_index]){
+                        min_index = j;
+                }
+            }
+            if (min_index == N){
+                obj_list.push_back(new_obstacle);
+                ROS_WARN("New obstacle");
+            }
+            else{
+                ROS_WARN("Associated with %d",min_index);
             }
         }
-        if (min_index == N){
+        else{
             obj_list.push_back(new_obstacle);
+            ROS_WARN("New obstacle");
         }
-
     }
 }
 
