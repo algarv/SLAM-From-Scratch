@@ -39,6 +39,7 @@
 #include <armadillo>
 
 int rate;
+int num_obstacles = 0;
 static bool teleporting = false;
 static double x = 0, y = 0, w = 0;
 static double max_range;
@@ -55,10 +56,7 @@ nav_msgs::Odometry odom_msg;
 static nav_msgs::Path odom_path_msg, SLAM_path_msg;
 static visualization_msgs::MarkerArray SLAM_marker_array;
 
-arma::mat A = arma::eye(9,9);
-arma::mat I = arma::eye(9,9);
-arma::mat K(9,2);
-arma::mat H(2,9);
+
 arma::mat h(2,1);
 arma::mat u(3,1);
 arma::mat z(2,3);
@@ -66,12 +64,12 @@ arma::mat v_k(2,1);
 arma::mat z_est(2,1);
 arma::mat z_measured(2,1);
 arma::mat dz(2,1);
-arma::mat x_0(9,1);
-arma::mat x_prev(9,1);
-arma::mat x_est(9,1);
-arma::mat S_0(9,9);
-arma::mat S_prev(9,9);
-arma::mat S_est(9,9);
+arma::mat x_0;
+arma::mat x_prev;
+arma::mat x_est;
+arma::mat S_0;
+arma::mat S_prev;
+arma::mat S_est;
 int run_count = 0;
 double n = 3;
 
@@ -164,6 +162,7 @@ void get_obj(const visualization_msgs::MarkerArray &obstacles){
     unsigned long int N = obj_list.size(); 
     ROS_WARN("Starting with %d obstacles",N);
     ROS_WARN("Sorting through %d potential new markers",  obstacles.markers.size());
+    
     for (unsigned long int i = 0; i < obstacles.markers.size(); i++){
         N = obj_list.size();
 
@@ -182,16 +181,17 @@ void get_obj(const visualization_msgs::MarkerArray &obstacles){
             double dy = temp_list[j].y - x_est(2,0);
             double d = pow(dx,2)+pow(dy,2);
 
-            H = arma::zeros(2,9);
+            arma::mat H;
+            H = arma::zeros(2,3+(temp_list.size()*2));
             H(0,0) = 0;  
             H(1,0) = -1;
 
             ROS_WARN("d = %3.2f",d);
             if (d != 0){
                 H(0,1) = -1*dx/sqrt(d); 
-                H(0,3+2*i) = dx/sqrt(d); 
+                H(0,3+2*j) = dx/sqrt(d); 
                 H(0,2) = -1*dy/sqrt(d); 
-                H(0,4+2*i) = dy/sqrt(d); 
+                H(0,4+2*j) = dy/sqrt(d); 
 
                 H(1,1) = dy/d; 
                 H(1,2) = -1*dx/d; 
@@ -204,6 +204,9 @@ void get_obj(const visualization_msgs::MarkerArray &obstacles){
 
             arma::mat R = arma::mat{{10.0,  0.0},
                                     {0.0,  10.0}};
+
+            
+            S_est.resize(3+(temp_list.size()*2),3+(temp_list.size()*2));
 
             arma::mat psi;
             psi = H*S_est*H.t() + R;
@@ -237,7 +240,7 @@ void get_obj(const visualization_msgs::MarkerArray &obstacles){
 
             double d_mah = d_mah_mat(0,0);
             d_list.push_back(d_mah);
-            ROS_WARN("Added mahalanobis distance: %3.2f", d_mah);
+            ROS_WARN("Added mahalanobis distance: %3.6f", d_mah);
         }
 
         if (d_list.size()>0){
@@ -248,7 +251,7 @@ void get_obj(const visualization_msgs::MarkerArray &obstacles){
             double mean_d = d_sum/(d_list.size());
             double d_StD = 0;
             for (unsigned long int j=0; j < d_list.size(); j++){
-                d_StD += pow((d_list[i] - mean_d),2);
+                d_StD += pow((d_list[j] - mean_d),2);
             }
             d_StD /= d_list.size();
 
@@ -264,18 +267,38 @@ void get_obj(const visualization_msgs::MarkerArray &obstacles){
                 }
             }
             if (min_index == N){
+                int old_size = 3 + 2*obj_list.size();
+
                 obj_list.push_back(new_obstacle);
                 ROS_WARN("New obstacle");
+
+                int new_size = 3 + 2*obj_list.size();
+                x_est.resize(new_size,1);
+                x_est(new_size - 2,0) = x_est(1,0) + z_measured(0,0)*cos(z_measured(1,0)+x_est(0,0));
+                x_est(new_size - 1,0) = x_est(2,0) + z_measured(0,0)*sin(z_measured(1,0)+x_est(0,0));
+                ROS_WARN("Append to x_est: ");
+                x_est.print();
             }
             else{
                 ROS_WARN("Associated with %d",min_index);
             }
         }
         else{
+            int old_size = 3 + 2*obj_list.size();
+
             obj_list.push_back(new_obstacle);
             ROS_WARN("New obstacle");
+
+            int new_size = 3 + 2*obj_list.size();
+            x_est.resize(new_size,1);
+            x_est(new_size - 2,0) = x_est(1,0) + z_measured(0,0)*cos(z_measured(1,0)+x_est(0,0));
+            x_est(new_size - 1,0) = x_est(2,0) + z_measured(0,0)*sin(z_measured(1,0)+x_est(0,0));
+            ROS_WARN("Append to x_est: ");
+            x_est.print();
         }
+        temp_list = obj_list;
     }
+    num_obstacles = obj_list.size();
 }
 
 int main(int argc, char *argv[]){
@@ -344,7 +367,7 @@ int main(int argc, char *argv[]){
     tf2_ros::TransformBroadcaster kalman_broadcaster;
     tf2_ros::TransformBroadcaster map_broadcaster;
 
-    x_0 = arma::zeros(9,1);
+    x_0 = arma::zeros(3 + num_obstacles*2,1);
     x_0(0,0) = w;
     x_0(1,0) = x;
     x_0(2,0) = y;
@@ -353,36 +376,25 @@ int main(int argc, char *argv[]){
 
     x_est = x_0;
 
-    S_0 = arma::zeros(9,9);
+    S_0 = arma::zeros(3+(num_obstacles*2),3+(num_obstacles*2));
     S_0(0,0) = 0.01;
     S_0(1,1) = 0.01;
     S_0(2,2) = 0.01;
-    S_0(3,3) = 1000;
-    S_0(4,4) = 1000;
-    S_0(5,5) = 1000;
-    S_0(6,6) = 1000;
-    S_0(7,7) = 1000;
-    S_0(8,8) = 1000;
+    for (int i = 3; i < 3+(num_obstacles*2); i++){
+        S_0(i,i) = 1000;
+    }
 
     S_prev = S_0;
     S_est = S_0;
-
-    arma::mat Q = arma::eye(9,9);
-    Q(0,0) = 100.0; //.00001;
-    Q(1,1) = 100.0; //.00001;
-    Q(2,2) = 100.0; //.00001;
-    Q(3,3) = 0; //Leave these as zero
-    Q(4,4) = 0;
-    Q(5,5) = 0;
-    Q(6,6) = 0;
-    Q(7,7) = 0;
-    Q(8,8) = 0;
-
+    
     arma::mat R = arma::mat{{10.0,  0.0},
                             {0.0,  10.0}};
     
+    int old_obstacle_count = 0;
     while(ros::ok()){
 
+        int num_added_obstacles = num_obstacles - old_obstacle_count;
+        ROS_WARN("Added %d obstacles since last run. (%d to %d)", num_added_obstacles, old_obstacle_count, num_obstacles);
         // ROS_WARN("Q: ");
         // Q.print(std::cout);
 
@@ -475,24 +487,35 @@ int main(int argc, char *argv[]){
         u(1,0) = twist.vx/rate;
         u(2,0) = 0;
 
-        // ROS_WARN("u: ");
-        // u.print(std::cout);
+        ROS_WARN("u: ");
+        u.print(std::cout);
 
-        // ROS_WARN("x_prev: ");
-        // x_prev.print(std::cout);
+        x_prev.resize(3+(num_obstacles*2),1);
+        ROS_WARN("x_prev: ");
+        x_prev.print(std::cout);
+
+        S_prev.resize(3+(num_obstacles*2),3+(num_obstacles*2));
+        ROS_WARN("S_prev: ");
+        S_prev.print(std::cout);
+
+        x_est.resize(3+(num_obstacles*2),1);
+        ROS_WARN("x_est: ");
+        x_est.print(std::cout);
+
+        arma::mat A = arma::eye(3+(num_obstacles*2),3+(num_obstacles*2));
+        ROS_WARN("Initialize A: ");
+        A.print(std::cout);
 
         if (turtlelib::almost_equal(twist.w,0,.0001)){
             x_est(0,0) = x_prev(0,0);
             x_est(1,0) = x_prev(1,0) + u(1,0)*cos(x_prev(0,0));
             x_est(2,0) = x_prev(2,0) + u(1,0)*sin(x_prev(0,0));
-            x_est(3,0) = x_prev(3,0);
-            x_est(4,0) = x_prev(4,0);
-            x_est(5,0) = x_prev(5,0);
-            x_est(6,0) = x_prev(6,0);
-            x_est(7,0) = x_prev(7,0);
-            x_est(8,0) = x_prev(8,0);
+            if (num_obstacles != 0){
+                for (int i = 3; i < 3+(num_obstacles*2); i++){
+                    x_est(i,0) = x_prev(i,0);
+                }
+            }
 
-            A = arma::eye(9,9);
             A(1,0) = -1*u(1,0) * sin(x_prev(0,0));
             A(2,0) = u(1,0) * cos(x_prev(0,0));
         }
@@ -500,81 +523,76 @@ int main(int argc, char *argv[]){
             x_est(0,0) = x_prev(0,0) + u(0,0);
             x_est(1,0) = x_prev(1,0) - (u(1,0)/u(0,0))*sin(x_prev(0,0)) + (u(1,0)/u(0,0))*sin(x_prev(0,0)+u(0,0));
             x_est(2,0) = x_prev(2,0) + (u(1,0)/u(0,0))*cos(x_prev(0,0)) - (u(1,0)/u(0,0))*cos(x_prev(0,0)+u(0,0));
-            x_est(3,0) = x_prev(3,0);
-            x_est(4,0) = x_prev(4,0);
-            x_est(5,0) = x_prev(5,0);
-            x_est(6,0) = x_prev(6,0);
-            x_est(7,0) = x_prev(7,0);
-            x_est(8,0) = x_prev(8,0);
-
-            A = arma::eye(9,9);
+            if (num_obstacles != 0){
+                for (int i = 3; i < 3+(num_obstacles*2); i++){
+                    x_est(i,0) = x_prev(i,0);
+                }
+            }
             A(1,0) = -1*(u(1,0)/u(0,0)) * cos(x_prev(0,0)) + (u(1,0)/u(0,0)) * cos(x_prev(0,0)+ u(0,0));
             A(2,0) = -1*(u(1,0)/u(0,0)) * sin(x_prev(0,0)) + (u(1,0)/u(0,0)) * sin(x_prev(0,0)+ u(0,0));
         }
 
-        // ROS_WARN("x_est: ");
-        // x_est.print(std::cout);
+        ROS_WARN("x_est: ");
+        x_est.print(std::cout);
 
-        // ROS_WARN("A: ");
-        // A.print(std::cout);
+        ROS_WARN("A: ");
+        A.print(std::cout);
         
         arma::mat A_T = A.t();
 
+        arma::mat Q = arma::zeros(3+(num_obstacles*2),3+(num_obstacles*2));
+        Q(0,0) = 100.0;
+        Q(1,1) = 100.0;
+        Q(2,2) = 100.0;
+
         S_est = A * S_prev * A_T + Q;
 
-        // ROS_WARN("S_est: ");
-        // S_est.print(std::cout);
+        ROS_WARN("S_est: ");
+        S_est.print(std::cout);
 
         // Kalman Filter //
-        // ROS_WARN("Num Markers: %ld", obj_list.size());
+        ROS_WARN("Num Markers: %ld", obj_list.size());
         if (obj_list.size()>0){
             for (unsigned int i=0; i<obj_list.size(); i++){
-                // ROS_WARN("Looking at marker %d",i);
+                ROS_WARN("Looking at marker %d",i);
                 double obj_x = obj_list[i].x;
                 double obj_y = obj_list[i].y;
-                // ROS_WARN("Found coordinates %3.2f, %3.2f", obj_x, obj_y);
+                ROS_WARN("Found coordinates %3.2f, %3.2f", obj_x, obj_y);
                 z_measured(0,0) = sqrt(pow(obj_x,2)+pow(obj_y,2));
                 z_measured(1,0) = atan2(obj_y,obj_x);
 
-                // ROS_WARN("z_measured: ");
-                // z_measured.print(std::cout);
+                ROS_WARN("z_measured: ");
+                z_measured.print(std::cout);
 
-                // ROS_WARN("x_est: ");
-                // x_est.print(std::cout);
+                ROS_WARN("x_est: ");
+                x_est.print(std::cout);
 
-                //Compute theoretical measurement
-                // ROS_WARN("run_count: %d",run_count);
-                if (run_count < 3){
-                    x_est(3+2*i,0) = x_est(1,0) + z_measured(0,0)*cos(z_measured(1,0)+x_est(0,0));
-                    x_est(4+2*i,0) = x_est(2,0) + z_measured(0,0)*sin(z_measured(1,0)+x_est(0,0));
-                }
-                run_count = run_count + 1;
-
-                // ROS_WARN("Computed x_est map values: %3.2f,%3.2f",x_est(3+2*i,0),x_est(4+2*i,0));
+                ROS_WARN("Computed x_est map values: %3.2f,%3.2f",x_est(3+2*i,0),x_est(4+2*i,0));
 
                 h(0,0) = sqrt(pow(x_est(3+2*i,0) - x_est(1,0),2)+pow(x_est(4+2*i,0) - x_est(2,0),2));
                 h(1,0) = atan2(x_est(4+2*i,0) - x_est(2,0), x_est(3+2*i,0) - x_est(1,0)) - x_est(0,0);
 
-                // ROS_WARN("h: ");
-                // h.print(std::cout);
+                ROS_WARN("h: ");
+                h.print(std::cout);
                 
                 z_est = h;
 
-                // ROS_WARN("z_est: ");
-                // z_est.print(std::cout);
+                ROS_WARN("z_est: ");
+                z_est.print(std::cout);
 
-                //Compute the Kalman gain
+                // Compute the Kalman gain
                 double dx = x_est(3+2*i,0) - x_est(1,0);
                 double dy = x_est(4+2*i,0) - x_est(2,0);
                 double d = pow(dx,2)+pow(dy,2);
 
-                H = arma::zeros(2,9);
+                arma::mat H;
+                H = arma::zeros(2,3+(num_obstacles*2));
 
                 H(0,0) = 0;  
 
                 H(1,0) = -1; 
 
-                // ROS_WARN("d = %3.2f",d);
+                ROS_WARN("d = %3.2f",d);
                 if (d != 0){
                     H(0,1) = -1*dx/sqrt(d); 
                     H(0,3+2*i) = dx/sqrt(d); 
@@ -587,39 +605,42 @@ int main(int argc, char *argv[]){
                     H(1,4+2*i) = dx/d;                     
                 }
 
-                // ROS_WARN("H: ");
-                // H.print(std::cout);
+                ROS_WARN("H: ");
+                H.print(std::cout);
 
-                // ROS_WARN("S_est: ");
-                // S_est.print(std::cout);
+                ROS_WARN("S_est: ");
+                S_est.print(std::cout);
 
                 arma::mat H_T = H.t();
 
+                arma::mat K;
                 K = S_est * H_T * (H*S_est*H_T+R).i();
 
-                // ROS_WARN("K: ");
-                // K.print(std::cout);
+                ROS_WARN("K: ");
+                K.print(std::cout);
                 
                 //Posterior State Update
                 dz(0,0) = z_measured(0,0) - z_est(0,0);
                 dz(1,0) = z_measured(1,0) - z_est(1,0);                
                 dz(1,0) = turtlelib::normalize_angle(dz(1,0));
                 
-                // ROS_WARN("dz: ");
-                // dz.print(std::cout);
+                ROS_WARN("dz: ");
+                dz.print(std::cout);
                 
                 x_est = x_est + K * dz;
-                // ROS_WARN("x_est: ");
-                // x_est.print(std::cout);
+                ROS_WARN("x_est: ");
+                x_est.print(std::cout);
                 
-                // ROS_WARN("Final x_est: ");
-                // x_est.print(std::cout);
+                ROS_WARN("Final x_est: ");
+                x_est.print(std::cout);
+
+                arma::mat I = arma::eye(3+(num_obstacles*2),3+(num_obstacles*2));
 
                 //Posterior Covariance
                 S_est = (I - K*H) * S_est; 
 
-                // ROS_WARN("Final S_est: ");
-                // S_est.print(std::cout);
+                ROS_WARN("Final S_est: ");
+                S_est.print(std::cout);
 
             }
         }
@@ -630,7 +651,7 @@ int main(int argc, char *argv[]){
         x_prev = x_0;
         S_prev = S_0;
         
-        // ROS_WARN("--------------------");
+        ROS_WARN("--------------------");
         /////////////////
         
         r.sleep();
