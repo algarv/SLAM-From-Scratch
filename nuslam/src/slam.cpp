@@ -62,11 +62,12 @@ arma::mat u(3,1);
 arma::mat z(2,3);
 arma::mat v_k(2,1);
 arma::mat z_est(2,1);
+arma::mat z_mes(2,1);
 arma::mat z_measured(2,1);
 arma::mat dz(2,1);
 arma::mat x_0;
-arma::mat x_prev;
-arma::mat x_est;
+arma::mat x_prev(3,1);
+arma::mat x_est(3,1);
 arma::mat S_0;
 arma::mat S_prev;
 arma::mat S_est;
@@ -170,13 +171,13 @@ void get_obj(const visualization_msgs::MarkerArray &obstacles){
         new_obstacle.d = obstacles.markers[i].scale.x;
         new_obstacle.x = obstacles.markers[i].pose.position.x;
         new_obstacle.y = obstacles.markers[i].pose.position.y;
-        ROS_WARN("New Obstacle (%3.2f, %3.2f)", new_obstacle.x, new_obstacle.y);
+        ROS_WARN("Possible New Obstacle (%3.2f, %3.2f)", new_obstacle.x, new_obstacle.y);
 
         std::vector<obstacle> temp_list = obj_list;
         std::vector<double> d_list;
         temp_list.push_back(new_obstacle);
 
-        for (unsigned long int j = 0; j < temp_list.size() - 1; j++){
+        for (unsigned long int j = 0; j < temp_list.size(); j++){
             double dx = temp_list[j].x - x_est(1,0);
             double dy = temp_list[j].y - x_est(2,0);
             double d = pow(dx,2)+pow(dy,2);
@@ -195,8 +196,8 @@ void get_obj(const visualization_msgs::MarkerArray &obstacles){
 
                 H(1,1) = dy/d; 
                 H(1,2) = -1*dx/d; 
-                H(1,3) = -1*dy/d; 
-                H(1,4) = dx/d;                     
+                H(1,3+2*j) = -1*dy/d; 
+                H(1,4+2*j) = dx/d;                     
             }
 
             ROS_WARN("H: ");
@@ -214,15 +215,20 @@ void get_obj(const visualization_msgs::MarkerArray &obstacles){
             ROS_WARN("Psi: ");
             psi.print(std::cout);
 
-            arma::mat z_mes(2,1);
             z_mes(0,0) = sqrt(pow(temp_list[j].x,2)+pow(temp_list[j].y,2));
             z_mes(1,0) = atan2(temp_list[j].y,temp_list[j].x);
             ROS_WARN("z_measured: ");
             z_mes.print(std::cout);
 
             arma::mat z_est(2,1);
-            z_est(0,0) = sqrt(pow(temp_list[j].x - x_est(1,0),2)+pow(temp_list[j].y - x_est(2,0),2));
-            z_est(1,0) = atan2(temp_list[j].y - x_est(2,0), temp_list[j].x - x_est(1,0)) - x_est(0,0);
+            if (x_est.n_rows > 4+2*j){
+                z_est(0,0) = sqrt(pow(x_est(3+2*j,0) - x_est(1,0),2)+pow(x_est(4+2*j,0) - x_est(2,0),2));
+                z_est(1,0) = atan2(x_est(4+2*j,0) - x_est(2,0), x_est(3+2*j,0) - x_est(1,0)) - x_est(0,0);
+            }
+            else{
+                z_est(0,0) = 0;
+                z_est(1,0) = 0;
+            }
             ROS_WARN("z_estimated: ");
             z_est.print(std::cout);
 
@@ -243,22 +249,22 @@ void get_obj(const visualization_msgs::MarkerArray &obstacles){
             ROS_WARN("Added mahalanobis distance: %3.6f", d_mah);
         }
 
-        if (d_list.size()>0){
+        if (d_list.size()>1){
             double d_sum = 0;
-            for (unsigned long int j=0; j < d_list.size(); j++){
+            for (unsigned long int j=0; j < d_list.size() - 1; j++){
                 d_sum += d_list[j];
             }
-            double mean_d = d_sum/(d_list.size());
+            double mean_d = d_sum/(d_list.size() - 1);
             double d_StD = 0;
-            for (unsigned long int j=0; j < d_list.size(); j++){
+            for (unsigned long int j=0; j < d_list.size() - 1; j++){
                 d_StD += pow((d_list[j] - mean_d),2);
             }
-            d_StD /= d_list.size();
+            d_StD /= d_list.size() - 1;
 
             double threshold = 3 * d_StD;
             
-            d_list.push_back(threshold);
-            ROS_WARN("Adding threshold distance: %3.2f", threshold);
+            d_list[d_list.size() - 1] = threshold;
+            ROS_WARN("Adding threshold distance: %3.6f", threshold);
 
             int min_index = 0;
             for (int j=0; j<d_list.size(); j++){
@@ -274,8 +280,8 @@ void get_obj(const visualization_msgs::MarkerArray &obstacles){
 
                 int new_size = 3 + 2*obj_list.size();
                 x_est.resize(new_size,1);
-                x_est(new_size - 2,0) = x_est(1,0) + z_measured(0,0)*cos(z_measured(1,0)+x_est(0,0));
-                x_est(new_size - 1,0) = x_est(2,0) + z_measured(0,0)*sin(z_measured(1,0)+x_est(0,0));
+                x_est(new_size - 2,0) = x_est(1,0) + z_mes(0,0)*cos(z_mes(1,0)+x_est(0,0));
+                x_est(new_size - 1,0) = x_est(2,0) + z_mes(0,0)*sin(z_mes(1,0)+x_est(0,0));
                 ROS_WARN("Append to x_est: ");
                 x_est.print();
             }
@@ -291,8 +297,8 @@ void get_obj(const visualization_msgs::MarkerArray &obstacles){
 
             int new_size = 3 + 2*obj_list.size();
             x_est.resize(new_size,1);
-            x_est(new_size - 2,0) = x_est(1,0) + z_measured(0,0)*cos(z_measured(1,0)+x_est(0,0));
-            x_est(new_size - 1,0) = x_est(2,0) + z_measured(0,0)*sin(z_measured(1,0)+x_est(0,0));
+            x_est(new_size - 2,0) = x_est(1,0) + z_mes(0,0)*cos(z_mes(1,0)+x_est(0,0));
+            x_est(new_size - 1,0) = x_est(2,0) + z_mes(0,0)*sin(z_mes(1,0)+x_est(0,0));
             ROS_WARN("Append to x_est: ");
             x_est.print();
         }
@@ -367,14 +373,16 @@ int main(int argc, char *argv[]){
     tf2_ros::TransformBroadcaster kalman_broadcaster;
     tf2_ros::TransformBroadcaster map_broadcaster;
 
-    x_0 = arma::zeros(3 + num_obstacles*2,1);
+    //x_0 = arma::zeros(3 + num_obstacles*2,1);
     x_0(0,0) = w;
     x_0(1,0) = x;
     x_0(2,0) = y;
     
     x_prev = x_0;
 
-    x_est = x_0;
+    x_est(0,0) = x_0(0,0);
+    x_est(1,0) = x_0(1,0);
+    x_est(2,0) = x_0(2,0);
 
     S_0 = arma::zeros(3+(num_obstacles*2),3+(num_obstacles*2));
     S_0(0,0) = 0.01;
@@ -490,6 +498,10 @@ int main(int argc, char *argv[]){
         ROS_WARN("u: ");
         u.print(std::cout);
 
+        x_est.resize(3+(num_obstacles*2),1);
+        ROS_WARN("x_prev: ");
+        x_est.print(std::cout);
+
         x_prev.resize(3+(num_obstacles*2),1);
         ROS_WARN("x_prev: ");
         x_prev.print(std::cout);
@@ -497,10 +509,6 @@ int main(int argc, char *argv[]){
         S_prev.resize(3+(num_obstacles*2),3+(num_obstacles*2));
         ROS_WARN("S_prev: ");
         S_prev.print(std::cout);
-
-        x_est.resize(3+(num_obstacles*2),1);
-        ROS_WARN("x_est: ");
-        x_est.print(std::cout);
 
         arma::mat A = arma::eye(3+(num_obstacles*2),3+(num_obstacles*2));
         ROS_WARN("Initialize A: ");
