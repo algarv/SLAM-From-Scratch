@@ -161,8 +161,8 @@ void update_obstacles(arma::mat state){
 void get_obj(const visualization_msgs::MarkerArray &obstacles){
 
     unsigned long int N = obj_list.size(); 
-    ROS_WARN("Starting with %d obstacles",N);
-    ROS_WARN("Sorting through %d potential new markers",  obstacles.markers.size());
+    ROS_WARN("Starting with %ld obstacles",N);
+    ROS_WARN("Sorting through %ld potential new markers",  obstacles.markers.size());
     
     for (unsigned long int i = 0; i < obstacles.markers.size(); i++){
         N = obj_list.size();
@@ -187,7 +187,8 @@ void get_obj(const visualization_msgs::MarkerArray &obstacles){
             H(0,0) = 0;  
             H(1,0) = -1;
 
-            ROS_WARN("d = %3.2f",d);
+            ROS_WARN("d = %3.6f",d);
+            ROS_WARN("j index: %ld", j);
             if (d != 0){
                 H(0,1) = -1*dx/sqrt(d); 
                 H(0,3+2*j) = dx/sqrt(d); 
@@ -261,20 +262,18 @@ void get_obj(const visualization_msgs::MarkerArray &obstacles){
             }
             d_StD /= d_list.size() - 1;
 
-            double threshold = 3 * d_StD;
+            double threshold = .000001; //3 * d_StD;
             
             d_list[d_list.size() - 1] = threshold;
             ROS_WARN("Adding threshold distance: %3.6f", threshold);
 
-            int min_index = 0;
-            for (int j=0; j<d_list.size(); j++){
+            long unsigned int min_index = 0;
+            for (long unsigned int j=0; j<d_list.size(); j++){
                 if (d_list[j] <= d_list[min_index]){
                         min_index = j;
                 }
             }
             if (min_index == N){
-                int old_size = 3 + 2*obj_list.size();
-
                 obj_list.push_back(new_obstacle);
                 ROS_WARN("New obstacle");
 
@@ -290,8 +289,6 @@ void get_obj(const visualization_msgs::MarkerArray &obstacles){
             }
         }
         else{
-            int old_size = 3 + 2*obj_list.size();
-
             obj_list.push_back(new_obstacle);
             ROS_WARN("New obstacle");
 
@@ -373,7 +370,7 @@ int main(int argc, char *argv[]){
     tf2_ros::TransformBroadcaster kalman_broadcaster;
     tf2_ros::TransformBroadcaster map_broadcaster;
 
-    //x_0 = arma::zeros(3 + num_obstacles*2,1);
+    x_0 = arma::zeros(3 + num_obstacles*2,1);
     x_0(0,0) = w;
     x_0(1,0) = x;
     x_0(2,0) = y;
@@ -498,13 +495,13 @@ int main(int argc, char *argv[]){
         ROS_WARN("u: ");
         u.print(std::cout);
 
-        x_est.resize(3+(num_obstacles*2),1);
-        ROS_WARN("x_prev: ");
-        x_est.print(std::cout);
-
         x_prev.resize(3+(num_obstacles*2),1);
         ROS_WARN("x_prev: ");
         x_prev.print(std::cout);
+
+        x_est.resize(3+(num_obstacles*2),1);
+        ROS_WARN("x_est: ");
+        x_est.print(std::cout);
 
         S_prev.resize(3+(num_obstacles*2),3+(num_obstacles*2));
         ROS_WARN("S_prev: ");
@@ -518,11 +515,11 @@ int main(int argc, char *argv[]){
             x_est(0,0) = x_prev(0,0);
             x_est(1,0) = x_prev(1,0) + u(1,0)*cos(x_prev(0,0));
             x_est(2,0) = x_prev(2,0) + u(1,0)*sin(x_prev(0,0));
-            if (num_obstacles != 0){
-                for (int i = 3; i < 3+(num_obstacles*2); i++){
-                    x_est(i,0) = x_prev(i,0);
-                }
-            }
+            // if (num_obstacles != 0){
+            //     for (int i = 3; i < 3+(num_obstacles*2); i++){
+            //         x_est(i,0) = x_prev(i,0);
+            //     }
+            // }
 
             A(1,0) = -1*u(1,0) * sin(x_prev(0,0));
             A(2,0) = u(1,0) * cos(x_prev(0,0));
@@ -531,11 +528,11 @@ int main(int argc, char *argv[]){
             x_est(0,0) = x_prev(0,0) + u(0,0);
             x_est(1,0) = x_prev(1,0) - (u(1,0)/u(0,0))*sin(x_prev(0,0)) + (u(1,0)/u(0,0))*sin(x_prev(0,0)+u(0,0));
             x_est(2,0) = x_prev(2,0) + (u(1,0)/u(0,0))*cos(x_prev(0,0)) - (u(1,0)/u(0,0))*cos(x_prev(0,0)+u(0,0));
-            if (num_obstacles != 0){
-                for (int i = 3; i < 3+(num_obstacles*2); i++){
-                    x_est(i,0) = x_prev(i,0);
-                }
-            }
+            // if (num_obstacles != 0){
+            //     for (int i = 3; i < 3+(num_obstacles*2); i++){
+            //         x_est(i,0) = x_prev(i,0);
+            //     }
+            // }
             A(1,0) = -1*(u(1,0)/u(0,0)) * cos(x_prev(0,0)) + (u(1,0)/u(0,0)) * cos(x_prev(0,0)+ u(0,0));
             A(2,0) = -1*(u(1,0)/u(0,0)) * sin(x_prev(0,0)) + (u(1,0)/u(0,0)) * sin(x_prev(0,0)+ u(0,0));
         }
@@ -630,7 +627,7 @@ int main(int argc, char *argv[]){
                 //Posterior State Update
                 dz(0,0) = z_measured(0,0) - z_est(0,0);
                 dz(1,0) = z_measured(1,0) - z_est(1,0);                
-                dz(1,0) = turtlelib::normalize_angle(dz(1,0));
+                // dz(1,0) = turtlelib::normalize_angle(dz(1,0));
                 
                 ROS_WARN("dz: ");
                 dz.print(std::cout);

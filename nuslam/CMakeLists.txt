@@ -9,6 +9,7 @@ project(nuslam)
 ## is used, also find other catkin packages
 
 find_package(catkin REQUIRED COMPONENTS
+catch_ros
 geometry_msgs
 nuturtlebot_msgs
 roscpp 
@@ -144,6 +145,7 @@ install(TARGETS ${PROJECT_NAME}_node RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DE
 target_link_libraries(${PROJECT_NAME}_node
   turtlelib
   kalman
+  measurement
   ${catkin_LIBRARIES}
   ${ARMADILLO_LIBRARIES}
 )
@@ -154,6 +156,7 @@ add_dependencies(landmarks_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXP
 install(TARGETS landmarks_node RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 target_link_libraries(landmarks_node
   turtlelib
+  measurement
   ${catkin_LIBRARIES}
   ${ARMADILLO_LIBRARIES}
 )
@@ -203,6 +206,22 @@ install(TARGETS kalman
   RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
 )
 
+
+add_library(measurement src/measurement.cpp)
+target_link_libraries(measurement
+  turtlelib
+  ${catkin_LIBRARIES}
+  ${ARMADILLO_LIBRARIES}
+)
+target_include_directories(measurement PUBLIC include/)
+
+install(TARGETS measurement
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
+)
+
+
 ## Mark cpp header files for installation
 # install(DIRECTORY include/kalman/
 #   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
@@ -227,9 +246,23 @@ install(TARGETS kalman
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
 
+catch_add_test(circle_tests
+	tests/circle_tests.cpp
+)
+
+target_link_libraries(circle_tests ##Thing I am adding libraries to
+    measurement
+    # turtlelib
+    ${catkin_LIBRARIES}
+    ${ARMADILLO_LIBRARIES}
+)
+
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
 
 ## Declare a C++ library
 target_compile_features(kalman PUBLIC cxx_std_17) 
 target_compile_options(kalman PUBLIC -Wall -Wextra)
+
+target_compile_features(measurement PUBLIC cxx_std_17) 
+target_compile_options(measurement PUBLIC -Wall -Wextra)

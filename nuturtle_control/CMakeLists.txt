@@ -231,7 +231,7 @@ install(DIRECTORY launch/
 
 # catch_add_test(${PROJECT_NAME}_test
 #  	tests/turtle_interface_test.cpp
-# )
+
 if(CATKIN_ENABLE_TESTING)
 
   catch_add_rostest_node(${PROJECT_NAME}_test tests/turtle_interface_test.cpp)
