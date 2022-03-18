@@ -9,16 +9,13 @@
 #define threshold .05
 #define obj_radius .125
 
-namespace measurement
-{
-
 struct point{
     double x;
     double y;
 };
 
 struct cluster{
-    std::vector<measurement::point> pt;
+    std::vector<point> pt;
 };
 
 struct circle{
@@ -27,20 +24,14 @@ struct circle{
     double R2;
 };
 
-/// \brief The framework for processing data from a LiDAR sensor into cylindrical obstacle estimations
+std::vector<cluster> clusters;
+std::vector<point> centroids;
+std::vector<double> z_bar;
+std::vector<cluster> found_clusters;
+point saved_pt;
 
-class clustering
-{
-public:
 
-    std::vector<circle> circle_detection(std::vector<cluster> found_clusters);
-    std::vector<circle> circle_classification(std::vector<cluster> found_clusters, std::vector<circle> circles);
+std::vector<circle> circle_detection(std::vector<cluster> clusters);
+std::vector<circle> circle_classification(std::vector<cluster> found_clusters, std::vector<circle> circles);
 
-private:
-
-    std::vector<circle> circles;
-    std::vector<circle> confirmed_circles;
-};
-
-}
 #endif

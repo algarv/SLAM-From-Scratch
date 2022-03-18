@@ -14,13 +14,36 @@
 #include <cmath> 
 #include "measurement/measurement.hpp"
 
+#define threshold .05
+#define obj_radius .125
 
 ros::Publisher obstacle_pub;
 ros::Publisher sensor_pub;
 
-std::vector<measurement::cluster> found_clusters;
-std::vector<measurement::circle> confirmed_circles;
-measurement::point saved_pt;
+// std::vector<measurement::cluster> found_clusters;
+std::vector<circle> confirmed_circles;
+// measurement::point saved_pt;
+
+// struct point{
+//     double x;
+//     double y;
+// };
+
+// struct cluster{
+//     std::vector<point> pt;
+// };
+
+// struct circle{
+//     double a;
+//     double b;
+//     double R2;
+// };
+
+// arma::mat M(4,4);
+// arma::mat H(4,4);
+// arma::mat H_inv(4,4);
+
+
 
 void get_clusters(const sensor_msgs::LaserScan &scan_data){
 
@@ -28,10 +51,10 @@ void get_clusters(const sensor_msgs::LaserScan &scan_data){
     int id = 0;
     for(double angle = scan_data.angle_min; angle<scan_data.angle_max; angle+=scan_data.angle_increment){
         
-        measurement::point new_pt = {.x = scan_data.ranges[id]*cos(angle), .y = scan_data.ranges[id]*sin(angle)};
+        point new_pt = {.x = scan_data.ranges[id]*cos(angle), .y = scan_data.ranges[id]*sin(angle)};
         // ROS_WARN("New Pt (#%d): (%3.2f,%3.2f)",id,new_pt.x, new_pt.y);
         if (id == 0){
-            measurement::cluster new_cluster;
+            cluster new_cluster;
             new_cluster.pt.push_back(new_pt);
             found_clusters.push_back(new_cluster);
             // ROS_WARN("Making new cluster %d",found_clusters.size());
@@ -49,7 +72,7 @@ void get_clusters(const sensor_msgs::LaserScan &scan_data){
                 // ROS_WARN("Adding pt to cluster %d",found_clusters.size());
             }
             else{
-                measurement::cluster new_cluster;
+                cluster new_cluster;
                 new_cluster.pt.push_back(new_pt);
                 found_clusters.push_back(new_cluster);
                 // ROS_WARN("Making new cluster %d",found_clusters.size());
@@ -59,8 +82,8 @@ void get_clusters(const sensor_msgs::LaserScan &scan_data){
         id ++;
     }
     
-    measurement::point first_pt = {.x = scan_data.ranges[0]*cos(scan_data.angle_min), .y = scan_data.ranges[0]*sin(scan_data.angle_min)};
-    measurement::point last_pt = {.x = scan_data.ranges[id - 1]*cos(scan_data.angle_max), .y = scan_data.ranges[id - 1]*sin(scan_data.angle_max)};
+    point first_pt = {.x = scan_data.ranges[0]*cos(scan_data.angle_min), .y = scan_data.ranges[0]*sin(scan_data.angle_min)};
+    point last_pt = {.x = scan_data.ranges[id - 1]*cos(scan_data.angle_max), .y = scan_data.ranges[id - 1]*sin(scan_data.angle_max)};
 
     double dx = first_pt.x - last_pt.x;
     double dy = first_pt.y - last_pt.y;
@@ -107,7 +130,6 @@ void publish_landmarks(const ros::TimerEvent&){
         id += 1;
     }
 
-    obstacle_pub.publish(obstacle);
     sensor_pub.publish(obstacle);
 }
 
@@ -122,15 +144,20 @@ int main(int argc, char *argv[]){
 
     ros::Timer timer_5Hz = nh.createTimer(ros::Duration(0.2), publish_landmarks);
     ros::Subscriber sensor_sub = pub_nh.subscribe("laser_scan", 10, get_clusters);
-    obstacle_pub = nh.advertise<visualization_msgs::MarkerArray>("visualization_marker_array", 10);
     sensor_pub =  pub_nh.advertise<visualization_msgs::MarkerArray>("/sensor", 10);
 
     while(ros::ok()){
 
-        measurement::clustering cluster;
+        // measurement::clustering cluster;
 
-        std::vector<measurement::circle> potential_circles = cluster.circle_detection(found_clusters);
-        confirmed_circles = cluster.circle_classification(found_clusters);
+        // std::vector<measurement::circle> potential_circles = cluster.circle_detection(found_clusters);
+        // confirmed_circles = cluster.circle_classification(found_clusters, potential_circles);
+        std::vector<circle> potential_circles = circle_detection(found_clusters);
+        confirmed_circles = circle_classification(found_clusters, potential_circles);
+        
+        for (unsigned long int i = 0; i < confirmed_circles.size(); i++){
+            ROS_WARN("Confirmed circle %d: R2 = %3.2f, a = %3.2f, b = %3.2f", i, confirmed_circles[i].R2, confirmed_circles[i].a, confirmed_circles[i].b);
+        }
 
         ros::spinOnce();
         r.sleep();

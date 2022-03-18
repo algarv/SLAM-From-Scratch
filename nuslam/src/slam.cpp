@@ -262,15 +262,16 @@ void get_obj(const visualization_msgs::MarkerArray &obstacles){
             }
             d_StD /= d_list.size() - 1;
 
-            double threshold = .000001; //3 * d_StD;
+            double threshold = 3 * d_StD;
             
             d_list[d_list.size() - 1] = threshold;
-            ROS_WARN("Adding threshold distance: %3.6f", threshold);
+            ROS_WARN("Adding threshold distance: %3.6f", d_list[d_list.size() - 1]);
 
             long unsigned int min_index = 0;
             for (long unsigned int j=0; j<d_list.size(); j++){
-                if (d_list[j] <= d_list[min_index]){
+                if (d_list[j] < d_list[min_index]){
                         min_index = j;
+                        ROS_WARN("Min Index: %ld, Min Value: %3.2f", min_index, d_list[min_index]);
                 }
             }
             if (min_index == N){

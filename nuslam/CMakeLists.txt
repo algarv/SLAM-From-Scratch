@@ -252,7 +252,7 @@ catch_add_test(circle_tests
 
 target_link_libraries(circle_tests ##Thing I am adding libraries to
     measurement
-    # turtlelib
+    turtlelib
     ${catkin_LIBRARIES}
     ${ARMADILLO_LIBRARIES}
 )
