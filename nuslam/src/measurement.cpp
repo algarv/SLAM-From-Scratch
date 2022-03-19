@@ -117,10 +117,10 @@ std::vector<circle> circle_detection(std::vector<cluster> clusters){
                 arma::mat eigvec;
 
                 arma::eig_sym(eigval, eigvec, Q);
-                ROS_WARN("Eigvec: ");
-                eigvec.print(std::cout);
-                ROS_WARN("Eigval: ");
-                eigval.print(std::cout);
+                // ROS_WARN("Eigvec: ");
+                // eigvec.print(std::cout);
+                // ROS_WARN("Eigval: ");
+                // eigval.print(std::cout);
 
                 int min_index = eigvec.n_cols - 1;
                 for (int i=0; i<eigval.n_rows; i++){
@@ -149,10 +149,10 @@ std::vector<circle> circle_detection(std::vector<cluster> clusters){
 
 std::vector<circle> circle_classification(std::vector<cluster> found_clusters, std::vector<circle> circles){
     std::vector<circle> confirmed_circles;
-    ROS_WARN("Unfiltered Cluster List Size: %d", found_clusters.size());
+    // ROS_WARN("Unfiltered Cluster List Size: %d", found_clusters.size());
     for (unsigned long int i=0; i < found_clusters.size(); i++){
         unsigned long int cluster_size = found_clusters[i].pt.size();
-        ROS_WARN("Cluster Size: %ld", cluster_size);
+        // ROS_WARN("Cluster Size: %ld", cluster_size);
         if (cluster_size>3){
             if (circles[i].R2 < (obj_radius * obj_radius)*1.2){
                 std::vector<double> angles;
@@ -169,7 +169,7 @@ std::vector<circle> circle_classification(std::vector<cluster> found_clusters, s
                     point a = {.x = p1.x - p3.x, .y = p1.y - p3.y};
                     point b = {.x = p2.x - p3.x, .y = p2.y - p3.y};
                     angles[j-1] = (a.x * b.x + a.y * b.y) / (sqrt(pow(a.x,2)+pow(a.y,2)) * sqrt(pow(b.x,2)+pow(b.y,2)));
-                    ROS_WARN("Angles: %3.2f", angles[j-1]);
+                    // ROS_WARN("Angles: %3.2f", angles[j-1]);
                     angle_sum += angles[j-1];
                 }
 
@@ -179,15 +179,15 @@ std::vector<circle> circle_classification(std::vector<cluster> found_clusters, s
                     mean_angle *= -1;
                 }
                 double angle_StD = 0;
-                ROS_WARN("Mean Cluster Angles: %3.2f",mean_angle);
+                // ROS_WARN("Mean Cluster Angles: %3.2f",mean_angle);
                 if (mean_angle > 0 && mean_angle < 135){
-                    ROS_WARN("circles[i].R2 %3.2f",circles[i].R2);
+                    // ROS_WARN("circles[i].R2 %3.2f",circles[i].R2);
                     if (circles[i].R2 != 0){
                         for (unsigned long int j=0; j < found_clusters[i].pt.size() - 2; j++){
                             angle_StD += pow((angles[i] - angle_StD),2);
                         }
                         angle_StD /= found_clusters[i].pt.size() - 2;
-                        ROS_WARN("STD: %3.2f",angle_StD);
+                        // ROS_WARN("STD: %3.2f",angle_StD);
                         if (angle_StD < .15){
                             confirmed_circles.push_back(circles[i]);
                             // ROS_WARN("Confirmed circle %d: R2 = %3.2f, a = %3.2f, b = %3.2f", i, circles[i].R2, circles[i].a, circles[i].b);

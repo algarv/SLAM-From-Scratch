@@ -156,7 +156,7 @@ int main(int argc, char *argv[]){
         confirmed_circles = circle_classification(found_clusters, potential_circles);
         
         for (unsigned long int i = 0; i < confirmed_circles.size(); i++){
-            ROS_WARN("Confirmed circle %d: R2 = %3.2f, a = %3.2f, b = %3.2f", i, confirmed_circles[i].R2, confirmed_circles[i].a, confirmed_circles[i].b);
+            ;// ROS_WARN("Confirmed circle %d: R2 = %3.2f, a = %3.2f, b = %3.2f", i, confirmed_circles[i].R2, confirmed_circles[i].a, confirmed_circles[i].b);
         }
 
         ros::spinOnce();

@@ -255,7 +255,7 @@ void fake_sensor(const ros::TimerEvent& ){
 
     fake_sensor_array.markers.resize(obj_x_list.size());
 
-    std::normal_distribution<> noise(0, 0.001);
+    std::normal_distribution<> noise(0, 0.0);
 
     for (unsigned int i = 0; i<obj_x_list.size(); i+=1) {
         
@@ -331,7 +331,7 @@ void update_wheel_position(const nuturtlebot_msgs::WheelCommands::ConstPtr &whee
     
     double mean_L = left_rot_vel;
     double mean_R = right_rot_vel;
-    double std = .1;
+    double std = 0;
 
     std::normal_distribution<> L(mean_L, std);
     std::normal_distribution<> R(mean_R, std);
