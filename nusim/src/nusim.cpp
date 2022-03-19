@@ -67,6 +67,7 @@ static turtlelib::Wheel_Angular_Velocities wheel_vels;
 static turtlelib::Twist2D twist;
 static turtlelib::q pos, old_pos;
 
+/// \brief random number seed
 std::mt19937 & get_random()
 {
     // static variables inside a function are created once and persist for the remainder of the program
@@ -77,12 +78,13 @@ std::mt19937 & get_random()
     return mt;
 }
 
-bool restart(std_srvs::Empty::Request&, std_srvs::Empty::Response&){
 /// \brief Send the turtle bot back to the origin of the world frame and restart the timestep counter.
 ///
 /// \param request - Empty::Request
 /// \param response - Empty::Reponse
 /// \returns true
+bool restart(std_srvs::Empty::Request&, std_srvs::Empty::Response&){
+
 
     ts.data = 0;
 
@@ -101,12 +103,12 @@ bool restart(std_srvs::Empty::Request&, std_srvs::Empty::Response&){
     return true;
 }
 
-bool teleport(nusim::teleport::Request &pose, nusim::teleport::Response&){
 /// \brief Teleports the turtle to the specified position and rotation.
 ///
 /// \param pose - position input from parameter
 /// \param response - Empty::Reponse
 /// \returns true
+bool teleport(nusim::teleport::Request &pose, nusim::teleport::Response&){
 
     pos.x = pose.x;
     pos.y = pose.y;
@@ -117,13 +119,13 @@ bool teleport(nusim::teleport::Request &pose, nusim::teleport::Response&){
     return true;
 }
 
-visualization_msgs::MarkerArray add_obstacles(std::vector<double> obj_x_list, std::vector<double> obj_y_list, std::vector<double> obj_d_list){
 /// \brief Spawns obstacles defined in the paramter.
 ///
 /// \param obj_x_list - std::vector<double> list of x positions
 /// \param obj_y_list - std::vector<double> list of y positions
 /// \param obj_d_list - std::vector<double> list of diameters
 /// \returns obstacle - visualization_msgs::MarkerArray message with obstacle information to publish
+visualization_msgs::MarkerArray add_obstacles(std::vector<double> obj_x_list, std::vector<double> obj_y_list, std::vector<double> obj_d_list){
 
     int id = 0;
     obstacle.markers.resize(obj_x_list.size());
@@ -318,7 +320,7 @@ void fake_sensor(const ros::TimerEvent& ){
         id += 1;
     }
     
-    fake_sensor_pub.publish(fake_sensor_array);
+    // fake_sensor_pub.publish(fake_sensor_array);
 }
 
 void update_wheel_position(const nuturtlebot_msgs::WheelCommands::ConstPtr &wheel_cmd){

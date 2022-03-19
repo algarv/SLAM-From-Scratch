@@ -20,31 +20,9 @@
 ros::Publisher obstacle_pub;
 ros::Publisher sensor_pub;
 
-// std::vector<measurement::cluster> found_clusters;
 std::vector<circle> confirmed_circles;
-// measurement::point saved_pt;
 
-// struct point{
-//     double x;
-//     double y;
-// };
-
-// struct cluster{
-//     std::vector<point> pt;
-// };
-
-// struct circle{
-//     double a;
-//     double b;
-//     double R2;
-// };
-
-// arma::mat M(4,4);
-// arma::mat H(4,4);
-// arma::mat H_inv(4,4);
-
-
-
+/// \brief Clusters raw LiDAR data based on relative distance
 void get_clusters(const sensor_msgs::LaserScan &scan_data){
 
     found_clusters.clear();
@@ -100,6 +78,7 @@ void get_clusters(const sensor_msgs::LaserScan &scan_data){
     // ROS_WARN("Clustered Successfully");
 }
 
+/// \brief Publishes the detected circle landmarks at 5 Hz.
 void publish_landmarks(const ros::TimerEvent&){
     int id = 0;
     static visualization_msgs::MarkerArray obstacle;
@@ -124,8 +103,8 @@ void publish_landmarks(const ros::TimerEvent&){
         obstacle.markers[i].scale.z = .25;
         obstacle.markers[i].color.a = 1.0;
         obstacle.markers[i].color.r = 1.0;
-        obstacle.markers[i].color.g = 0.0;
-        obstacle.markers[i].color.b = 1.0;
+        obstacle.markers[i].color.g = 1.0;
+        obstacle.markers[i].color.b = 0.0;
         // obstacle.markers[i].lifetime = ros::Duration();
         id += 1;
     }

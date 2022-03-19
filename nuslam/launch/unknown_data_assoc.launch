@@ -1,0 +1,6 @@
+<launch>
+
+<include file="$(find nuslam)/launch/slam.launch"/>
+<node name="landmarks_node" pkg="nuslam" type="landmarks_node" output = "screen"/> 
+
+</launch>

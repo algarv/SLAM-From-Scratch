@@ -16,7 +16,7 @@
 ///     green_nav_msgs/Path (nav_msgs/Path): Publishes the path of the green robot
 /// SUBSCRIBERS:
 ///     joint_states (sensor_msgs/JointState): Receives the wheel joint angles
-///     fake_sensor (visualization_msgs/MarkerArray): Recieves the obstacle positions from a simulated sensor
+///     sensor (visualization_msgs/MarkerArray): Receives LiDAR data clusters from the landmarks node
 
 #include <ros/ros.h>
 #include <string>
@@ -155,9 +155,9 @@ void update_obstacles(arma::mat state){
     }
 }
 
-/// \brief Callback for the marker array subscriber that assigns data from the LiDAR to the global obstacle variable
+/// \brief Callback for the sensor subscriber that assigns data from the LiDAR to the global obstacle variable
 ///
-/// \param obstacles - Marker array received from the sensor publisher
+/// \param obstacles - Marker array received from the landmark node
 void get_obj(const visualization_msgs::MarkerArray &obstacles){
 
     unsigned long int N = (x_est.n_rows - 3)/2;
