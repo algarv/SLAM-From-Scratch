@@ -115,7 +115,7 @@ void update_obstacles(arma::mat state){
 
     if (state.n_rows > .5){
         double size = (state.n_rows - 3)/2;
-        ROS_WARN("size: ",size);
+        // ROS_WARN("size: ",size);
         SLAM_marker_array.markers.resize(size);
         // ros::Duration duration(3.0);
 
@@ -155,6 +155,34 @@ void update_obstacles(arma::mat state){
     }
 }
 
+/// \brief Callback for the sensor subscriber that assigns data from the fake sensor global obstacle variable
+///
+/// \param obstacles - Marker array received from the nusim node
+void get_obj_fake(const visualization_msgs::MarkerArray &obstacles){
+    new_obj_list.clear();
+    for (unsigned long int i = 0; i < obstacles.markers.size(); i++){
+        obstacle new_obstacle; //in robot frame
+        new_obstacle.d = obstacles.markers[i].scale.x;
+        new_obstacle.x = obstacles.markers[i].pose.position.x;
+        new_obstacle.y = obstacles.markers[i].pose.position.y;
+        new_obj_list.push_back(new_obstacle);
+        ROS_WARN("Obstacle (%3.2f, %3.2f)", new_obstacle.x, new_obstacle.y);
+
+        if (first_run){
+            x_est.resize(3+2*(obstacles.markers.size()),1);
+            
+            z_measured(0,0) = sqrt(pow(new_obstacle.x,2)+pow(new_obstacle.y,2));
+            z_measured(1,0) = atan2(new_obstacle.y,new_obstacle.x);
+
+            x_est(3+2*i,0) = x_est(1,0) + z_measured(0,0)*cos(z_measured(1,0)+x_est(0,0));
+            x_est(4+2*i,0) = x_est(2,0) + z_measured(0,0)*sin(z_measured(1,0)+x_est(0,0));
+        }
+    }
+    first_run = false;
+    num_obstacles = obstacles.markers.size();
+
+}
+
 /// \brief Callback for the sensor subscriber that assigns data from the LiDAR to the global obstacle variable
 ///
 /// \param obstacles - Marker array received from the landmark node
@@ -162,7 +190,7 @@ void get_obj(const visualization_msgs::MarkerArray &obstacles){
 
     unsigned long int N = (x_est.n_rows - 3)/2;
 
-    new_obj_list.empty();
+    new_obj_list.clear();
     ROS_WARN("Starting with %d obstacles",N);
     ROS_WARN("Sorting through %d potential new markers",  obstacles.markers.size());
     
@@ -332,164 +360,9 @@ void get_obj(const visualization_msgs::MarkerArray &obstacles){
     num_obstacles = (x_est.n_rows - 3)/2;
 }
 
-// void get_obj(const visualization_msgs::MarkerArray &obstacles){
-
-//     unsigned long int N = obj_list.size(); 
-//     ROS_WARN("Starting with %ld obstacles",N);
-//     ROS_WARN("Sorting through %ld potential new markers",  obstacles.markers.size());
-//     std::vector<obstacle> temp_list = obj_list;
-
-//     for (unsigned long int i = 0; i < obstacles.markers.size(); i++){
-//         N = obj_list.size();
-
-//         obstacle new_obstacle;
-//         new_obstacle.d = obstacles.markers[i].scale.x;
-//         new_obstacle.x = obstacles.markers[i].pose.position.x;
-//         new_obstacle.y = obstacles.markers[i].pose.position.y;
-//         ROS_WARN("Possible New Obstacle (%3.2f, %3.2f)", new_obstacle.x, new_obstacle.y);
-
-//         std::vector<double> d_list;
-//         // temp_list.push_back(new_obstacle);
-
-//         for (unsigned long int j = 0; j < temp_list.size(); j++){
-//             double dx = temp_list[j].x - x_est(1,0);
-//             double dy = temp_list[j].y - x_est(2,0);
-//             double d = pow(dx,2)+pow(dy,2);
-
-//             arma::mat H;
-//             H = arma::zeros(2,3+(temp_list.size()*2));
-//             H(0,0) = 0;  
-//             H(1,0) = -1;
-
-//             ROS_WARN("d = %3.6f",d);
-//             ROS_WARN("j index: %ld", j);
-//             if (d != 0){
-//                 H(0,1) = -1*dx/sqrt(d); 
-//                 H(0,3+2*j) = dx/sqrt(d); 
-//                 H(0,2) = -1*dy/sqrt(d); 
-//                 H(0,4+2*j) = dy/sqrt(d); 
-
-//                 H(1,1) = dy/d; 
-//                 H(1,2) = -1*dx/d; 
-//                 H(1,3+2*j) = -1*dy/d; 
-//                 H(1,4+2*j) = dx/d;                     
-//             }
-
-//             ROS_WARN("H: ");
-//             H.print(std::cout);
-
-//             arma::mat R = arma::mat{{10.0,  0.0},
-//                                     {0.0,  10.0}};
-
-            
-//             S_est.resize(3+(temp_list.size()*2),3+(temp_list.size()*2));
-
-//             arma::mat psi;
-//             psi = H*S_est*H.t() + R;
-            
-//             ROS_WARN("Psi: ");
-//             psi.print(std::cout);
-
-//             z_mes(0,0) = sqrt(pow(obstacles.markers[i].pose.position.x,2)+pow(obstacles.markers[i].pose.position.y,2));
-//             z_mes(1,0) = atan2(obstacles.markers[i].pose.position.y,obstacles.markers[i].pose.position.x);
-//             ROS_WARN("z_measured: ");
-//             z_mes.print(std::cout);
-
-//             arma::mat z_est(2,1);
-//             if (x_est.n_rows > 4+2*j){
-//                 z_est(0,0) = sqrt(pow(x_est(3+2*j,0) - x_est(1,0),2)+pow(x_est(4+2*j,0) - x_est(2,0),2));
-//                 z_est(1,0) = atan2(x_est(4+2*j,0) - x_est(2,0), x_est(3+2*j,0) - x_est(1,0)) - x_est(0,0);
-//             }
-//             else{
-//                 z_est(0,0) = 0;
-//                 z_est(1,0) = 0;
-//             }
-//             ROS_WARN("z_estimated: ");
-//             z_est.print(std::cout);
-
-//             arma::mat dz(2,1);
-//             dz(0,0) = z_mes(0,0) - z_est(0,0);
-//             dz(1,0) = z_mes(1,0) - z_est(1,0);                
-//             dz(1,0) = turtlelib::normalize_angle(dz(1,0));
-//             ROS_WARN("dz: ");
-//             dz.print(std::cout);
-
-//             arma::mat d_mah_mat;
-//             d_mah_mat = dz.t() * psi.i() * dz;
-//             ROS_WARN("Why does this need to be a matrix?");
-//             d_mah_mat.print(std::cout);
-
-//             double d_mah = d_mah_mat(0,0);
-//             d_list.push_back(d_mah);
-//             ROS_WARN("Added mahalanobis distance: %3.6f", d_mah);
-//         }
-
-//         if (d_list.size()>1){
-//             // double d_sum = 0;
-//             // for (unsigned long int j=0; j < d_list.size(); j++){
-//             //     d_sum += d_list[j];
-//             // }
-//             // double mean_d = d_sum/(d_list.size());
-//             // double d_StD = 0;
-//             // for (unsigned long int j=0; j < d_list.size(); j++){
-//             //     d_StD += pow((d_list[j] - mean_d),2);
-//             // }
-//             // d_StD /= (d_list.size());
-
-//             double threshold = .001; //3 * d_StD;
-            
-//             // d_list[d_list.size() - 1] = threshold;
-//             // ROS_WARN("Adding threshold distance: %3.6f", d_list[d_list.size() - 1]);
-
-//             auto min_addr = std::min_element(d_list.begin(),d_list.end());
-//             int min_index = std::min_element(d_list.begin(),d_list.end()) - d_list.begin();
-//             double min_value = *min_addr;
-//             ROS_WARN("Min Index: %ld, Min Value: %3.6f", min_index, min_value);
-//             // long unsigned int min_index = 0;
-//             // double min_value = 0;
-//             // for (long unsigned int j=0; j<d_list.size() - 1; j++){
-//             //     if (d_list[j] < d_list[min_index]){
-//             //             min_index = j;
-//             //             min_value = d_list[j];
-//             //             ROS_WARN("Min Index: %ld, Min Value: %3.2f", min_index, d_list[min_index]);
-//             //     }
-//             // }
-
-//             if (min_value >= threshold){
-//                 // if (d_list[min_index] > 0){
-//                     obj_list.push_back(new_obstacle);
-//                     ROS_WARN("New obstacle");
-
-//                     int new_size = 3 + 2*obj_list.size();
-//                     x_est.resize(new_size,1);
-//                     x_est(new_size - 2,0) = x_est(1,0) + z_mes(0,0)*cos(z_mes(1,0)+x_est(0,0));
-//                     x_est(new_size - 1,0) = x_est(2,0) + z_mes(0,0)*sin(z_mes(1,0)+x_est(0,0));
-//                     ROS_WARN("Append to x_est: ");
-//                     x_est.print();
-//                 // }
-//             }
-//             else{
-//                 ROS_WARN("Associated with %d",min_index);
-//             }
-//         }
-//         else{
-//             obj_list.push_back(new_obstacle);
-//             ROS_WARN("New obstacle");
-
-//             int new_size = 3 + 2*obj_list.size();
-//             x_est.resize(new_size,1);
-//             x_est(new_size - 2,0) = x_est(1,0) + z_mes(0,0)*cos(z_mes(1,0)+x_est(0,0));
-//             x_est(new_size - 1,0) = x_est(2,0) + z_mes(0,0)*sin(z_mes(1,0)+x_est(0,0));
-//             ROS_WARN("Append to x_est: ");
-//             x_est.print();
-//         }
-//     }
-//     num_obstacles = obj_list.size();
-// }
-
 int main(int argc, char *argv[]){
 
-    ros::init(argc, argv, "nusalm");
+    ros::init(argc, argv, "nuslam");
     ros::NodeHandle nh("~"), pub_nh;
 
     // if (ros::param::has("body_id")){
@@ -542,8 +415,17 @@ int main(int argc, char *argv[]){
 
     js_sub = pub_nh.subscribe("red/joint_states",10,update_odom);
 
-    //sensor_sub = pub_nh.subscribe("/fake_sensor",10,get_obj);
-    sensor_sub = pub_nh.subscribe("/sensor",10,get_obj);
+    int da;
+    double using_fake;
+    nh.getParam("data_association",da);
+    if (da == 1){
+        using_fake = false;
+        sensor_sub = pub_nh.subscribe("/sensor",10,get_obj);
+    }
+    else{
+        using_fake = true;
+        sensor_sub = pub_nh.subscribe("/fake_sensor",10,get_obj_fake);
+    }
 
     old_pos.theta = w;
     old_pos.x = x;
@@ -580,9 +462,9 @@ int main(int argc, char *argv[]){
     
     int old_obstacle_count = 0;
     while(ros::ok()){
-
+        ROS_WARN("Data Association: %d", !using_fake);
         int num_added_obstacles = num_obstacles - old_obstacle_count;
-        ROS_WARN("Added %d obstacles since last run. (%d to %d)", num_added_obstacles, old_obstacle_count, num_obstacles);
+        // ROS_WARN("Added %d obstacles since last run. (%d to %d)", num_added_obstacles, old_obstacle_count, num_obstacles);
         // ROS_WARN("Q: ");
         // Q.print(std::cout);
 
@@ -682,7 +564,7 @@ int main(int argc, char *argv[]){
         // ROS_WARN("x_prev: ");
         // x_prev.print(std::cout);
 
-        // x_est.resize(3+(num_obstacles*2),1);
+        x_est.resize(3+(num_obstacles*2),1);
         // ROS_WARN("x_est: ");
         // x_est.print(std::cout);
 
@@ -740,6 +622,7 @@ int main(int argc, char *argv[]){
 
         // Kalman Filter //
         ROS_WARN("Num Markers: %ld", new_obj_list.size());
+        ROS_WARN("Num Markers: %ld", num_obstacles);
         if (new_obj_list.size()>0){
             for (unsigned int i=0; i<new_obj_list.size(); i++){
                 // ROS_WARN("Looking at marker %d",i);
@@ -752,8 +635,8 @@ int main(int argc, char *argv[]){
                 // ROS_WARN("z_measured: ");
                 // z_measured.print(std::cout);
 
-                // ROS_WARN("x_est: ");
-                // x_est.print(std::cout);
+                ROS_WARN("x_est: ");
+                x_est.print(std::cout);
 
                 // ROS_WARN("Computed x_est map values: %3.2f,%3.2f",x_est(3+2*i,0),x_est(4+2*i,0));
 

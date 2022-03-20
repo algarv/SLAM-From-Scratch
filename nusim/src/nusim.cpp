@@ -320,7 +320,7 @@ void fake_sensor(const ros::TimerEvent& ){
         id += 1;
     }
     
-    // fake_sensor_pub.publish(fake_sensor_array);
+    fake_sensor_pub.publish(fake_sensor_array);
 }
 
 void update_wheel_position(const nuturtlebot_msgs::WheelCommands::ConstPtr &wheel_cmd){
@@ -687,8 +687,7 @@ int main(int argc, char *argv[]){
 
         path_pub.publish(path_msg);
 
-        //fake_sensor_array = fake_sensor(pos, obj_x_list, obj_y_list);
-        
+        // fake_sensor_array = fake_sensor(pos, obj_x_list, obj_y_list);
 
         laser_scan(pos, obj_x_list, obj_y_list);
         laser_pub.publish(laser_msg);
