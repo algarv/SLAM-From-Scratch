@@ -34,3 +34,5 @@ Green: The state according to EKF SLAM
 |Blue| (0,0) | (0.1175,-0.00164) | (0.0505, -0.01074)
 
 EKF SLAM outperformed odometry! 
+
+![SLAM Demo](final_demo.gif)
