@@ -9,7 +9,9 @@ To run the simulation with a realistic representation of LiDAR data and an attem
         roslaunch nuslam unknown_data_assoc.launch
 
 #### EKF SLAM With Fake Sensor Data (No Data Association)
-![SLAM Demo](Kalman_Filter.png)
+![SLAM Demo](img/Kalman_Filter.png)
+
+
 Red: The state of the simulated real-world 
 
 Yellow: The state according to the fake sensor data
@@ -20,7 +22,10 @@ Green: The state according to the kalman filter
 
 #### EKF SLAM With Realistic Sensor Data (Including Data Association)
 
-![SLAM Demo](data_assoc.png)
+![SLAM Demo](img/data_assoc.png)
+
+Red: The state of the simulated real-world 
+
 Yellow: The state according to the clustered and circle-fit LiDAR sensor data
 
 Blue: The state according to odometry 
@@ -35,4 +40,4 @@ Green: The state according to EKF SLAM
 
 EKF SLAM outperformed odometry! 
 
-![SLAM Demo](final_demo.gif)
+![SLAM Demo](img/final_demo.gif)
