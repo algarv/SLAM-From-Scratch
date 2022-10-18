@@ -11,7 +11,7 @@ To run the simulation with simuated LiDAR data and data association (unknown lan
 #### EKF SLAM With Fake Sensor Data (known landmark locations, no data association)
 ![SLAM Demo](img/Kalman_Filter.png)
 
-This image shows 4 representations of the state. The red is the ground-truth, and the yellow will be an exact copy of the red because the landmarks locations are given directly to the fake_sensor topic. The blue robot will move ahead of the red robot due to slip, but follow nearly the same path. The green robot may get confused as information is added and taken away from the filter, but will eventually find its way back to the red robot's location.
+This image shows 4 representations of the state. The red is the ground-truth, and the yellow will be an exact copy of the red because the landmarks locations are given directly to the fake_sensor topic. The blue robot follows the path of the red robot according to odometry, so it moves ahead gradually deviate paths as error accumulates due to the tire slip. The green robot may get confused as information is added and taken away from the filter, but will eventually find its way back to the red robot's location.
 
 Red: The state of the simulated real-world 
 
@@ -25,7 +25,7 @@ Green: The state according to the kalman filter
 
 ![SLAM Demo](img/data_assoc.png)
 
-This image similarly shows 4 representations of the state. The red is the same ground truth as the first image, but the yellow now varies slightly as it is an estimation of the landmark locations from LiDAR range data. The blue behaves similar because it is indifferent to the landmarks, but the green may not perform as well if the landmark estimation is not reliable. 
+This image similarly shows 4 representations of the state. The red is the same ground truth as the first image, but the yellow now varies slightly as it is an estimation of the landmark locations from LiDAR range data. The blue behaves similarly because it is indifferent to the landmarks, but the green may not perform as well if the landmark leave the sensor range or an estimation is not reliable. However, unlike the odometry state estimation, the Kalman Filter will not accumulate error and is able to reset the state estimation as more information become available, making it the most accurate over time.
 
 Red: The state of the simulated real-world 
 
