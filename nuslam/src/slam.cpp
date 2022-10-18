@@ -35,7 +35,6 @@
 #include <turtlesim/Pose.h>
 #include "nuturtle_control/set_pose.h"
 #include <visualization_msgs/MarkerArray.h>
-#include "kalman/kalman.hpp"
 #include <armadillo>
 
 int rate;

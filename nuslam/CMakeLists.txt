@@ -144,7 +144,7 @@ add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catk
 install(TARGETS ${PROJECT_NAME}_node RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 target_link_libraries(${PROJECT_NAME}_node
   turtlelib
-  kalman
+  # kalman
   measurement
   ${catkin_LIBRARIES}
   ${ARMADILLO_LIBRARIES}
@@ -196,15 +196,15 @@ target_link_libraries(landmarks_node
 
 ## Mark libraries for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_libraries.html
-add_library(kalman src/kalman.cpp)
+# add_library(kalman src/kalman.cpp)
 
-target_include_directories(kalman PUBLIC include/)
+# target_include_directories(kalman PUBLIC include/)
 
-install(TARGETS kalman
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
-)
+# install(TARGETS kalman
+#   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+#   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+#   RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
+# )
 
 
 add_library(measurement src/measurement.cpp)
@@ -261,8 +261,8 @@ target_link_libraries(circle_tests ##Thing I am adding libraries to
 # catkin_add_nosetests(test)
 
 ## Declare a C++ library
-target_compile_features(kalman PUBLIC cxx_std_17) 
-target_compile_options(kalman PUBLIC -Wall -Wextra)
+# target_compile_features(kalman PUBLIC cxx_std_17) 
+# target_compile_options(kalman PUBLIC -Wall -Wextra)
 
 target_compile_features(measurement PUBLIC cxx_std_17) 
 target_compile_options(measurement PUBLIC -Wall -Wextra)

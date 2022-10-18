@@ -8,6 +8,8 @@ To run the simulation with a realistic representation of LiDAR data and an attem
 
         roslaunch nuslam unknown_data_assoc.launch
 
+The simulation will open an RVIZ window that displays 4 color-coded representations of the robot and landmarks. The red robot is the ground-truth and is controlled with standard tele-op keyboard commands. The yellow, green, and blue robots represent different state estimations.  
+
 #### EKF SLAM With Fake Sensor Data (No Data Association)
 ![SLAM Demo](img/Kalman_Filter.png)
 
