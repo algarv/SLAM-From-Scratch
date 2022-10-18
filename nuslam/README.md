@@ -1,14 +1,14 @@
-The kalman filter library is currently under construction and should not be used. The nuslam node, however, is fully functional and simulates a turtlebot navigating turtlebot using teleop keyboard control. Adding unknown_data_assoc incorporates LiDAR data with automatic data association for the turtlebot to localize itself in the map. 
+The nuslam node simulates a turtlebot navigating using teleop keyboard control. Adding unknown_data_assoc incorporates LiDAR data with data association for the turtlebot to localize itself in the map. 
 
-To run the simulation with only localization, using the fake_sensor topic rather than the more realistic sensor with data assoication, run the slam.launch file. This simulation is fully functional.
+To run the simulation with known landmark locations (easy mode):
 
         roslaunch nuslam slam.launch
 
-To run the simulation with a realistic representation of LiDAR data and an attempt at associating the data, run the unknown_data_assoc.launch file.
+To run the simulation with simuated LiDAR data and data association (unknown landmark associaion -- hard mode):
 
         roslaunch nuslam unknown_data_assoc.launch
 
-#### EKF SLAM With Fake Sensor Data (No Data Association)
+#### EKF SLAM With Fake Sensor Data (known landmark locations, no data association)
 ![SLAM Demo](img/Kalman_Filter.png)
 
 
@@ -20,7 +20,7 @@ Blue: The state according to odometry
 
 Green: The state according to the kalman filter
 
-#### EKF SLAM With Realistic Sensor Data (Including Data Association)
+#### EKF SLAM With Realistic Sensor Data (initially unknown landmark locations)
 
 ![SLAM Demo](img/data_assoc.png)
 
